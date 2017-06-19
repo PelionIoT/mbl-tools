@@ -33,3 +33,17 @@ typically used to spin up a container and execute the build script
 build-optee.sh.  The directory used for the build can be passed to the
 build-optee.sh script by argument.  Typical usage would be to map a
 build directory into the container as the volume path /optee.
+
+### Raspberry PI 3 Open Embedded Build
+
+* Build the docker image encapsulating the OE build environment:
+
+```
+docker build -t oe ./mbl-tools/build-oe
+```
+
+* Execute the build:
+
+```
+docker run -v $(pwd)/build-oe:/work oe ./build-oe.sh --builddir /work
+```
