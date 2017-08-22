@@ -47,3 +47,19 @@ docker build -t oe ./mbl-tools/build-oe
 ```
 docker run -v $(pwd)/build-oe:/work oe ./build-oe.sh --builddir /work
 ```
+
+### Raspberry PI 3 Mbed Linux Build
+
+#### Quick Start
+
+Build mbed linux for Raspberry PI 3 (RPi3):
+
+```
+./mbl-tools/build-mbl/run-me.sh
+```
+
+#### Under the Hood
+
+The run-me.sh script encapsulates two steps:
+1) Construct a docker environment capable of build mbed-linux.
+2) Build mbed-linux in a docker environment.
