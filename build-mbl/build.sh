@@ -45,15 +45,23 @@ usage()
 {
   cat <<EOF
 
-usage: build.sh [OPTION]
+usage: build.sh [OPTION] [STAGE]..
 
   --builddir DIR	Use DIR for build, default CWD.
   -h, --help		Print brief usage information and exit.
   -x			Enable shell debugging in this script.
 
+  STAGE			Start execution at STAGE, default previous
+			exit stage or start.
+
+Useful STAGE names:
+  clean			Blow away the working tree and start over.
+  start			Start at the beginning.
+
 EOF
 }
-args=$(getopt -o+hx -l builddir:,clean,no-clean,help -n $(basename "$0") -- "$@")
+
+args=$(getopt -o+hx -l builddir:,help -n $(basename "$0") -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -72,14 +80,6 @@ while [ $# -gt 0 ]; do
     opt_prev=builddir
     ;;
 
-  --clean)
-    flag_clean=1
-    ;;
-
-  --no-clean)
-    flag_clean=0
-    ;;
-
   -h | --help)
     usage
     exit 0
@@ -96,6 +96,10 @@ while [ $# -gt 0 ]; do
   esac
   shift 1
 done
+
+if [ $# -gt 0 ]; then
+  stages=("$@")
+fi
 
 if [ -z "${builddir:-}" ]; then
   builddir=$(pwd)
@@ -126,6 +130,18 @@ while true; do
 
   update_stage "$stage"
   case "$stage" in
+  clean)
+    # Take care to ensure that removal of the working tree
+    # is atomic
+    rm -rf "$builddir/mbl-manifest.t"
+    rm -rf "$builddir/,stage"
+    if [ -e "$builddir/mbl-manifest" ]; then
+      mv "$builddir/mbl-manifest" "$builddir/mbl-manifest.t"
+    fi
+    rm -rf "$builddir/mbl-manifest.t"
+    push_stages start
+    ;;
+
   start)
     push_stages checkout build
     ;;
