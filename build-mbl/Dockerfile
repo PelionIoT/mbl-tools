@@ -4,7 +4,25 @@
 
 FROM ubuntu:xenial-20170517.1
 
-RUN useradd -ms /bin/bash squirrel
+## UID/GID Management
+
+# We need to manage uid/gid inside a container because the workspace
+# VOLUME and the ssh agent authentication socket are shared between
+# inside and outside.  We explicit capture the users uid and gid at
+# 'docker run' and arrange for an entrypoint to create the necessary
+# user on the fly.
+
+
+RUN apt-get update && apt-get install gosu
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Use the 'exec' form of ENTRYPOINT to ensure that docker run
+# invocation arguments are appended to the command line.
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+COPY setup-ssh.sh /usr/local/bin/setup-ssh.sh
+
+## Build environment tooling
 
 RUN apt-get update && apt-get install locales \
     && dpkg-reconfigure locales \
@@ -54,24 +72,5 @@ RUN mkdir -p /dev/net \
     && mknod /dev/net/tun c 10 200 \
     && chmod 600 /dev/net/tun
 
-USER squirrel
-WORKDIR /home/squirrel
-
-RUN git config --global user.email "secret.squirrel@we.will.call.you.com" \
-    && git config --global user.name "Secret Squirrel" \
-    && git config --global color.ui false
-
-RUN host="github.com" \
-    && mkdir -p ~/.ssh \
-    && chmod 700 ~/.ssh \
-    && touch ~/.ssh/known_hosts \
-    && chmod 600 ~/.ssh/known_hosts \
-    && if ! ssh-keygen -F "$host" > /dev/null; then \
-         ssh-keyscan -H "$host" >> ~/.ssh/known_hosts; \
-       fi \
-    && cat ~/.ssh/known_hosts
-      
 COPY build.sh .
 
-#ENTRYPOINT ./build.sh
-#CMD ["--help"]
