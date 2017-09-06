@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright (c) 2017 ARM Ltd.
+#
+# SPDX-License-Identifier: Apache-2.0
+
 set -e
 set -u
 set -o pipefail

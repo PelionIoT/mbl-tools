@@ -1,3 +1,7 @@
+# Copyright (c) 2017 ARM Ltd.
+#
+# SPDX-License-Identifier: Apache-2.0
+
 FROM ubuntu:xenial-20170517.1
 
 RUN useradd -ms /bin/bash squirrel
