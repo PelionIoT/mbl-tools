@@ -45,7 +45,7 @@ usage()
 {
   cat <<EOF
 
-usage: build-oe.sh [OPTION]
+usage: build.sh [OPTION]
 
   --builddir DIR	Use DIR for build, default CWD.
   -h, --help		Print brief usage information and exit.
