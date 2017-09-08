@@ -17,5 +17,6 @@ docker build -t "$containername" ./mbl-tools/build-oe/
 mkdir -p "$workdir"
 
 docker run --rm -t -i \
+       -e LOCAL_UID=$(id -u) -e LOCAL_GID=$(id -g) \
        -v "$workdir":/work "$containername" \
        ./build.sh --builddir /work "$@"
