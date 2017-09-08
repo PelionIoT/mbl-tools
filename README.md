@@ -36,16 +36,12 @@ build directory into the container as the volume path /optee.
 
 ### Raspberry PI 3 Open Embedded Build
 
-* Build the docker image encapsulating the OE build environment:
+#### Quick Start
+
+Build Raspberry PI 3 (RPi3) OE:
 
 ```
-docker build -t oe ./mbl-tools/build-oe
-```
-
-* Execute the build:
-
-```
-docker run -v $(pwd)/build-oe:/work oe ./build.sh --builddir /work
+./mbl-tools/build-oe/run-me.sh
 ```
 
 ### Raspberry PI 3 Mbed Linux Build
