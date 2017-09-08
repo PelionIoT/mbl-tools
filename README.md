@@ -45,7 +45,7 @@ docker build -t oe ./mbl-tools/build-oe
 * Execute the build:
 
 ```
-docker run -v $(pwd)/build-oe:/work oe ./build-oe.sh --builddir /work
+docker run -v $(pwd)/build-oe:/work oe ./build.sh --builddir /work
 ```
 
 ### Raspberry PI 3 Mbed Linux Build

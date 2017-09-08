@@ -50,7 +50,7 @@ RUN mkdir -p /dev/net \
 USER squirrel
 WORKDIR /home/squirrel
 
-COPY build-oe.sh .
+COPY build.sh .
 
 RUN git config --global user.email "secret.squirrel@we.will.call.you.com" \
     && git config --global user.name "Secret Squirrel" \
