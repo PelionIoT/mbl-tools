@@ -182,7 +182,7 @@ while true; do
     ;;
 
   *)
-    printf "error: unrecognized stage: $stage\n" 2>&1
+    printf "error: unrecognized stage: %s\n" "$stage" 2>&1
     rm -f "$builddir/,stage"
     exit 1
     ;;
