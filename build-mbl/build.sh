@@ -8,6 +8,8 @@ set -e
 set -u
 set -o pipefail
 
+execdir="$(readlink -e "$(dirname "$0")")"
+
 ## The stack of stages is abstracted out to these functions primarily to
 ## isolate the pain of bash arrays in conjunction with set -u.  We want
 ## set -u behaviour on in order to improve script robustness.  However
@@ -147,6 +149,8 @@ while true; do
     ;;
 
   checkout)
+    "$execdir/git_setup.sh"
+    "$execdir/ssh_setup.sh"
     url="git@github.com:ARMmbed/mbl-manifest.git"
     branch="mbl-ci"
     manifest="pinned-manifest.xml"
