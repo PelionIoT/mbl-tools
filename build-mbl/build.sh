@@ -61,7 +61,7 @@ Useful STAGE names:
 EOF
 }
 
-args=$(getopt -o+hx -l builddir:,help -n $(basename "$0") -- "$@")
+args=$(getopt -o+hx -l builddir:,help -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
