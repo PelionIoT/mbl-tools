@@ -20,8 +20,6 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 # invocation arguments are appended to the command line.
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-COPY setup-ssh.sh /usr/local/bin/setup-ssh.sh
-
 ## Build environment tooling
 
 RUN apt-get update && apt-get install locales \
@@ -72,5 +70,5 @@ RUN mkdir -p /dev/net \
     && mknod /dev/net/tun c 10 200 \
     && chmod 600 /dev/net/tun
 
-COPY build.sh .
-
+# Scripts used to build mbed-linux image
+COPY git_setup.sh ssh_setup.sh build.sh ./
