@@ -48,6 +48,4 @@ fi
    
 export HOME=/home/"$username"
 
-gosu "$username" /usr/local/bin/setup-ssh.sh
-
 exec gosu "$username" "$@"

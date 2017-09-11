@@ -7,12 +7,11 @@
 set -e
 set -u
 
+# It sets known_hosts with the right key of github.com. In this way git doesn't
+# complain about the host not being recognised when cloning repositories from
+# github via ssh
+
 host="github.com"
-
-git config --global user.email "nobody@nowhere.arm.com"
-git config --global user.name "nobody"
-git config --global color.ui false
-
 
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
