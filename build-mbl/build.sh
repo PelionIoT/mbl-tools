@@ -177,7 +177,7 @@ while true; do
 
     rm -rf "$builddir/mbl-manifest-t"
     mkdir -p "$builddir/mbl-manifest-t"
-    (cd "$builddir/mbl-manifest-t"  && repo init -u "$url" -b "$branch" -m "$manifest")
+    (cd "$builddir/mbl-manifest-t" && repo init -u "$url" -b "$branch" -m "$manifest")
     mv "$builddir/mbl-manifest-t" "$builddir/mbl-manifest"
     push_stages sync
     ;;
