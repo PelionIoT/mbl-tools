@@ -43,14 +43,21 @@ update_stage ()
   echo "($action) $*"
 }
 
+default_branch="mbl-ci"
+default_manifest="pinned-manifest.xml"
+default_url="git@github.com:ARMmbed/mbl-manifest.git"
+
 usage()
 {
   cat <<EOF
 
 usage: build.sh [OPTION] [STAGE]..
 
+  --branch BRANCH	Name the branch to checkout. Default ${default_branch}.
   --builddir DIR	Use DIR for build, default CWD.
   -h, --help		Print brief usage information and exit.
+  --manifest=MANIFEST   Name the manifest file. Default ${default_manifest}.
+  --url=URL		Name the URL to clone. Default ${default_url}.
   -x			Enable shell debugging in this script.
 
   STAGE			Start execution at STAGE, default previous
@@ -63,7 +70,11 @@ Useful STAGE names:
 EOF
 }
 
-args=$(getopt -o+hx -l builddir:,help -n "$(basename "$0")" -- "$@")
+branch="$default_branch"
+manifest="$default_manifest"
+url="$default_url"
+
+args=$(getopt -o+hx -l branch:,builddir:,help,manifest:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -78,6 +89,10 @@ while [ $# -gt 0 ]; do
     continue
   fi
   case $1 in
+  --branch)
+    opt_prev=branch
+    ;;
+
   --builddir)
     opt_prev=builddir
     ;;
@@ -85,6 +100,14 @@ while [ $# -gt 0 ]; do
   -h | --help)
     usage
     exit 0
+    ;;
+
+  --manifest)
+    opt_prev=manifest
+    ;;
+
+  --url)
+    opt_prev=url
     ;;
 
   -x)
@@ -151,9 +174,6 @@ while true; do
   checkout)
     "$execdir/git-setup.sh"
     "$execdir/ssh-setup.sh"
-    url="git@github.com:ARMmbed/mbl-manifest.git"
-    branch="mbl-ci"
-    manifest="pinned-manifest.xml"
 
     rm -rf "$builddir/mbl-manifest-t"
     mkdir -p "$builddir/mbl-manifest-t"
