@@ -45,7 +45,7 @@ usage()
 {
   cat <<EOF
 
-usage: build-oe.sh [OPTION]
+usage: build.sh [OPTION]
 
   --builddir DIR	Use DIR for build, default CWD.
   -h, --help		Print brief usage information and exit.
@@ -53,7 +53,7 @@ usage: build-oe.sh [OPTION]
 
 EOF
 }
-args=$(getopt -o+hx -l builddir:,clean,no-clean,help,target: -n $(basename "$0") -- "$@")
+args=$(getopt -o+hx -l builddir:,clean,no-clean,help -n $(basename "$0") -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -83,10 +83,6 @@ while [ $# -gt 0 ]; do
   -h | --help)
     usage
     exit 0
-    ;;
-
-  --target)
-    opt_prev=target
     ;;
 
   -x)

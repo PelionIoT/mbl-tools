@@ -4,7 +4,25 @@
 
 FROM ubuntu:xenial-20170517.1
 
-RUN useradd -ms /bin/bash squirrel
+## UID/GID Management
+
+# We need to manage uid/gid inside a container because the workspace
+# VOLUME and the ssh agent authentication socket are shared between
+# inside and outside.  We explicit capture the users uid and gid at
+# 'docker run' and arrange for an entrypoint to create the necessary
+# user on the fly.
+
+
+RUN apt-get update && apt-get install gosu
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Use the 'exec' form of ENTRYPOINT to ensure that docker run
+# invocation arguments are appended to the command line.
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+COPY setup-ssh.sh /usr/local/bin/setup-ssh.sh
+
+## Build environment tooling
 
 # op-tee build.git prerequisites
 RUN apt-get update && apt-get install -y \
@@ -47,14 +65,4 @@ RUN mkdir -p /dev/net \
     && mknod /dev/net/tun c 10 200 \
     && chmod 600 /dev/net/tun
 
-USER squirrel
-WORKDIR /home/squirrel
-
-COPY build-oe.sh .
-
-RUN git config --global user.email "secret.squirrel@we.will.call.you.com" \
-    && git config --global user.name "Secret Squirrel" \
-    && git config --global color.ui false
-
-#ENTRYPOINT ./build-optee.sh
-#CMD ["--help"]
+COPY build.sh .
