@@ -165,8 +165,24 @@ while true; do
   sync)
     (cd "$builddir/mbl-manifest"
      repo sync)
+    push_stages pin
     ;;
 
+  pin)
+    (cd "$builddir/mbl-manifest"
+     repo manifest -r -o generated-pinned-manifest.xml
+    )
+    push_stages switch-to-pinned
+    ;;
+  
+  switch-to-pinned)
+    (cd "$builddir/mbl-manifest"
+     cp generated-pinned-manifest.xml "$builddir/mbl-manifest/.repo/manifests/"
+     repo init -m generated-pinned-manifest.xml
+     repo sync
+    )
+    ;;
+  
   build)
     (cd "$builddir/mbl-manifest"
      set +u
