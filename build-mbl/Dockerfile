@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y \
     cpio \
     curl \
     debianutils \
+    dialog \
     diffstat \
     gawk \
     gcc-multilib \
@@ -51,9 +52,6 @@ RUN apt-get update && apt-get install -y \
     wget \
     xterm \
     xz-utils
-
-RUN apt-get update && apt-get install -y \
-    dialog
 
 RUN rm -rf /var/lib/apt/lists/*
 
