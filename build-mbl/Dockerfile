@@ -70,5 +70,9 @@ RUN mkdir -p /dev/net \
     && mknod /dev/net/tun c 10 200 \
     && chmod 600 /dev/net/tun
 
+# Create a user used by circleci to run our build. This will be specified in
+# .circleci/config.yml file
+RUN useradd -ms /bin/bash circleci
+
 # Scripts used to build mbed-linux image
 COPY git_setup.sh ssh_setup.sh build.sh ./
