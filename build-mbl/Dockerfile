@@ -63,7 +63,7 @@ RUN mkdir -p /usr/local/bin \
 
 # The build process needs working space to perform the build and
 # delivery the build products.
-VOLUME /work
+RUN mkdir -m 777 /work
 
 # Make TUN available for qemu
 RUN mkdir -p /dev/net \
