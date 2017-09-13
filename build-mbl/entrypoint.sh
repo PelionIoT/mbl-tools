@@ -45,7 +45,7 @@ else
     exit $?
   fi
 fi
-   
+
 export HOME=/home/"$username"
 
 exec gosu "$username" "$@"
