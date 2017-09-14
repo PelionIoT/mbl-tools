@@ -176,6 +176,11 @@ while true; do
     "$execdir/ssh-setup.sh"
 
     rm -rf "$builddir/mbl-manifest-t"
+    if [ -e "$builddir/mbl-manifest" ]; then
+      mv "$builddir/mbl-manifest" "$builddir/mbl-manifest-t"
+      rm -rf "$builddir/mbl-manifest-t"
+    fi
+    
     mkdir -p "$builddir/mbl-manifest-t"
     (cd "$builddir/mbl-manifest-t" && repo init -u "$url" -b "$branch" -m "$manifest")
     mv "$builddir/mbl-manifest-t" "$builddir/mbl-manifest"
