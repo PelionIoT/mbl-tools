@@ -4,15 +4,6 @@
 
 FROM ubuntu:xenial-20170517.1
 
-## UID/GID Management
-
-# We need to manage uid/gid inside a container because the workspace
-# VOLUME and the ssh agent authentication socket are shared between
-# inside and outside.  We explicit capture the users uid and gid at
-# 'docker run' and arrange for an entrypoint to create the necessary
-# user on the fly.
-
-
 RUN apt-get update && apt-get install gosu
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
