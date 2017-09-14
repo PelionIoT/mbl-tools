@@ -4,16 +4,10 @@
 
 FROM ubuntu:xenial-20170517.1
 
-## UID/GID Management
-
-# We need to manage uid/gid inside a container because the workspace
-# VOLUME and the ssh agent authentication socket are shared between
-# inside and outside.  We explicit capture the users uid and gid at
-# 'docker run' and arrange for an entrypoint to create the necessary
-# user on the fly.
-
-
+# gosu will be used in the entrypoint
 RUN apt-get update && apt-get install gosu
+
+# This script will be used as entry point when the container is executed
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
@@ -55,6 +49,8 @@ RUN apt-get update && apt-get install -y \
 
 RUN rm -rf /var/lib/apt/lists/*
 
+# Repo is a repository management tool that Android built on top of Git. Repo
+# is used by the build script.
 RUN mkdir -p /usr/local/bin \
     && curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo \
     && chmod a+x "/usr/local/bin/repo"

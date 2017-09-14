@@ -7,6 +7,14 @@
 set -e
 set -u
 
+## UID/GID Management
+
+# We need to manage uid/gid inside a container because the workspace
+# VOLUME and the ssh agent authentication socket are shared between
+# inside and outside.  We explicit capture the users uid and gid at
+# 'docker run' and arrange for an entrypoint to create the necessary
+# user on the fly.
+
 # We need a username, but it doesn't matter what the name is, we only
 # care that uid/gid are anchored correctly.
 
