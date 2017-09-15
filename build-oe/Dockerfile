@@ -11,7 +11,15 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 # invocation arguments are appended to the command line.
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# op-tee build.git prerequisites
+## Build environment tooling
+
+RUN apt-get update && apt-get install locales \
+    && dpkg-reconfigure locales \
+    && locale-gen en_US.UTF-8 \
+    && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+
+ENV LANG=en_US.UTF-8
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     chrpath \
@@ -34,12 +42,7 @@ RUN apt-get update && apt-get install -y \
     xterm \
     xz-utils
 
-RUN apt-get update && apt-get install locales \
-    && dpkg-reconfigure locales \
-    && locale-gen en_US.UTF-8 \
-    && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
 
-ENV LANG=en_US.UTF-8
 
 RUN rm -rf /var/lib/apt/lists/*
 
@@ -51,6 +54,5 @@ VOLUME /work
 RUN mkdir -p /dev/net \
     && mknod /dev/net/tun c 10 200 \
     && chmod 600 /dev/net/tun
-
 
 COPY git-setup.sh ssh-setup.sh build.sh ./
