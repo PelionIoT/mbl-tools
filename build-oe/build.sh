@@ -168,13 +168,13 @@ while true; do
 
   build)
     (cd "$builddir/poky"
-    set +e
-    set +u
-    source oe-init-build-env
-    set -e
-    set -u
+     set +e
+     set +u
+     source oe-init-build-env
+     set -e
+     set -u
 
-    bitbake core-image-base)
+     bitbake core-image-base)
     ;;
 
   stop)
