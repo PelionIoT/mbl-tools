@@ -18,5 +18,7 @@ mkdir -p "$workdir"
 
 docker run --rm -t -i \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
+       -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
+       -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
        -v "$workdir":/work "$containername" \
        ./build.sh --builddir /work "$@"
