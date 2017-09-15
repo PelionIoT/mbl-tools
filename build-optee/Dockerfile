@@ -75,11 +75,7 @@ VOLUME /optee
 USER squirrel
 WORKDIR /home/squirrel
 
-COPY build-optee.sh .
-
-RUN git config --global user.email "secret.squirrel@we.will.call.you.com" \
-    && git config --global user.name "Secret Squirrel" \
-    && git config --global color.ui false
+COPY git-setup.sh ssh-setup.sh build.sh ./
 
 #ENTRYPOINT ./build.sh
 #CMD ["--help"]
