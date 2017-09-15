@@ -8,6 +8,8 @@ set -e
 set -u
 set -o pipefail
 
+execdir="$(readlink -e "$(dirname "$0")")"
+
 usage()
 {
   cat <<EOF
@@ -94,6 +96,9 @@ fi
 
 mkdir -p "$builddir"
 cd "$builddir"
+
+"$execdir/git-setup.sh"
+"$execdir/ssh-setup.sh"
 
 if [ ! -e .ss-sync ]; then
   repo init -u https://github.com/OP-TEE/manifest.git -m ${target}.xml # [-b ${BRANCH}]
