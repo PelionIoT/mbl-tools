@@ -53,19 +53,19 @@ usage()
 
 usage: build.sh [OPTION] [STAGE]..
 
-  --branch BRANCH	Name the branch to checkout. Default ${default_branch}.
-  --builddir DIR	Use DIR for build, default CWD.
-  -h, --help		Print brief usage information and exit.
+  --branch BRANCH       Name the branch to checkout. Default ${default_branch}.
+  --builddir DIR        Use DIR for build, default CWD.
+  -h, --help            Print brief usage information and exit.
   --manifest=MANIFEST   Name the manifest file. Default ${default_manifest}.
-  --url=URL		Name the URL to clone. Default ${default_url}.
-  -x			Enable shell debugging in this script.
+  --url=URL             Name the URL to clone. Default ${default_url}.
+  -x                    Enable shell debugging in this script.
 
-  STAGE			Start execution at STAGE, default previous
-			exit stage or start.
+  STAGE                 Start execution at STAGE, default previous
+                        exit stage or start.
 
 Useful STAGE names:
-  clean			Blow away the working tree and start over.
-  start			Start at the beginning.
+  clean                 Blow away the working tree and start over.
+  start                 Start at the beginning.
 
 EOF
 }
