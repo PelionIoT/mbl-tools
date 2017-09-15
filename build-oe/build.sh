@@ -47,9 +47,9 @@ usage()
 
 usage: build.sh [OPTION]
 
-  --builddir DIR	Use DIR for build, default CWD.
-  -h, --help		Print brief usage information and exit.
-  -x			Enable shell debugging in this script.
+  --builddir DIR        Use DIR for build, default CWD.
+  -h, --help            Print brief usage information and exit.
+  -x                    Enable shell debugging in this script.
 
 EOF
 }
