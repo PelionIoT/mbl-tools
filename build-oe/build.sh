@@ -103,6 +103,10 @@ while [ $# -gt 0 ]; do
   shift 1
 done
 
+if [ $# -gt 0 ]; then
+  stages=("$@")
+fi
+
 if [ -z "${builddir:-}" ]; then
   builddir=$(pwd)
 fi
