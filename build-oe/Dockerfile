@@ -42,8 +42,6 @@ RUN apt-get update && apt-get install -y \
     xterm \
     xz-utils
 
-
-
 RUN rm -rf /var/lib/apt/lists/*
 
 # The build process needs working space to perform the build and
