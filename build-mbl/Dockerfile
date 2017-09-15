@@ -64,4 +64,4 @@ RUN mkdir -p /dev/net \
 RUN useradd -ms /bin/bash circleci
 
 # Scripts used to build mbed-linux image
-COPY git_setup.sh ssh_setup.sh build.sh ./
+COPY git-setup.sh ssh-setup.sh build.sh ./

@@ -149,8 +149,8 @@ while true; do
     ;;
 
   checkout)
-    "$execdir/git_setup.sh"
-    "$execdir/ssh_setup.sh"
+    "$execdir/git-setup.sh"
+    "$execdir/ssh-setup.sh"
     url="git@github.com:ARMmbed/mbl-manifest.git"
     branch="mbl-ci"
     manifest="pinned-manifest.xml"
