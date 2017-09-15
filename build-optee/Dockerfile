@@ -70,7 +70,7 @@ RUN mkdir -p /usr/local/bin \
 
 # The build process needs working space to perform the build and
 # delivery the build products.
-VOLUME /optee
+VOLUME /work
 
 USER squirrel
 WORKDIR /home/squirrel
