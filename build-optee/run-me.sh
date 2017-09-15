@@ -17,5 +17,5 @@ docker build -t "$containername" ./mbl-tools/build-optee/
 mkdir -p "$workdir"
 
 docker run --rm -t -i \
-       -v "$workdir":/optee "$containername" \
-       ./build.sh --builddir /optee "$@"
+       -v "$workdir":/work "$containername" \
+       ./build.sh --builddir /work "$@"
