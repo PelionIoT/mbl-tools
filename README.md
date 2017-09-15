@@ -4,23 +4,12 @@ This repository provides a collection of tools and recipes related to the build 
 
 ### Building OP-TEE ###
 
-* Build the docker image encapsulating the OP-TEE build environment:
+#### Quick Start
+
+Build OP-TEE for Raspberry PI 3 (RPi3):
 
 ```
-docker build -t optee ./mbl-tools/build-optee/
-```
-
-* Create a work space to contain the build:
-
-```
-mkdir build-optee
-```
-
-* Execute the build:
-
-```
-docker run -v $(pwd)/build-optee:/optee optee ./build.sh --builddir /optee --target rpi3
-```
+./mbl-tools/build-optee/run-me.sh --target rpi3
 
 ### OP-TEE Build Image
 
