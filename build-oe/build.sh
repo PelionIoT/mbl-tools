@@ -47,11 +47,17 @@ usage()
 {
   cat <<EOF
 
-usage: build.sh [OPTION]
+usage: build.sh [OPTION] [STAGE]..
 
   --builddir DIR        Use DIR for build, default CWD.
   -h, --help            Print brief usage information and exit.
   -x                    Enable shell debugging in this script.
+
+  STAGE                 Start execution at STAGE, default previous
+                        exit stage or start.
+
+Useful STAGE names:
+  start                 Start at the beginning.
 
 EOF
 }
