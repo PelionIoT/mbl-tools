@@ -41,7 +41,7 @@ else
   fi
 fi
 
-if useradd --shell /bin/bash -u "$LOCAL_UID" -g "$LOCAL_GID" -o -c "" -m "$username"; then
+if useradd --shell /bin/bash -u "$LOCAL_UID" -g "$LOCAL_GID" -c "" -m "$username"; then
   _=
 else
   # We are about to test the exit code of useradd, hence there can
@@ -56,4 +56,4 @@ fi
 
 export HOME=/home/"$username"
 
-exec gosu "$username" "$@"
+exec gosu $LOCAL_UID:$LOCAL_GID "$@"
