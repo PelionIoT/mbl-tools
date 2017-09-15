@@ -79,7 +79,6 @@ done
 if [ -z "${builddir:-}" ]; then
   builddir=$(pwd)
 fi
-builddir=$(pwd)
 
 case $target in
     rpi3)

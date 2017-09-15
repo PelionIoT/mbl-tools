@@ -4,7 +4,13 @@
 
 FROM ubuntu:xenial-20170517.1
 
-RUN useradd -ms /bin/bash squirrel
+RUN apt-get update && apt-get install gosu
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Use the 'exec' form of ENTRYPOINT to ensure that docker run
+# invocation arguments are appended to the command line.
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
 RUN apt-get update && apt-get install -y \
     emacs
 
@@ -72,10 +78,4 @@ RUN mkdir -p /usr/local/bin \
 # delivery the build products.
 VOLUME /work
 
-USER squirrel
-WORKDIR /home/squirrel
-
 COPY git-setup.sh ssh-setup.sh build.sh ./
-
-#ENTRYPOINT ./build.sh
-#CMD ["--help"]
