@@ -19,7 +19,7 @@ mkdir build-optee
 * Execute the build:
 
 ```
-docker run -v $(pwd)/build-optee:/optee optee ./build-optee.sh --builddir /optee --target rpi3
+docker run -v $(pwd)/build-optee:/optee optee ./build.sh --builddir /optee --target rpi3
 ```
 
 ### OP-TEE Build Image
@@ -30,8 +30,8 @@ a minimal OP-TEE system using https://github.com/OP-TEE/manifest.git
 The image contains a base ubuntu image with minimal set of tools
 required and a script to drive the build process.  The image is
 typically used to spin up a container and execute the build script
-build-optee.sh.  The directory used for the build can be passed to the
-build-optee.sh script by argument.  Typical usage would be to map a
+build.sh.  The directory used for the build can be passed to the
+build.sh script by argument.  Typical usage would be to map a
 build directory into the container as the volume path /optee.
 
 ### Raspberry PI 3 Open Embedded Build

@@ -81,5 +81,5 @@ RUN git config --global user.email "secret.squirrel@we.will.call.you.com" \
     && git config --global user.name "Secret Squirrel" \
     && git config --global color.ui false
 
-#ENTRYPOINT ./build-optee.sh
+#ENTRYPOINT ./build.sh
 #CMD ["--help"]

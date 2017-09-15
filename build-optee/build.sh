@@ -12,7 +12,7 @@ usage()
 {
   cat <<EOF
 
-usage: build-optee.sh [OPTION] [WORKDIR]
+usage: build.sh [OPTION] [WORKDIR]
 
   --builddir DIR        Use DIR for build, default CWD.
   --[no-]clean          Clean any existing build.
