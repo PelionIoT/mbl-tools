@@ -18,5 +18,5 @@ chmod 700 ~/.ssh
 touch ~/.ssh/known_hosts
 chmod 600 ~/.ssh/known_hosts
 if ! ssh-keygen -F "$host" > /dev/null; then
-     ssh-keyscan -H "$host" >> ~/.ssh/known_hosts;
+     ssh-keyscan -H "$host" >> ~/.ssh/known_hosts
 fi
