@@ -4,7 +4,12 @@
 
 FROM ubuntu:xenial-20170517.1
 
-RUN useradd -ms /bin/bash squirrel
+RUN apt-get update && apt-get install gosu
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Use the 'exec' form of ENTRYPOINT to ensure that docker run
+# invocation arguments are appended to the command line.
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # op-tee build.git prerequisites
 RUN apt-get update && apt-get install -y \
@@ -47,10 +52,5 @@ RUN mkdir -p /dev/net \
     && mknod /dev/net/tun c 10 200 \
     && chmod 600 /dev/net/tun
 
-USER squirrel
-WORKDIR /home/squirrel
 
 COPY git-setup.sh ssh-setup.sh build.sh ./
-
-#ENTRYPOINT ./build-optee.sh
-#CMD ["--help"]
