@@ -14,12 +14,12 @@ usage()
 
 usage: build-optee.sh [OPTION] [WORKDIR]
 
-  --builddir DIR	Use DIR for build, default CWD.
-  --[no-]clean		Clean any existing build.
-  -h, --help		Print brief usage information and exit.
-  --target TARGET	Build for TARGET.
-			  rpi3
-  -x			Enable shell debugging in this script.
+  --builddir DIR        Use DIR for build, default CWD.
+  --[no-]clean          Clean any existing build.
+  -h, --help            Print brief usage information and exit.
+  --target TARGET       Build for TARGET.
+                          rpi3
+  -x                    Enable shell debugging in this script.
 
 EOF
 }
