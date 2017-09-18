@@ -56,6 +56,8 @@ usage: build.sh [OPTION] [STAGE]..
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
   --branch BRANCH       Name the branch to checkout. Default ${default_branch}.
   --builddir DIR        Use DIR for build, default CWD.
+  --external-manifest=PATH
+                        Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
   --manifest=MANIFEST   Name the manifest file. Default ${default_manifest}.
   --url=URL             Name the URL to clone. Default ${default_url}.
@@ -75,7 +77,7 @@ branch="$default_branch"
 manifest="$default_manifest"
 url="$default_url"
 
-args=$(getopt -o+hj:x -l branch:,builddir:,help,jobs:,manifest:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:x -l branch:,builddir:,external-manifest:,help,jobs:,manifest:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -96,6 +98,10 @@ while [ $# -gt 0 ]; do
 
   --builddir)
     opt_prev=builddir
+    ;;
+
+  --external-manifest)
+    opt_prev=external_manifest
     ;;
 
   -h | --help)
@@ -174,7 +180,7 @@ while true; do
     ;;
 
   start)
-    push_stages checkout build
+    push_stages checkout
     ;;
 
   checkout)
@@ -191,6 +197,13 @@ while true; do
     ;;
 
   sync)
+    if [ -n "${external_manifest:-}" ]; then
+        name="$(basename "$external_manifest")"
+        manifest="custom-$name"
+        cp "$external_manifest" "$builddir/mbl-manifest/.repo/manifests/$manifest"
+        (cd "$builddir/mbl-manifest"; repo init -m "$manifest")
+    fi
+    
     (cd "$builddir/mbl-manifest"
      repo sync)
     push_stages pin
@@ -209,6 +222,7 @@ while true; do
      repo init -m generated-pinned-manifest.xml
      repo sync
     )
+    push_stages build
     ;;
   
   build)
