@@ -30,6 +30,8 @@ usage()
 
 usage: run-me.sh [OPTION] -- [build.sh arguments]
 
+  --external-manifest=PATH
+                        Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
   --image-name NAME     Specify the docker image name to build. Default ${default_imagename}.
   --tty                 Enable tty creation (default).
@@ -44,7 +46,7 @@ workdir="$default_workdir"
 imagename="$default_imagename"
 flag_tty="-t"
 
-args=$(getopt -o+hx -l help,image-name:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hx -l external-manifest:,help,image-name:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -59,6 +61,10 @@ while [ $# -gt 0 ]; do
     continue
   fi
   case $1 in
+  --external-manifest)
+    opt_prev=external_manifest
+    ;;
+
   -h | --help)
     usage
     exit 0
@@ -96,6 +102,12 @@ workdir=$(readlink -f "$workdir")
 mkdir -p "$workdir"
 
 docker build -t "$imagename" "$execdir"
+
+if [ -n "${external_manifest:-}" ]; then
+  name="$(basename "$external_manifest")"
+  cp "$external_manifest" "$workdir/$name"
+  set -- "--external-manifest=/work/$name" "$@"
+fi
 
 docker run --rm -i $flag_tty \
        --name "$default_containername" \
