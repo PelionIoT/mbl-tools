@@ -16,6 +16,8 @@ usage()
 usage: run-me.sh [OPTION] -- [build.sh arguments]
 
   -h, --help            Print brief usage information and exit.
+  --tty                 Enable tty creation (default).
+  --no-tty              Disable tty creation.
   --workdir PATH        Specify the directory where to store artifacts. Default ${default_workdir}.
   -x                    Enable shell debugging in this script.
 
@@ -23,8 +25,9 @@ EOF
 }
 
 workdir="$default_workdir"
+flag_tty="-t"
 
-args=$(getopt -o+hx -l help,workdir: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hx -l help,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -42,6 +45,14 @@ while [ $# -gt 0 ]; do
   -h | --help)
     usage
     exit 0
+    ;;
+
+  --tty)
+    flag_tty="-t"
+    ;;
+
+  --no-tty)
+    flag_tty=
     ;;
 
   --workdir)
@@ -69,7 +80,7 @@ dockerfiledir="$(readlink -e "$(dirname "$0")")"
 docker build -t "$containername" "$dockerfiledir"
 
 
-docker run --rm -t -i \
+docker run --rm -i $flag_tty \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
        -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
