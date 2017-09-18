@@ -142,6 +142,9 @@ if empty_stages_p; then
   fi
 fi
 
+"$execdir/git-setup.sh"
+"$execdir/ssh-setup.sh"
+
 while true; do
   if empty_stages_p; then
     push_stages stop
@@ -172,9 +175,6 @@ while true; do
     ;;
 
   checkout)
-    "$execdir/git-setup.sh"
-    "$execdir/ssh-setup.sh"
-
     rm -rf "$builddir/mbl-manifest-t"
     if [ -e "$builddir/mbl-manifest" ]; then
       mv "$builddir/mbl-manifest" "$builddir/mbl-manifest-t"
