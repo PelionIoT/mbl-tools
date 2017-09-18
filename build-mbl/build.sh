@@ -130,8 +130,6 @@ if [ -z "${builddir:-}" ]; then
   builddir=$(pwd)
 fi
 
-cd "$builddir"
-
 if empty_stages_p; then
   if [ -r "$builddir/,stage" ]; then
     # Continue from last failing stage
