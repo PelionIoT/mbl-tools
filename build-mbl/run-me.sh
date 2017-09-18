@@ -7,6 +7,8 @@
 set -e
 set -u
 
+default_workdir="build-mbl-manifest"
+
 usage()
 {
   cat <<EOF
@@ -14,12 +16,15 @@ usage()
 usage: run-me.sh [OPTION] -- [build.sh arguments]
 
   -h, --help            Print brief usage information and exit.
+  --workdir PATH        Specify the directory where to store artifacts. Default ${default_workdir}.
   -x                    Enable shell debugging in this script.
 
 EOF
 }
 
-args=$(getopt -o+hx -l help -n "$(basename "$0")" -- "$@")
+workdir="$default_workdir"
+
+args=$(getopt -o+hx -l help,workdir: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -39,6 +44,10 @@ while [ $# -gt 0 ]; do
     exit 0
     ;;
 
+  --workdir)
+    opt_prev=workdir
+    ;;
+
   -x)
     set -x
     ;;
@@ -53,13 +62,12 @@ done
 
 containername="mbl-manifest-env"
 
-workdir="build-mbl-manifest"
 workdir=$(readlink -f "$workdir")
+mkdir -p "$workdir"
 
 dockerfiledir="$(readlink -e "$(dirname "$0")")"
 docker build -t "$containername" "$dockerfiledir"
 
-mkdir -p "$workdir"
 
 docker run --rm -t -i \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
