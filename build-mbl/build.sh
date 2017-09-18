@@ -121,7 +121,6 @@ EOF
 }
 
 branch="$default_branch"
-manifest="$default_manifest"
 url="$default_url"
 distro="$default_distro"
 image="$default_image"
@@ -197,6 +196,15 @@ while [ $# -gt 0 ]; do
   esac
   shift 1
 done
+
+if [ -n "${external_manifest:-}" -a -n "${manifest:-}" ]; then
+    printf "error: --external-manifest and --manifest are mutually exclusive.\n" >&2
+    exit 3
+fi
+
+if [ -z "${manifest:-}" ]; then
+  manifest="$default_manifest"
+fi
 
 if [ $# -gt 0 ]; then
   stages=("$@")
