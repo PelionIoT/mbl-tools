@@ -8,6 +8,7 @@ set -e
 set -u
 
 default_workdir="build-mbl-manifest"
+default_imagename="mbl-manifest-env"
 
 usage()
 {
@@ -16,6 +17,7 @@ usage()
 usage: run-me.sh [OPTION] -- [build.sh arguments]
 
   -h, --help            Print brief usage information and exit.
+  --image-name NAME     Specify the docker image name to build. Default ${default_imagename}.
   --tty                 Enable tty creation (default).
   --no-tty              Disable tty creation.
   --workdir PATH        Specify the directory where to store artifacts. Default ${default_workdir}.
@@ -25,9 +27,10 @@ EOF
 }
 
 workdir="$default_workdir"
+imagename="$default_imagename"
 flag_tty="-t"
 
-args=$(getopt -o+hx -l help,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hx -l help,image-name:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -45,6 +48,10 @@ while [ $# -gt 0 ]; do
   -h | --help)
     usage
     exit 0
+    ;;
+
+  --image-name)
+    opt_prev=imagename
     ;;
 
   --tty)
@@ -71,18 +78,15 @@ while [ $# -gt 0 ]; do
   shift 1
 done
 
-containername="mbl-manifest-env"
-
 workdir=$(readlink -f "$workdir")
 mkdir -p "$workdir"
 
 dockerfiledir="$(readlink -e "$(dirname "$0")")"
-docker build -t "$containername" "$dockerfiledir"
-
+docker build -t "$imagename" "$dockerfiledir"
 
 docker run --rm -i $flag_tty \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
        -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
-       -v "$workdir":/work "$containername" \
+       -v "$workdir":/work "$imagename" \
        ./build.sh --builddir /work "$@"
