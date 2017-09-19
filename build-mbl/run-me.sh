@@ -56,7 +56,8 @@ containername="mbl-manifest-env"
 workdir="build-mbl-manifest"
 workdir=$(readlink -f "$workdir")
 
-docker build -t "$containername" ./mbl-tools/build-mbl/
+dockerfiledir="$(readlink -e "$(dirname "$0")")"
+docker build -t "$containername" "$dockerfiledir"
 
 mkdir -p "$workdir"
 
