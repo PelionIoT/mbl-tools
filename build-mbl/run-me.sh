@@ -9,6 +9,18 @@ set -u
 
 default_workdir="build-mbl-manifest"
 default_imagename="mbl-manifest-env"
+default_containername="mbl-tools-container.$$"
+
+trap cleanup 0
+
+cleanup() {
+    # This command will return an id (eg. 43008e2a9f5a) of the running
+    # container
+    running_container="$(docker ps -q -f name="$default_containername")"
+    if [ ! -z "$running_container" ]; then
+        docker kill "$default_containername"
+    fi
+}
 
 usage()
 {
@@ -85,6 +97,7 @@ dockerfiledir="$(readlink -e "$(dirname "$0")")"
 docker build -t "$imagename" "$dockerfiledir"
 
 docker run --rm -i $flag_tty \
+       --name "$default_containername" \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
        -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
