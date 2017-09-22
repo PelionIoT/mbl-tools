@@ -53,6 +53,7 @@ usage()
 
 usage: build.sh [OPTION] [STAGE]..
 
+  -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
   --branch BRANCH       Name the branch to checkout. Default ${default_branch}.
   --builddir DIR        Use DIR for build, default CWD.
   -h, --help            Print brief usage information and exit.
@@ -74,7 +75,7 @@ branch="$default_branch"
 manifest="$default_manifest"
 url="$default_url"
 
-args=$(getopt -o+hx -l branch:,builddir:,help,manifest:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:x -l branch:,builddir:,help,jobs:,manifest:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -100,6 +101,10 @@ while [ $# -gt 0 ]; do
   -h | --help)
     usage
     exit 0
+    ;;
+
+  -j | --jobs)
+    opt_prev=flag_jobs
     ;;
 
   --manifest)
@@ -213,6 +218,15 @@ while true; do
      MACHINE=raspberrypi3 DISTRO=rpb . setup-environment  "build-rpb"
      set -u
      set -e
+
+     # This needs to be done after the setup otherwise bitbake does not have
+     # visibility of these variables
+     if [ ! -z "${flag_jobs:-}" ]; then
+       export PARALLEL_MAKE="-j $flag_jobs"
+       export BB_NUMBER_THREADS="$flag_jobs"
+       export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
+     fi
+
      image="rpb-console-image"
      image="core-image-base"
      bitbake "$image"
