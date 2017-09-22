@@ -7,6 +7,8 @@
 set -e
 set -u
 
+execdir="$(readlink -e "$(dirname "$0")")"
+
 default_workdir="build-mbl-manifest"
 default_imagename="mbl-manifest-env"
 default_containername="mbl-tools-container.$$"
@@ -93,8 +95,7 @@ done
 workdir=$(readlink -f "$workdir")
 mkdir -p "$workdir"
 
-dockerfiledir="$(readlink -e "$(dirname "$0")")"
-docker build -t "$imagename" "$dockerfiledir"
+docker build -t "$imagename" "$execdir"
 
 docker run --rm -i $flag_tty \
        --name "$default_containername" \
