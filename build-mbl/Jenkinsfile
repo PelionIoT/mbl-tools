@@ -1,0 +1,28 @@
+/* Copyright (c) 2017 ARM Ltd.
+
+   SPDX-License-Identifier: Apache-2.0 */
+
+properties([
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '7', daysToKeepStr: '', numToKeepStr: '7')),
+    [$class: 'GithubProjectProperty', displayName: 'build-mbl daily builds', projectUrlStr: 'http://github.com/armmbed/mbl-tools/'],
+    pipelineTriggers([cron('H 01 * * * ')])
+])
+
+node('16CPUS'){
+    stage('clean'){
+        cleanWs()
+    }
+    stage('checkout'){
+        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: 'fc6db1f7-2a3f-4655-b54a-476bac1194e5', url: 'git@github.com:armmbed/mbl-tools']]])
+    }
+    stage('build'){
+        sshagent(['fc6db1f7-2a3f-4655-b54a-476bac1194e5']) {
+            sh "${WORKSPACE}/build-mbl/run-me.sh --no-tty -x -- -j ${CPUS} -x --branch master"
+        }
+    }
+    stage('artifacts'){
+        archiveArtifacts artifacts: 'build-mbl-manifest/mbl-manifest/build-rpb/tmp-rpb-glibc/deploy/images/raspberrypi3/core-image-base-raspberrypi3-*.rpi-sdimg', fingerprint: true, onlyIfSuccessful: true
+        archiveArtifacts artifacts: 'build-mbl-manifest/mbl-manifest/build-rpb/tmp-rpb-glibc/deploy/licenses/', fingerprint: true, onlyIfSuccessful: true
+        archiveArtifacts artifacts: 'build-mbl-manifest/mbl-manifest/generated-pinned-manifest.xml', fingerprint: true, onlyIfSuccessful: true
+    }
+}
