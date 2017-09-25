@@ -128,6 +128,9 @@ fi
 
 if [ -z "${builddir:-}" ]; then
   builddir=$(pwd)
+else
+  mkdir -p "$builddir"
+  builddir=$(readlink -f "$builddir")
 fi
 
 cd "$builddir"
