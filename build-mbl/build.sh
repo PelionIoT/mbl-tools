@@ -139,6 +139,9 @@ fi
 
 if [ -z "${builddir:-}" ]; then
   builddir=$(pwd)
+else
+  mkdir -p "$builddir"
+  builddir=$(readlink -f "$builddir")
 fi
 
 if empty_stages_p; then
