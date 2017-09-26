@@ -43,7 +43,7 @@ update_stage ()
   echo "($action) $*"
 }
 
-default_branch="mbl-ci"
+default_branch="master"
 default_manifest="pinned-manifest.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
 
@@ -215,7 +215,7 @@ while true; do
     (cd "$builddir/mbl-manifest"
      set +u
      set +e
-     MACHINE=raspberrypi3 DISTRO=rpb . setup-environment  "build-rpb"
+     MACHINE=raspberrypi3 DISTRO=mbl . setup-environment "build-mbl"
      set -u
      set -e
 
@@ -229,6 +229,7 @@ while true; do
 
      image="rpb-console-image"
      image="core-image-base"
+     image="mbl-console-image"
      bitbake "$image"
     )
     ;;
