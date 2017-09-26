@@ -81,12 +81,12 @@ if [ -z "${builddir:-}" ]; then
 fi
 
 case $target in
-    rpi3)
-	;;
-    *)
-	printf "error: unrecognized --target $target\n" >&2
-	exit 3
-	;;
+rpi3)
+  ;;
+*)
+  printf "error: unrecognized --target %s\n" "$target" >&2
+  exit 3
+  ;;
 esac
 
 if [ ${flag_clean:-0} -eq 1 ]; then
