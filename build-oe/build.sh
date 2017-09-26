@@ -152,11 +152,11 @@ while true; do
 
     mkdir -p "$builddir"
     if [ ! -d poky ]; then
-	(cd "$builddir"
+        (cd "$builddir"
          pwd
-	 git clone git://git.yoctoproject.org/poky
-	 cd "$builddir/poky"
-	 git checkout pyro)
+         git clone git://git.yoctoproject.org/poky
+         cd "$builddir/poky"
+         git checkout pyro)
     fi
     ;;
 
