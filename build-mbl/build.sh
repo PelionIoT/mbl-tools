@@ -43,7 +43,7 @@ update_stage ()
   echo "($action) $*"
 }
 
-default_branch="mbl-ci"
+default_branch="master"
 default_manifest="pinned-manifest.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
 
