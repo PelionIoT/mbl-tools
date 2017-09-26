@@ -46,6 +46,9 @@ update_stage ()
 default_branch="master"
 default_manifest="pinned-manifest.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
+default_machine="raspberrypi3"
+default_distro="mbl"
+default_image="mbl-console-image"
 
 usage()
 {
@@ -76,6 +79,9 @@ EOF
 branch="$default_branch"
 manifest="$default_manifest"
 url="$default_url"
+machine="$default_machine"
+distro="$default_distro"
+image="$default_image"
 
 args=$(getopt -o+hj:x -l branch:,builddir:,external-manifest:,help,jobs:,manifest:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
@@ -232,7 +238,7 @@ while true; do
     (cd "$builddir/mbl-manifest"
      set +u
      set +e
-     MACHINE=raspberrypi3 DISTRO=mbl . setup-environment "build-mbl"
+     MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
      set -u
      set -e
 
@@ -244,9 +250,6 @@ while true; do
        export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
      fi
 
-     image="rpb-console-image"
-     image="core-image-base"
-     image="mbl-console-image"
      bitbake "$image"
     )
     ;;
