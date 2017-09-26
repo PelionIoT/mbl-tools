@@ -23,8 +23,8 @@ usage()
 
 usage: flash-sdcard-rpi3.sh [OPTION]...
 
-  -h, --help		Print brief usage information and exit.
-  --device DEVICE	SDCARD Device
+  -h, --help            Print brief usage information and exit.
+  --device DEVICE       SDCARD Device
 EOF
 }
 
