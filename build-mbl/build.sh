@@ -192,7 +192,7 @@ while true; do
       mv "$builddir/mbl-manifest" "$builddir/mbl-manifest-t"
       rm -rf "$builddir/mbl-manifest-t"
     fi
-    
+
     mkdir -p "$builddir/mbl-manifest-t"
     (cd "$builddir/mbl-manifest-t" && repo init -u "$url" -b "$branch" -m "$manifest")
     mv "$builddir/mbl-manifest-t" "$builddir/mbl-manifest"
@@ -218,7 +218,7 @@ while true; do
     )
     push_stages switch-to-pinned
     ;;
-  
+
   switch-to-pinned)
     (cd "$builddir/mbl-manifest"
      cp generated-pinned-manifest.xml "$builddir/mbl-manifest/.repo/manifests/"
@@ -227,7 +227,7 @@ while true; do
     )
     push_stages build
     ;;
-  
+
   build)
     (cd "$builddir/mbl-manifest"
      set +u
