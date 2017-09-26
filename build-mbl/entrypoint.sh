@@ -56,4 +56,4 @@ fi
 
 export HOME=/home/"$username"
 
-exec gosu $LOCAL_UID:$LOCAL_GID "$@"
+exec gosu "$LOCAL_UID:$LOCAL_GID" "$@"

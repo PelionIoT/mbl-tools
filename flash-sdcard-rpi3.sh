@@ -28,7 +28,7 @@ usage: flash-sdcard-rpi3.sh [OPTION]...
 EOF
 }
 
-args=$(getopt -o+hx -l device:,help -n $(basename "$0") -- "$@")
+args=$(getopt -o+hx -l device:,help -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
