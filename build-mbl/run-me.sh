@@ -115,4 +115,4 @@ docker run --rm -i $flag_tty \
        -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
        -v "$workdir":/work "$imagename" \
-       ./build.sh --builddir /work "$@"
+       ./build.sh --builddir /work --outputdir /work/artifacts "$@"
