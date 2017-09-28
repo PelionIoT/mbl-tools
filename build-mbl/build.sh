@@ -63,6 +63,7 @@ usage: build.sh [OPTION] [STAGE]..
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
   --manifest=MANIFEST   Name the manifest file. Default ${default_manifest}.
+  -o, --outputdir DIR   DIR where to store artifacts. Default \$builddir/artifacts.
   --url=URL             Name the URL to clone. Default ${default_url}.
   -x                    Enable shell debugging in this script.
 
@@ -83,7 +84,7 @@ machine="$default_machine"
 distro="$default_distro"
 image="$default_image"
 
-args=$(getopt -o+hj:x -l branch:,builddir:,external-manifest:,help,jobs:,manifest:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l branch:,builddir:,external-manifest:,help,jobs:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -123,6 +124,10 @@ while [ $# -gt 0 ]; do
     opt_prev=manifest
     ;;
 
+  -o | --outputdir)
+    opt_prev=outputdir
+    ;;
+
   --url)
     opt_prev=url
     ;;
@@ -149,6 +154,11 @@ else
   mkdir -p "$builddir"
   builddir=$(readlink -f "$builddir")
 fi
+
+if [ -z "${outputdir:-}" ]; then
+  outputdir="$builddir/artifacts"
+fi
+outputdir=$(readlink -f "$outputdir")
 
 if empty_stages_p; then
   if [ -r "$builddir/,stage" ]; then
@@ -251,7 +261,22 @@ while true; do
      fi
 
      bitbake "$image"
+     push_stages artifact
     )
+    ;;
+
+  artifact)
+    mkdir -p "$outputdir"
+    bbtmpdir="$builddir/mbl-manifest/build-mbl/tmp-$distro-glibc"
+
+    # We are interested in the image...
+    cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$outputdir"
+
+    # ... the license information...
+    cp -r "$bbtmpdir/deploy/licenses/" "$outputdir"
+
+    # ... and the manifest
+    cp "$builddir/mbl-manifest/generated-pinned-manifest.xml" "$outputdir"
     ;;
 
   stop)
