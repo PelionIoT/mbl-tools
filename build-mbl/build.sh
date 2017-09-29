@@ -59,6 +59,7 @@ usage: build.sh [OPTION] [STAGE]..
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
   --branch BRANCH       Name the branch to checkout. Default ${default_branch}.
   --builddir DIR        Use DIR for build, default CWD.
+  --downloaddir DIR    Use DIR to store downloaded packages. Default \$builddir/download
   --external-manifest=PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
@@ -84,7 +85,7 @@ machine="$default_machine"
 distro="$default_distro"
 image="$default_image"
 
-args=$(getopt -o+hj:o:x -l branch:,builddir:,external-manifest:,help,jobs:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l branch:,builddir:,downloaddir:,external-manifest:,help,jobs:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -105,6 +106,10 @@ while [ $# -gt 0 ]; do
 
   --builddir)
     opt_prev=builddir
+    ;;
+
+  --downloaddir)
+    opt_prev=downloaddir
     ;;
 
   --external-manifest)
@@ -258,6 +263,12 @@ while true; do
        export PARALLEL_MAKE="-j $flag_jobs"
        export BB_NUMBER_THREADS="$flag_jobs"
        export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
+     fi
+
+     if [ -n "${downloaddir:-}" ]; then
+       downloaddir=$(readlink -f "$downloaddir")
+       export DL_DIR="$downloaddir"
+       export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
      fi
 
      bitbake "$image"
