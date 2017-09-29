@@ -59,6 +59,7 @@ usage: build.sh [OPTION] [STAGE]..
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
   --branch BRANCH       Name the branch to checkout. Default ${default_branch}.
   --builddir DIR        Use DIR for build, default CWD.
+  --downloadsdir DIR    Use DIR to store downloaded packages. Default \$builddir/downloads
   --external-manifest=PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
@@ -84,7 +85,7 @@ machine="$default_machine"
 distro="$default_distro"
 image="$default_image"
 
-args=$(getopt -o+hj:o:x -l branch:,builddir:,external-manifest:,help,jobs:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l branch:,builddir:,downloadsdir:,external-manifest:,help,jobs:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -105,6 +106,10 @@ while [ $# -gt 0 ]; do
 
   --builddir)
     opt_prev=builddir
+    ;;
+
+  --downloadsdir)
+    opt_prev=downloadsdir
     ;;
 
   --external-manifest)
@@ -154,6 +159,11 @@ else
   mkdir -p "$builddir"
   builddir=$(readlink -f "$builddir")
 fi
+
+if [ -z "${downloadsdir:-}" ]; then
+  downloadsdir="$builddir/downloads"
+fi
+downloadsdir=$(readlink -f "$downloadsdir")
 
 if [ -z "${outputdir:-}" ]; then
   outputdir="$builddir/artifacts"
@@ -259,6 +269,9 @@ while true; do
        export BB_NUMBER_THREADS="$flag_jobs"
        export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
      fi
+
+     export DL_DIR="$downloadsdir"
+     export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
 
      bitbake "$image"
      push_stages artifact
