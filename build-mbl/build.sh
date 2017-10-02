@@ -283,8 +283,8 @@ while true; do
      fi
 
      bitbake "$image"
-     push_stages artifact
     )
+    push_stages artifact
     ;;
 
   artifact)
