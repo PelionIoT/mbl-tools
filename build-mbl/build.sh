@@ -264,7 +264,7 @@ while true; do
 
      # This needs to be done after the setup otherwise bitbake does not have
      # visibility of these variables
-     if [ ! -z "${flag_jobs:-}" ]; then
+     if [ -n "${flag_jobs:-}" ]; then
        export PARALLEL_MAKE="-j $flag_jobs"
        export BB_NUMBER_THREADS="$flag_jobs"
        export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
