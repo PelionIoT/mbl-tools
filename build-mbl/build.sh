@@ -44,7 +44,7 @@ update_stage ()
 }
 
 default_branch="master"
-default_manifest="pinned-manifest.xml"
+default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
 default_machine="raspberrypi3"
 default_distro="mbl"
