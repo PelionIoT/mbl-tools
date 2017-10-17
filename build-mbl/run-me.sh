@@ -30,6 +30,7 @@ usage()
 
 usage: run-me.sh [OPTION] -- [build.sh arguments]
 
+  --downloaddir PATH    Use PATH to store downloaded packages.
   --external-manifest=PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
@@ -46,7 +47,7 @@ workdir="$default_workdir"
 imagename="$default_imagename"
 flag_tty="-t"
 
-args=$(getopt -o+hx -l external-manifest:,help,image-name:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hx -l downloaddir:,external-manifest:,help,image-name:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -61,6 +62,10 @@ while [ $# -gt 0 ]; do
     continue
   fi
   case $1 in
+  --downloaddir)
+    opt_prev=downloaddir
+    ;;
+
   --external-manifest)
     opt_prev=external_manifest
     ;;
@@ -98,6 +103,14 @@ while [ $# -gt 0 ]; do
   shift 1
 done
 
+if [ -n "${downloaddir:-}" ]; then
+  downloaddir=$(readlink -f "$downloaddir")
+  if [ ! -e "$downloaddir" ]; then
+    printf "error: missing downloaddir %s\n" "$downloaddir" >&2
+    exit 3
+  fi
+fi
+
 workdir=$(readlink -f "$workdir")
 mkdir -p "$workdir"
 
@@ -113,6 +126,8 @@ docker run --rm -i $flag_tty \
        --name "$default_containername" \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
        -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
+       ${downloaddir:+-v "$downloaddir":/downloads} \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
-       -v "$workdir":/work "$imagename" \
-       ./build.sh --builddir /work --outputdir /work/artifacts "$@"
+       -v "$workdir":/work \
+       "$imagename" \
+       ./build.sh --builddir /work ${downloaddir:+--downloaddir /downloads} --outputdir /work/artifacts "$@"
