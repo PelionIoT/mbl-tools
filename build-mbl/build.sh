@@ -230,11 +230,10 @@ while true; do
         name="$(basename "$external_manifest")"
         manifest="custom-$name"
         cp "$external_manifest" "$builddir/mbl-manifest/.repo/manifests/$manifest"
-        (cd "$builddir/mbl-manifest"; repo init -m "$manifest")
     fi
+    (cd "$builddir/mbl-manifest"; repo init -m "$manifest")
+    (cd "$builddir/mbl-manifest"; repo sync)
     
-    (cd "$builddir/mbl-manifest"
-     repo sync)
     push_stages pin
     ;;
 
