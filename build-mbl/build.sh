@@ -59,7 +59,7 @@ usage: build.sh [OPTION] [STAGE]..
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
   --branch BRANCH       Name the branch to checkout. Default ${default_branch}.
   --builddir DIR        Use DIR for build, default CWD.
-  --downloaddir DIR    Use DIR to store downloaded packages. Default \$builddir/download
+  --downloaddir DIR     Use DIR to store downloaded packages. Default \$builddir/download
   --external-manifest=PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
