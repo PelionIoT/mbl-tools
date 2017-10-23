@@ -4,6 +4,15 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# Workspace layout:
+# --buildir ROOT
+#
+# ROOT/
+#  download
+#  machine-<MACHINE>/
+#    ,stage
+#    mbl-manifest
+
 set -e
 set -u
 set -o pipefail
@@ -92,6 +101,7 @@ usage: build.sh [OPTION] [STAGE]..
   --external-manifest=PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
+  --machine=MACHINE     Add a machine to build.  Default ${default_machine}.
   --manifest=MANIFEST   Name the manifest file. Default ${default_manifest}.
   -o, --outputdir PATH  Directory to output build artifacts.
   --url=URL             Name the URL to clone. Default ${default_url}.
@@ -110,11 +120,10 @@ EOF
 branch="$default_branch"
 manifest="$default_manifest"
 url="$default_url"
-machine="$default_machine"
 distro="$default_distro"
 image="$default_image"
 
-args=$(getopt -o+hj:o:x -l branch:,builddir:,downloaddir:,external-manifest:,help,jobs:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l branch:,builddir:,downloaddir:,external-manifest:,help,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -154,6 +163,10 @@ while [ $# -gt 0 ]; do
     opt_prev=flag_jobs
     ;;
 
+  --machine)
+    opt_append=machines
+    ;;
+
   --manifest)
     opt_prev=manifest
     ;;
@@ -187,6 +200,10 @@ if [ -z "${builddir:-}" ]; then
 else
   mkdir -p "$builddir"
   builddir="$(readlink -f "$builddir")"
+fi
+
+if [ -z "${machines:-}" ]; then
+  machines="$default_machine"
 fi
 
 if [ -n "${outputdir:-}" ]; then
@@ -273,58 +290,71 @@ while true; do
     # Since we are going to force the use of the pinned manifest, it
     # does not matter what branch or manifest we ask repo for here, we
     # just accept repo's defaults.
-    rm_atomic "$builddir/machine-$machine/mbl-manifest"
-    mkdir -p "$builddir/machine-$machine"
-    # Default branch and manifest, we will override the manifest anyway.
-    repo_init_atomic "$builddir/machine-$machine/mbl-manifest" -u "$url"
+    for machine in $machines; do
+      rm_atomic "$builddir/machine-$machine/mbl-manifest"
+      mkdir -p "$builddir/machine-$machine"
+      # Default branch and manifest, we will override the manifest anyway.
+      repo_init_atomic "$builddir/machine-$machine/mbl-manifest" -u "$url"
+    done
     push_stages sync-pinned
     ;;
 
   sync-pinned)
-    cp "$builddir/pinned-manifest.xml" "$builddir/machine-$machine/mbl-manifest/.repo/manifests/"
-    (cd "$builddir/machine-$machine/mbl-manifest"
-     repo init -m "pinned-manifest.xml"
-     repo sync
-    )
+    for machine in $machines; do
+      cp "$builddir/pinned-manifest.xml" "$builddir/machine-$machine/mbl-manifest/.repo/manifests/"
+      (cd "$builddir/machine-$machine/mbl-manifest"
+       repo init -m "pinned-manifest.xml"
+       repo sync
+      )
+    done
     push_stages build
     ;;
 
   build)
-    (cd "$builddir/machine-$machine/mbl-manifest"
-     set +u
-     set +e
-     MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
-     set -u
-     set -e
+    for machine in $machines; do
+      (cd "$builddir/machine-$machine/mbl-manifest"
+       set +u
+       set +e
+       MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
+       set -u
+       set -e
 
-     # This needs to be done after the setup otherwise bitbake does not have
-     # visibility of these variables
-     if [ -n "${flag_jobs:-}" ]; then
-       export PARALLEL_MAKE="-j $flag_jobs"
-       export BB_NUMBER_THREADS="$flag_jobs"
-       export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
-     fi
+       # This needs to be done after the setup otherwise bitbake does not have
+       # visibility of these variables
+       if [ -n "${flag_jobs:-}" ]; then
+         export PARALLEL_MAKE="-j $flag_jobs"
+         export BB_NUMBER_THREADS="$flag_jobs"
+         export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
+       fi
 
-     if [ -n "${downloaddir:-}" ]; then
-       downloaddir=$(readlink -f "$downloaddir")
-       export DL_DIR="$downloaddir"
-       export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
-     fi
+       if [ -n "${downloaddir:-}" ]; then
+         downloaddir=$(readlink -f "$downloaddir")
+         export DL_DIR="$downloaddir"
+         export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
+       fi
 
-     bitbake "$image"
-    )
+       bitbake "$image"
+      )
+    done
     push_stages artifact
     ;;
 
   artifact)
     if [ -n "${outputdir:-}" ]; then
-      bbtmpdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc"
+      for machine in $machines; do
+      	bbtmpdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc"
+	machinedir="$outputdir/machine/$machine"
 
-      # We are interested in the image...
-      cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$outputdir"
-
-      # ... the license information...
-      cp -r "$bbtmpdir/deploy/licenses/" "$outputdir"
+     	# We are interested in the image...
+	imagedir="$machinedir/images/$image/images/"
+	mkdir -p "$imagedir"
+	cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$imagedir"
+	
+      	# ... the license information...
+	licensedir="$machinedir/licenses"
+	mkdir -p "$licensedir"
+	cp -r "$bbtmpdir/deploy/licenses/" "$licensedir"
+      done
     fi
     ;;
 
