@@ -93,7 +93,7 @@ usage: build.sh [OPTION] [STAGE]..
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
   --manifest=MANIFEST   Name the manifest file. Default ${default_manifest}.
-  -o, --outputdir DIR   DIR where to store artifacts. Default \$builddir/artifacts.
+  -o, --outputdir PATH  Directory to output build artifacts.
   --url=URL             Name the URL to clone. Default ${default_url}.
   -x                    Enable shell debugging in this script.
 
@@ -189,10 +189,9 @@ else
   builddir="$(readlink -f "$builddir")"
 fi
 
-if [ -z "${outputdir:-}" ]; then
-  outputdir="$builddir/artifacts"
+if [ -n "${outputdir:-}" ]; then
+  outputdir="$(readlink -f "$outputdir")"
 fi
-outputdir="$(readlink -f "$outputdir")"
 
 if empty_stages_p; then
   if [ -r "$builddir/,stage" ]; then
@@ -291,17 +290,18 @@ while true; do
     ;;
 
   artifact)
-    mkdir -p "$outputdir"
-    bbtmpdir="$builddir/mbl-manifest/build-mbl/tmp-$distro-glibc"
+    if [ -n "${outputdir:-}" ]; then
+      bbtmpdir="$builddir/mbl-manifest/build-mbl/tmp-$distro-glibc"
 
-    # We are interested in the image...
-    cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$outputdir"
+      # We are interested in the image...
+      cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$outputdir"
 
-    # ... the license information...
-    cp -r "$bbtmpdir/deploy/licenses/" "$outputdir"
+      # ... the license information...
+      cp -r "$bbtmpdir/deploy/licenses/" "$outputdir"
 
-    # ... and the manifest
-    cp "$builddir/pinned-manifest.xml" "$outputdir"
+      # ... and the manifest
+      cp "$builddir/pinned-manifest.xml" "$outputdir"
+    fi
     ;;
 
   stop)
