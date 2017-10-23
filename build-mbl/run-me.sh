@@ -138,6 +138,10 @@ if [ -n "${external_manifest:-}" ]; then
   set -- "--external-manifest=/work/$name" "$@"
 fi
 
+# The ${:+} expansion of download upsets shellcheck, but we do not
+# want that instance quoted because that would inject an empty
+# argument when download is not defined.
+# shellcheck disable=SC2086
 docker run --rm -i $flag_tty \
        --name "$default_containername" \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
