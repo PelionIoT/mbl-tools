@@ -250,6 +250,14 @@ while true; do
     (cd "$builddir/mbl-manifest"
      repo manifest -r -o "$builddir/pinned-manifest.xml"
     )
+
+    # If we are saving build artifacts, then save them as they are
+    # created rather than waiting for the end of the build process,
+    # this makes debug of build issues easier.
+    if [ -n "${outputdir:-}" ]; then
+      cp "$builddir/pinned-manifest.xml" "$outputdir/pinned-manifest.xml"
+    fi
+
     push_stages switch-to-pinned
     ;;
 
@@ -298,9 +306,6 @@ while true; do
 
       # ... the license information...
       cp -r "$bbtmpdir/deploy/licenses/" "$outputdir"
-
-      # ... and the manifest
-      cp "$builddir/pinned-manifest.xml" "$outputdir"
     fi
     ;;
 
