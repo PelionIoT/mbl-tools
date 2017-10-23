@@ -43,6 +43,22 @@ update_stage ()
   echo "($action) $*"
 }
 
+rm_atomic ()
+{
+  local path="$1"
+
+  # Ensure we cleanup after an interrupted previous deletion attempt
+  rm -rf "$path.rm"
+
+  # Atomic rename of the tree to delete.
+  if [ -e "$path" ]; then
+    mv -f "$path" "$path.rm"
+
+    # Non atomic delete of the renamed tree.
+    rm -rf "$path.rm"
+  fi
+}
+
 default_branch="master"
 default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
@@ -192,13 +208,7 @@ while true; do
   update_stage "$stage"
   case "$stage" in
   clean)
-    # Take care to ensure that removal of the working tree
-    # is atomic
-    rm -rf "$builddir/mbl-manifest.t"
-    if [ -e "$builddir/mbl-manifest" ]; then
-      mv "$builddir/mbl-manifest" "$builddir/mbl-manifest.t"
-    fi
-    rm -rf "$builddir/mbl-manifest.t"
+    rm_atomic "$builddir/mbl-manifest"
     push_stages start
     ;;
 
@@ -207,11 +217,7 @@ while true; do
     ;;
 
   checkout)
-    rm -rf "$builddir/mbl-manifest-t"
-    if [ -e "$builddir/mbl-manifest" ]; then
-      mv "$builddir/mbl-manifest" "$builddir/mbl-manifest-t"
-      rm -rf "$builddir/mbl-manifest-t"
-    fi
+    rm_atomic "$builddir/mbl-manifest"
 
     mkdir -p "$builddir/mbl-manifest-t"
     (cd "$builddir/mbl-manifest-t" && repo init -u "$url" -b "$branch" -m "$manifest")
