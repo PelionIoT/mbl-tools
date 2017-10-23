@@ -59,6 +59,19 @@ rm_atomic ()
   fi
 }
 
+repo_init_atomic ()
+{
+  local path="$1"
+  shift
+
+  # Ensure we remove any previous interrupted init
+  rm -rf "$path-ri"
+
+  mkdir -p "$path-ri"
+  (cd "$path-ri" && repo init "$@")
+  mv "$path-ri" "$path"
+}
+
 default_branch="master"
 default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
@@ -218,10 +231,7 @@ while true; do
 
   checkout)
     rm_atomic "$builddir/mbl-manifest"
-
-    mkdir -p "$builddir/mbl-manifest-t"
-    (cd "$builddir/mbl-manifest-t" && repo init -u "$url" -b "$branch" -m "$manifest")
-    mv "$builddir/mbl-manifest-t" "$builddir/mbl-manifest"
+    repo_init_atomic "$builddir/mbl-manifest" -u "$url" -b "$branch" -m "$manifest"
     push_stages sync
     ;;
 
