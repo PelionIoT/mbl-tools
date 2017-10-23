@@ -249,15 +249,15 @@ while true; do
 
   pin)
     (cd "$builddir/mbl-manifest"
-     repo manifest -r -o generated-pinned-manifest.xml
+     repo manifest -r -o "$builddir/pinned-manifest.xml"
     )
     push_stages switch-to-pinned
     ;;
 
   switch-to-pinned)
     (cd "$builddir/mbl-manifest"
-     cp generated-pinned-manifest.xml "$builddir/mbl-manifest/.repo/manifests/"
-     repo init -m generated-pinned-manifest.xml
+     cp "$builddir/pinned-manifest.xml" "$builddir/mbl-manifest/.repo/manifests/"
+     repo init -m "pinned-manifest.xml"
      repo sync
     )
     push_stages build
@@ -301,7 +301,7 @@ while true; do
     cp -r "$bbtmpdir/deploy/licenses/" "$outputdir"
 
     # ... and the manifest
-    cp "$builddir/mbl-manifest/generated-pinned-manifest.xml" "$outputdir"
+    cp "$builddir/pinned-manifest.xml" "$outputdir"
     ;;
 
   stop)
