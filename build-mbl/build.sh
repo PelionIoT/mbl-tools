@@ -195,7 +195,6 @@ while true; do
     # Take care to ensure that removal of the working tree
     # is atomic
     rm -rf "$builddir/mbl-manifest.t"
-    rm -rf "$builddir/,stage"
     if [ -e "$builddir/mbl-manifest" ]; then
       mv "$builddir/mbl-manifest" "$builddir/mbl-manifest.t"
     fi
