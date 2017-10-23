@@ -65,7 +65,6 @@ usage: build.sh [OPTION] [STAGE]..
   -h, --help            Print brief usage information and exit.
   --manifest=MANIFEST   Name the manifest file. Default ${default_manifest}.
   -o, --outputdir DIR   DIR where to store artifacts. Default \$builddir/artifacts.
-  --sstate-cachedir DIR Use DIR for shared state cache. Default \$builddir/sstate-cache.
   --url=URL             Name the URL to clone. Default ${default_url}.
   -x                    Enable shell debugging in this script.
 
@@ -86,7 +85,7 @@ machine="$default_machine"
 distro="$default_distro"
 image="$default_image"
 
-args=$(getopt -o+hj:o:x -l branch:,builddir:,downloaddir:,external-manifest:,help,jobs:,manifest:,outputdir:,sstate-cachedir:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l branch:,builddir:,downloaddir:,external-manifest:,help,jobs:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -132,10 +131,6 @@ while [ $# -gt 0 ]; do
 
   -o | --outputdir)
     opt_prev=outputdir
-    ;;
-
-  --sstate-cachedir)
-    opt_prev=sstate_cachedir
     ;;
 
   --url)
@@ -273,12 +268,6 @@ while true; do
        downloaddir=$(readlink -f "$downloaddir")
        export DL_DIR="$downloaddir"
        export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
-     fi
-
-     if [ -n "${sstate_cachedir:-}" ]; then
-       sstate_cachedir=$(readlink -f "$sstate_cachedir")
-       export SSTATE_DIR="$sstate_cachedir"
-       export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE SSTATE_DIR"
      fi
 
      bitbake "$image"
