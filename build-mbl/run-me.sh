@@ -9,7 +9,7 @@ set -u
 
 execdir="$(readlink -e "$(dirname "$0")")"
 
-default_workdir="build-mbl-manifest"
+default_builddir="build-mbl-manifest"
 default_imagename="mbl-manifest-env"
 default_containername="mbl-tools-container.$$"
 
@@ -30,6 +30,7 @@ usage()
 
 usage: run-me.sh [OPTION] -- [build.sh arguments]
 
+  --builddir PATH       Specify the root of the build tree.  Default ${default_builddir}.
   --downloaddir PATH    Use PATH to store downloaded packages.
   --external-manifest=PATH
                         Specify an external manifest file.
@@ -37,17 +38,17 @@ usage: run-me.sh [OPTION] -- [build.sh arguments]
   --image-name NAME     Specify the docker image name to build. Default ${default_imagename}.
   --tty                 Enable tty creation (default).
   --no-tty              Disable tty creation.
-  --workdir PATH        Specify the directory where to store artifacts. Default ${default_workdir}.
+  --workdir PATH        Specify the directory where to store artifacts.  Default ${default_builddir}.
+                        Deprecated.  Use --builddir instead.
   -x                    Enable shell debugging in this script.
 
 EOF
 }
 
-workdir="$default_workdir"
 imagename="$default_imagename"
 flag_tty="-t"
 
-args=$(getopt -o+hx -l downloaddir:,external-manifest:,help,image-name:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hx -l builddir:,downloaddir:,external-manifest:,help,image-name:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -62,6 +63,10 @@ while [ $# -gt 0 ]; do
     continue
   fi
   case $1 in
+  --builddir)
+    opt_prev=builddir
+    ;;
+
   --downloaddir)
     opt_prev=downloaddir
     ;;
@@ -111,14 +116,25 @@ if [ -n "${downloaddir:-}" ]; then
   fi
 fi
 
-workdir=$(readlink -f "$workdir")
-mkdir -p "$workdir"
+if [ -n "${workdir:-}" ]; then
+  printf "warning: --workdir is deprecated, use --builddir\n" >& 2
+  if [ -z "${builddir:-}" ]; then
+    builddir="$workdir"
+  fi
+fi
+
+if [ -z "${builddir:-}" ]; then
+  builddir="$default_builddir"
+fi
+
+builddir=$(readlink -f "$builddir")
+mkdir -p "$builddir"
 
 docker build -t "$imagename" "$execdir"
 
 if [ -n "${external_manifest:-}" ]; then
   name="$(basename "$external_manifest")"
-  cp "$external_manifest" "$workdir/$name"
+  cp "$external_manifest" "$builddir/$name"
   set -- "--external-manifest=/work/$name" "$@"
 fi
 
@@ -128,6 +144,6 @@ docker run --rm -i $flag_tty \
        -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
        ${downloaddir:+-v "$downloaddir":/downloads} \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
-       -v "$workdir":/work \
+       -v "$builddir":/work \
        "$imagename" \
        ./build.sh --builddir /work ${downloaddir:+--downloaddir /downloads} --outputdir /work/artifacts "$@"
