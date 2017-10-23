@@ -229,6 +229,11 @@ while true; do
     ;;
 
   checkout)
+    # We checkout one copy of mbl-manifest specifically for the
+    # purpose of pinning the manifest. Once we have a pinned manifest
+    # we checkout one further version of mbl-manifest per machine we
+    # want to build.  The per machine mbl-manifest is forced to the
+    # pinned manifest.
     rm_atomic "$builddir/mbl-manifest"
     repo_init_atomic "$builddir/mbl-manifest" -u "$url" -b "$branch" -m "$manifest"
     push_stages sync
@@ -258,12 +263,26 @@ while true; do
       cp "$builddir/pinned-manifest.xml" "$outputdir/pinned-manifest.xml"
     fi
 
-    push_stages switch-to-pinned
+    push_stages checkout-pinned
     ;;
 
-  switch-to-pinned)
-    (cd "$builddir/mbl-manifest"
-     cp "$builddir/pinned-manifest.xml" "$builddir/mbl-manifest/.repo/manifests/"
+  checkout-pinned)
+    # We now have a pinned manifest, we checkout an instance of
+    # mbl-manifest for each machine we want to build. This per machine
+    # mbl-manifest is forced to the pinned manifest generated above.
+    # Since we are going to force the use of the pinned manifest, it
+    # does not matter what branch or manifest we ask repo for here, we
+    # just accept repo's defaults.
+    rm_atomic "$builddir/machine-$machine/mbl-manifest"
+    mkdir -p "$builddir/machine-$machine"
+    # Default branch and manifest, we will override the manifest anyway.
+    repo_init_atomic "$builddir/machine-$machine/mbl-manifest" -u "$url"
+    push_stages sync-pinned
+    ;;
+
+  sync-pinned)
+    cp "$builddir/pinned-manifest.xml" "$builddir/machine-$machine/mbl-manifest/.repo/manifests/"
+    (cd "$builddir/machine-$machine/mbl-manifest"
      repo init -m "pinned-manifest.xml"
      repo sync
     )
@@ -271,7 +290,7 @@ while true; do
     ;;
 
   build)
-    (cd "$builddir/mbl-manifest"
+    (cd "$builddir/machine-$machine/mbl-manifest"
      set +u
      set +e
      MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
@@ -299,7 +318,7 @@ while true; do
 
   artifact)
     if [ -n "${outputdir:-}" ]; then
-      bbtmpdir="$builddir/mbl-manifest/build-mbl/tmp-$distro-glibc"
+      bbtmpdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc"
 
       # We are interested in the image...
       cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$outputdir"
