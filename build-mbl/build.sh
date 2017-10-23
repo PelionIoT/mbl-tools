@@ -154,16 +154,16 @@ if [ $# -gt 0 ]; then
 fi
 
 if [ -z "${builddir:-}" ]; then
-  builddir=$(pwd)
+  builddir="$(pwd)"
 else
   mkdir -p "$builddir"
-  builddir=$(readlink -f "$builddir")
+  builddir="$(readlink -f "$builddir")"
 fi
 
 if [ -z "${outputdir:-}" ]; then
   outputdir="$builddir/artifacts"
 fi
-outputdir=$(readlink -f "$outputdir")
+outputdir="$(readlink -f "$outputdir")"
 
 if empty_stages_p; then
   if [ -r "$builddir/,stage" ]; then
