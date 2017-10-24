@@ -36,6 +36,7 @@ usage: run-me.sh [OPTION] -- [build.sh arguments]
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
   --image-name NAME     Specify the docker image name to build. Default ${default_imagename}.
+  -o, --outputdir PATH  Specify a directory to store built arifacts.
   --tty                 Enable tty creation (default).
   --no-tty              Disable tty creation.
   --workdir PATH        Specify the directory where to store artifacts.  Default ${default_builddir}.
@@ -48,7 +49,7 @@ EOF
 imagename="$default_imagename"
 flag_tty="-t"
 
-args=$(getopt -o+hx -l builddir:,downloaddir:,external-manifest:,help,image-name:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+ho:x -l builddir:,downloaddir:,external-manifest:,help,image-name:,outputdir:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -84,6 +85,10 @@ while [ $# -gt 0 ]; do
     opt_prev=imagename
     ;;
 
+  -o | --outputdir)
+    opt_prev=outputdir
+    ;;
+  
   --tty)
     flag_tty="-t"
     ;;
@@ -112,6 +117,14 @@ if [ -n "${downloaddir:-}" ]; then
   downloaddir=$(readlink -f "$downloaddir")
   if [ ! -e "$downloaddir" ]; then
     printf "error: missing downloaddir %s\n" "$downloaddir" >&2
+    exit 3
+  fi
+fi
+
+if [ -n "${outputdir:-}" ]; then
+  outputdir=$(readlink -f "$outputdir")
+  if [ ! -e "$outputdir" ]; then
+    printf "error: missing outputdir %s\n" "$outputdir" >&2
     exit 3
   fi
 fi
@@ -147,7 +160,8 @@ docker run --rm -i $flag_tty \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
        -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
        ${downloaddir:+-v "$downloaddir":/downloads} \
+       ${outputdir:+-v "$outputdir":/artifacts} \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
        -v "$builddir":/work \
        "$imagename" \
-       ./build.sh --builddir /work ${downloaddir:+--downloaddir /downloads} --outputdir /work/artifacts "$@"
+       ./build.sh --builddir /work ${downloaddir:+--downloaddir /downloads} ${outputdir:+--outputdir /artifacts} "$@"
