@@ -164,4 +164,7 @@ docker run --rm -i $flag_tty \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
        -v "$builddir":/work \
        "$imagename" \
-       ./build.sh --builddir /work ${downloaddir:+--downloaddir /downloads} ${outputdir:+--outputdir /artifacts} "$@"
+       ./build.sh --builddir /work \
+         ${downloaddir:+--downloaddir /downloads} \
+         ${outputdir:+--outputdir /artifacts} \
+         "$@"
