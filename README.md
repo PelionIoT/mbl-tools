@@ -99,6 +99,17 @@ To re-build using a previously pinned manifest use the --external-manifest optio
 ./mbl-tools/build-mbl/run-me.sh --external-manifest=pinned-manifest.xml
 ```
 
+#### mbed Cloud Client Credentials
+
+The current mbed Cloud Client requries key material to be statically
+built into the cloud client binary.  This is a temporary measure that
+will be replaced with a dynamic key injection mechanism shortly.  In
+the meantime, the build scripts provide a work around:
+
+```
+./mbl-tools/build-mbl/run-me.sh --inject-mcc mbed_cloud_dev_credentials.c --inject-mcc update_default_resources.c --
+```
+
 ### Building OP-TEE ###
 
 #### Quick Start
