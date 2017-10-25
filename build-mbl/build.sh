@@ -101,6 +101,9 @@ usage: build.sh [OPTION] [STAGE]..
   --external-manifest=PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
+  --inject-mcc PATH     Add a file to the list of mbed cloud client files
+                        to be injected into a build.  This is a temporary
+                        mechanism to inject development keys.
   --machine=MACHINE     Add a machine to build.  Default ${default_machine}.
   --manifest=MANIFEST   Name the manifest file. Default ${default_manifest}.
   -o, --outputdir PATH  Directory to output build artifacts.
@@ -123,7 +126,7 @@ url="$default_url"
 distro="$default_distro"
 image="$default_image"
 
-args=$(getopt -o+hj:o:x -l branch:,builddir:,downloaddir:,external-manifest:,help,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l branch:,builddir:,downloaddir:,external-manifest:,help,inject-mcc:,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -157,6 +160,10 @@ while [ $# -gt 0 ]; do
   -h | --help)
     usage
     exit 0
+    ;;
+
+  --inject-mcc)
+    opt_append=inject_mcc_files
     ;;
 
   -j | --jobs)
@@ -307,6 +314,31 @@ while true; do
        repo sync
       )
     done
+    push_stages setup
+    ;;
+
+  setup)
+    for machine in $machines; do
+      (cd "$builddir/machine-$machine/mbl-manifest"
+       set +u
+       set +e
+       MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
+       set -u
+       set -e
+      )
+    done
+    push_stages inject
+    ;;
+
+  inject)
+    if [ -n "${inject_mcc_files:-}" ]; then
+      for machine in $machines; do
+        for file in $inject_mcc_files; do
+          base="$(basename "$file")"
+          cp "$file" "$builddir/machine-$machine/mbl-manifest/build-mbl/$base"
+        done
+      done
+    fi
     push_stages build
     ;;
 
