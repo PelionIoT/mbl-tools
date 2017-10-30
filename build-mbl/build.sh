@@ -376,12 +376,29 @@ while true; do
       for machine in $machines; do
         bbtmpdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc"
         machinedir="$outputdir/machine/$machine"
+        imagedir="$machinedir/images/$image"
 
         # We are interested in the image...
-        imagedir="$machinedir/images/$image/images/"
-        mkdir -p "$imagedir"
-        cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$imagedir"
+        mkdir -p "$imagedir/images"
+        cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$imagedir/images"
         
+        # Dot graphs
+        mkdir -p "$imagedir/dot/"
+        bh_path="$builddir/machine-$machine/mbl-manifest/build-mbl/buildhistory/images/$machine/glibc/$image"
+        for path in "$bh_path/"*.dot; do
+          if [ -e "$path" ]; then          
+            cp "$path" "$imagedir/dot/"
+          fi
+        done
+
+        # Build information
+        mkdir -p "$imagedir/info/"
+        for path in "$bh_path/"*.txt; do
+          if [ -e "$path" ]; then          
+            cp "$path" "$imagedir/info/"
+          fi
+        done
+
         # ... the license information...
         cp -r "$bbtmpdir/deploy/licenses/" "$machinedir"
       done
