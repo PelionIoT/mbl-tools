@@ -342,18 +342,18 @@ while true; do
   artifact)
     if [ -n "${outputdir:-}" ]; then
       for machine in $machines; do
-      	bbtmpdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc"
-	machinedir="$outputdir/machine/$machine"
+        bbtmpdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc"
+        machinedir="$outputdir/machine/$machine"
 
-     	# We are interested in the image...
-	imagedir="$machinedir/images/$image/images/"
-	mkdir -p "$imagedir"
-	cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$imagedir"
-	
-      	# ... the license information...
-	licensedir="$machinedir/licenses"
-	mkdir -p "$licensedir"
-	cp -r "$bbtmpdir/deploy/licenses/" "$licensedir"
+        # We are interested in the image...
+        imagedir="$machinedir/images/$image/images/"
+        mkdir -p "$imagedir"
+        cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$imagedir"
+        
+        # ... the license information...
+        licensedir="$machinedir/licenses"
+        mkdir -p "$licensedir"
+        cp -r "$bbtmpdir/deploy/licenses/" "$licensedir"
       done
     fi
     ;;
