@@ -36,6 +36,9 @@ usage: run-me.sh [OPTION] -- [build.sh arguments]
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
   --image-name NAME     Specify the docker image name to build. Default ${default_imagename}.
+  --inject-mcc PATH     Add a file to the list of mbed cloud client files
+                        to be injected into a build.  This is a temporary
+                        mechanism to inject development keys.
   -o, --outputdir PATH  Specify a directory to store built arifacts.
   --tty                 Enable tty creation (default).
   --no-tty              Disable tty creation.
@@ -49,7 +52,7 @@ EOF
 imagename="$default_imagename"
 flag_tty="-t"
 
-args=$(getopt -o+ho:x -l builddir:,downloaddir:,external-manifest:,help,image-name:,outputdir:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+ho:x -l builddir:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,outputdir:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -83,6 +86,10 @@ while [ $# -gt 0 ]; do
 
   --image-name)
     opt_prev=imagename
+    ;;
+
+  --inject-mcc)
+    opt_append=inject_mcc_files
     ;;
 
   -o | --outputdir)
@@ -143,6 +150,15 @@ fi
 builddir=$(readlink -f "$builddir")
 mkdir -p "$builddir"
 
+if [ -n "${inject_mcc_files:-}" ]; then
+  mkdir -p "$builddir/inject-mcc"
+  for file in ${inject_mcc_files:-}; do
+    base="$(basename "$file")"      
+    cp "$file" "$builddir/inject-mcc/$base"
+    build_args="${build_args:-} --inject-mcc=/work/inject-mcc/$base"
+  done
+fi
+
 docker build -t "$imagename" "$execdir"
 
 if [ -n "${external_manifest:-}" ]; then
@@ -165,6 +181,7 @@ docker run --rm -i $flag_tty \
        -v "$builddir":/work \
        "$imagename" \
        ./build.sh --builddir /work \
+         ${build_args:-} \
          ${downloaddir:+--downloaddir /downloads} \
          ${outputdir:+--outputdir /artifacts} \
          "$@"
