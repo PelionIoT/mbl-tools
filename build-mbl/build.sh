@@ -383,9 +383,7 @@ while true; do
         cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$imagedir"
         
         # ... the license information...
-        licensedir="$machinedir/licenses"
-        mkdir -p "$licensedir"
-        cp -r "$bbtmpdir/deploy/licenses/" "$licensedir"
+        cp -r "$bbtmpdir/deploy/licenses/" "$machinedir"
       done
     fi
     ;;
