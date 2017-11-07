@@ -86,7 +86,7 @@ default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
 default_machine="raspberrypi3"
 default_distro="mbl"
-default_images="mbl-console-image"
+default_images="mbl-console-image mbl-console-image-test"
 
 usage()
 {
