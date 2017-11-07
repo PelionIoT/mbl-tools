@@ -86,7 +86,7 @@ default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
 default_machine="raspberrypi3"
 default_distro="mbl"
-default_image="mbl-console-image"
+default_images="mbl-console-image"
 
 usage()
 {
@@ -101,6 +101,8 @@ usage: build.sh [OPTION] [STAGE]..
   --external-manifest=PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
+  --image IMAGE         Select an alternative image.  Default $default_images.
+                        This option can be repeated to add multiple images.
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys.
@@ -123,9 +125,8 @@ EOF
 branch="$default_branch"
 url="$default_url"
 distro="$default_distro"
-image="$default_image"
 
-args=$(getopt -o+hj:o:x -l branch:,builddir:,downloaddir:,external-manifest:,help,inject-mcc:,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l branch:,builddir:,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -159,6 +160,10 @@ while [ $# -gt 0 ]; do
   -h | --help)
     usage
     exit 0
+    ;;
+
+  --image)
+    opt_append=images
     ;;
 
   --inject-mcc)
@@ -215,6 +220,10 @@ if [ -z "${builddir:-}" ]; then
 else
   mkdir -p "$builddir"
   builddir="$(readlink -f "$builddir")"
+fi
+
+if [ -z "${images:-}" ]; then
+  images="$default_images"
 fi
 
 if [ -z "${machines:-}" ]; then
@@ -373,7 +382,12 @@ while true; do
          export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
        fi
 
-       bitbake "$image"
+       # images is a space separated list of options, it should not be
+       # quoted because it will form multiple options rather than one
+       # option. However ideally each option in the list should be
+       # quoted.
+       # shellcheck disable=SC2086
+       bitbake $images
       )
     done
     push_stages artifact
@@ -384,27 +398,29 @@ while true; do
       for machine in $machines; do
         bbtmpdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc"
         machinedir="$outputdir/machine/$machine"
-        imagedir="$machinedir/images/$image"
+        for image in $images; do
+          imagedir="$machinedir/images/$image"
 
-        # We are interested in the image...
-        mkdir -p "$imagedir/images"
-        cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$imagedir/images"
+          # We are interested in the image...
+          mkdir -p "$imagedir/images"
+          cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$imagedir/images"
         
-        # Dot graphs
-        mkdir -p "$imagedir/dot/"
-        bh_path="$builddir/machine-$machine/mbl-manifest/build-mbl/buildhistory/images/$machine/glibc/$image"
-        for path in "$bh_path/"*.dot; do
-          if [ -e "$path" ]; then          
-            cp "$path" "$imagedir/dot/"
-          fi
-        done
+          # Dot graphs
+          mkdir -p "$imagedir/dot/"
+          bh_path="$builddir/machine-$machine/mbl-manifest/build-mbl/buildhistory/images/$machine/glibc/$image"
+          for path in "$bh_path/"*.dot; do
+            if [ -e "$path" ]; then          
+              cp "$path" "$imagedir/dot/"
+            fi
+          done
 
-        # Build information
-        mkdir -p "$imagedir/info/"
-        for path in "$bh_path/"*.txt; do
-          if [ -e "$path" ]; then          
-            cp "$path" "$imagedir/info/"
-          fi
+          # Build information
+          mkdir -p "$imagedir/info/"
+          for path in "$bh_path/"*.txt; do
+            if [ -e "$path" ]; then          
+              cp "$path" "$imagedir/info/"
+            fi
+          done
         done
 
         # ... the license information...
