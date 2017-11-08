@@ -84,7 +84,7 @@ repo_init_atomic ()
 default_branch="master"
 default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
-default_machine="raspberrypi3"
+default_machines="imx7s-warp raspberrypi3"
 default_distro="mbl"
 default_images="mbl-console-image mbl-console-image-test"
 
@@ -106,7 +106,7 @@ usage: build.sh [OPTION] [STAGE]..
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys.
-  --machine=MACHINE     Add a machine to build.  Default ${default_machine}.
+  --machine=MACHINE     Add a machine to build.  Default ${default_machines}.
   --manifest=MANIFEST   Name the manifest file. Default ${default_manifest}.
   -o, --outputdir PATH  Directory to output build artifacts.
   --url=URL             Name the URL to clone. Default ${default_url}.
@@ -227,7 +227,7 @@ if [ -z "${images:-}" ]; then
 fi
 
 if [ -z "${machines:-}" ]; then
-  machines="$default_machine"
+  machines="$default_machines"
 fi
 
 if [ -n "${outputdir:-}" ]; then
