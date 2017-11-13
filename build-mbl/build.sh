@@ -118,6 +118,7 @@ usage: build.sh [OPTION] [STAGE]..
 Useful STAGE names:
   clean                 Blow away the working tree and start over.
   start                 Start at the beginning.
+  build                 Execute the bitbake build for all images and machines.
 
 EOF
 }
