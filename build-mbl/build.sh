@@ -465,7 +465,8 @@ while true; do
         done
 
         # ... the license information...
-        cp -r "$bbtmpdir/deploy/licenses/" "$machinedir"
+        write_info "save artifact licenses\n"
+        tar c -C "$bbtmpdir/deploy" -f "$machinedir/licenses.tar" "licenses"
       done
     fi
     ;;
