@@ -275,8 +275,9 @@ while true; do
     # we checkout one further version of mbl-manifest per machine we
     # want to build.  The per machine mbl-manifest is forced to the
     # pinned manifest.
-    rm_atomic "$builddir/mbl-manifest"
-    repo_init_atomic "$builddir/mbl-manifest" -u "$url" -b "$branch" -m "$manifest"
+    if [ ! -e "$builddir/mbl-manifest" ]; then
+      repo_init_atomic "$builddir/mbl-manifest" -u "$url" -b "$branch" -m "$manifest"
+    fi
     push_stages sync
     ;;
 
