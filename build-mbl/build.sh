@@ -19,6 +19,14 @@ set -o pipefail
 
 execdir="$(readlink -e "$(dirname "$0")")"
 
+write_info()
+{
+  printf "info:"
+  # We explicit want the info() function to take a format string followed by arguments, hence:
+  # shellcheck disable=SC2059
+  printf "$@"
+}
+
 ## The stack of stages is abstracted out to these functions primarily to
 ## isolate the pain of bash arrays in conjunction with set -u.  We want
 ## set -u behaviour on in order to improve script robustness.  However
@@ -49,7 +57,7 @@ update_stage ()
 {
   local action="$1"
   shift
-  echo "($action) $*"
+  write_info "(%s) %s\n" "$action" "$*"
 }
 
 rm_atomic ()
@@ -413,6 +421,7 @@ while true; do
           bh_path="$builddir/machine-$machine/mbl-manifest/build-mbl/buildhistory/images/$machine/glibc/$image"
           for path in "$bh_path/"*.dot; do
             if [ -e "$path" ]; then          
+              write_info "save artifact %s\n" "$(basename "$path")"
               cp "$path" "$imagedir/dot/"
             fi
           done
@@ -421,6 +430,7 @@ while true; do
           mkdir -p "$imagedir/info/"
           for path in "$bh_path/"*.txt; do
             if [ -e "$path" ]; then          
+              write_info "save artifact %s\n" "$(basename "$path")"
               cp "$path" "$imagedir/info/"
             fi
           done
@@ -433,7 +443,7 @@ while true; do
     ;;
 
   stop)
-    printf "  completed as requested\n"
+    write_info "completed as requested\n"
     exit 0
     ;;
 
