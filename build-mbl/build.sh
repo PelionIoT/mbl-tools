@@ -115,6 +115,17 @@ valid_machine_p()
   return 1
 }
 
+maybe_compress()
+{
+    local path="$1"
+
+    rm -f "$path.gz"
+    if [ "$flag_compress" -eq 1 ]; then
+        write_info "compress artifact %s\n" "$(basename "$path")"
+        gzip "$path"
+    fi
+}
+
 usage()
 {
   cat <<EOF
@@ -123,6 +134,7 @@ usage: build.sh [OPTION] [STAGE]..
 
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
   --branch BRANCH       Name the branch to checkout. Default ${default_branch}.
+  --[no-]compress       Enable image artifact compression, default enabled.
   --builddir DIR        Use DIR for build, default CWD.
   --downloaddir DIR     Use DIR to store downloaded packages. Default \$builddir/download
   --external-manifest=PATH
@@ -153,8 +165,9 @@ EOF
 branch="$default_branch"
 url="$default_url"
 distro="$default_distro"
+flag_compress=1
 
-args=$(getopt -o+hj:o:x -l branch:,builddir:,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l branch:,builddir:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -177,6 +190,14 @@ while [ $# -gt 0 ]; do
     opt_prev=builddir
     ;;
 
+  --compress)
+    flag_compress=1
+    ;;
+  
+  --no-compress)
+    flag_compress=0
+    ;;
+  
   --downloaddir)
     opt_prev=downloaddir
     ;;
@@ -443,7 +464,9 @@ while true; do
 
           write_info "save artifact %s\n" "$image-$machine.rpi-sdimg"
           cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$imagedir/images"
-        
+
+          maybe_compress "$imagedir/images/$image-$machine.rpi-sdimg"
+
           # Dot graphs
           mkdir -p "$imagedir/dot/"
           bh_path="$builddir/machine-$machine/mbl-manifest/build-mbl/buildhistory/images/$machine/glibc/$image"
@@ -467,6 +490,8 @@ while true; do
         # ... the license information...
         write_info "save artifact licenses\n"
         tar c -C "$bbtmpdir/deploy" -f "$machinedir/licenses.tar" "licenses"
+
+        maybe_compress "$machinedir/licenses.tar"
       done
     fi
     ;;
