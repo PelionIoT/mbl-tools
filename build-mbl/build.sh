@@ -315,10 +315,11 @@ while true; do
     # does not matter what branch or manifest we ask repo for here, we
     # just accept repo's defaults.
     for machine in $machines; do
-      rm_atomic "$builddir/machine-$machine/mbl-manifest"
-      mkdir -p "$builddir/machine-$machine"
-      # Default branch and manifest, we will override the manifest anyway.
-      repo_init_atomic "$builddir/machine-$machine/mbl-manifest" -u "$url"
+      if [ ! -e "$builddir/machine-$machine/mbl-manifest" ]; then
+        mkdir -p "$builddir/machine-$machine"
+        # Default branch and manifest, we will override the manifest anyway.
+        repo_init_atomic "$builddir/machine-$machine/mbl-manifest" -u "$url"
+      fi
     done
     push_stages sync-pinned
     ;;
