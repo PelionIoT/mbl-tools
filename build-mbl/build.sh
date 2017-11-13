@@ -414,6 +414,8 @@ while true; do
 
           # We are interested in the image...
           mkdir -p "$imagedir/images"
+
+          write_info "save artifact %s\n" "$image-$machine.rpi-sdimg"
           cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$imagedir/images"
         
           # Dot graphs
