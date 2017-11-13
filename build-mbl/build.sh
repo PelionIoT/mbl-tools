@@ -81,12 +81,31 @@ repo_init_atomic ()
   mv "$path-ri" "$path"
 }
 
+all_machines="imx7s-warp raspberrypi3"
+
 default_branch="master"
 default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
 default_machines="raspberrypi3"
 default_distro="mbl"
 default_images="mbl-console-image mbl-console-image-test"
+
+# Test if a machine name appears in the all_machines list.
+#
+
+valid_machine_p()
+{
+  local candidate="$1"
+  local machine
+
+  for machine in $all_machines; do
+    if [ "$candidate" == "$machine" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
 
 usage()
 {
@@ -229,6 +248,13 @@ fi
 if [ -z "${machines:-}" ]; then
   machines="$default_machines"
 fi
+
+for machine in $machines; do
+  if ! valid_machine_p "$machine"; then
+    printf "error: unrecognized machine '%s'\n" "$machine" >&2
+    exit 3
+  fi
+done
 
 if [ -n "${outputdir:-}" ]; then
   outputdir="$(readlink -f "$outputdir")"
