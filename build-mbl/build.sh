@@ -462,10 +462,25 @@ while true; do
           # We are interested in the image...
           mkdir -p "$imagedir/images"
 
-          write_info "save artifact %s\n" "$image-$machine.rpi-sdimg"
-          cp "$bbtmpdir/deploy/images/$machine/$image-$machine.rpi-sdimg" "$imagedir/images"
-
-          maybe_compress "$imagedir/images/$image-$machine.rpi-sdimg"
+          case $machine in
+          imx7s-warp)
+            suffixes="manifest tar.xz wic.gz"
+            ;;
+          raspberrypi3)
+            suffixes="rpi-sdimg"
+            ;;
+          esac
+            
+          for suffix in $suffixes
+          do
+            write_info "save artifact %s\n" "$image-$machine.$suffix"
+            cp "$bbtmpdir/deploy/images/$machine/$image-$machine.$suffix" "$imagedir/images"
+            case $suffix in
+            rpi-sdimg)
+              maybe_compress "$imagedir/images/$image-$machine.$suffix"
+              ;;
+            esac
+          done
 
           # Dot graphs
           mkdir -p "$imagedir/dot/"
