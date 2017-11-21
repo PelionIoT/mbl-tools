@@ -142,12 +142,74 @@ define_conf()
   rm -f "$path.new"
 }
 
+## Setup the yocto source archiver
+## PATH: The path to local.conf
+## ARCHIVER: The bitbake archiver source mode to install.  One of
+##           original patched configured.
+##
+## Refer to the bitbake documentation for details of the archiver:
+## https://github.com/openembedded/openembedded-core/blob/master/meta/classes/archiver.bbclass
+##
+
+setup_archiver()
+{
+  local path="$1"
+  local archiver="$2"
+  local name="build-mbl-archiver"
+
+  # We need to modify the local.conf file to inherit the archiver
+  # class then configure the archiver behaviour.
+
+  # The local.conf modification should be indempotent and handle the
+  # situation that consecutive builds (and hence consecutive calls to
+  # this setup function) change the archiver configuration, or indeed,
+  # remove the configuration.
+  #
+  # We achieve this by putting start and end markers around the
+  # configuration we inject.  We then implement a 3 stage processes:
+  # 1) Remove any existing marked configuration
+  # 2) Add the new required configuration, if any.
+  # 3) Atomically update the local.conf file with the new file if
+  #    anything changed.
+  #
+  # The atomic update ensures that if we fail, or are interrupted, we
+  # never leave a partially updated local.conf.  Atomic update is not
+  # because another process might race us!
+
+  # If we previously aborted we may have left a working temporary file
+  # littering the work area.
+  rm -f "$path.new"
+
+  # Remove any existing marked configuration.
+  awk '/^# start '"$name"'$/ { drop = 1; next }
+       /^# stop '"$name"'$/  { drop = 0; next }
+       drop                  { next }
+                             { print }' "$path" > "$path.new"
+
+  # Add the new required configuration, if any.
+  if [ -n "${archiver}" ]; then
+    cat >> "$path.new" <<EOF
+# start build-mbl-archiver
+INHERIT += "archiver"
+ARCHIVER_MODE[src] = "$archiver"
+# stop build-mbl-archiver
+EOF
+  fi
+
+  # If anything changed then atomically update local.conf
+  if ! cmp -s "$path" "$path.new"; then
+    mv -f "$path.new" "$path"
+  fi
+  rm -f "$path.new"
+}
+
 usage()
 {
   cat <<EOF
 
 usage: build.sh [OPTION] [STAGE]..
 
+  --archive-source      Enable source package archiving.
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
   --branch BRANCH       Name the branch to checkout. Default ${default_branch}.
   --[no-]compress       Enable image artifact compression, default enabled.
@@ -183,8 +245,9 @@ branch="$default_branch"
 url="$default_url"
 distro="$default_distro"
 flag_compress=1
+flag_archiver=""
 
-args=$(getopt -o+hj:o:x -l branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l archive-source,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -199,6 +262,10 @@ while [ $# -gt 0 ]; do
     continue
   fi
   case $1 in
+  --archive-source)
+    flag_archiver=original
+    ;;
+
   --branch)
     opt_prev=branch
     ;;
@@ -451,6 +518,7 @@ while true; do
          define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/conf/distro/mbl.conf" \
                      "DISTRO_VERSION" "$build_tag"
        fi
+       setup_archiver "$builddir/machine-$machine/mbl-manifest/conf/local.conf" "$flag_archiver"
 
        # This needs to be done after the setup otherwise bitbake does not have
        # visibility of these variables
@@ -506,7 +574,30 @@ while true; do
             suffixes="rpi-sdimg"
             ;;
           esac
-            
+
+          # Source tar balls
+          mkdir -p "$imagedir/source"
+
+          case $flag_archiver in
+          "")
+            ;;
+          original)
+            # If we are archiving 'original' source we need to tar up a
+            # directory containing source tarballs, patches, series
+            # files and other crud.
+            for path in "$bbtmpdir/deploy/sources/arm-oe-linux-gnueabi/"*; do
+              dir=$(dirname "$path")
+              pvn=$(basename "$path")
+              write_info "save artifact %s\n" "$pvn"
+              tar c -J -C "$dir" -f "$imagedir/source/$pvn.tar.xz" "$pvn"
+            done
+            ;;
+          *)
+            printf "assert: bad archiver %s\n" "$flag_archiver" >&2
+            exit 9
+            ;;
+          esac
+
           for suffix in $suffixes
           do
             write_info "save artifact %s\n" "$image-$machine.$suffix"
