@@ -126,6 +126,22 @@ maybe_compress()
     fi
 }
 
+define_conf()
+{
+  local path="$1"
+  local k="$2"
+  local v="$3"
+
+  rm -f "$path.new"
+  grep -v "$k" "$path" > "$path.new"
+  printf "%s = \"%s\"\n" "$k" "$v" >> "$path.new"
+
+  if ! cmp -s "$path" "$path.new"; then
+    mv -f "$path.new" "$path"
+  fi
+  rm -f "$path.new"
+}
+
 usage()
 {
   cat <<EOF
@@ -136,6 +152,7 @@ usage: build.sh [OPTION] [STAGE]..
   --branch BRANCH       Name the branch to checkout. Default ${default_branch}.
   --[no-]compress       Enable image artifact compression, default enabled.
   --builddir DIR        Use DIR for build, default CWD.
+  --build-tag TAG       Specify a unique version tag to identify the build.
   --downloaddir DIR     Use DIR to store downloaded packages. Default \$builddir/download
   --external-manifest=PATH
                         Specify an external manifest file.
@@ -167,7 +184,7 @@ url="$default_url"
 distro="$default_distro"
 flag_compress=1
 
-args=$(getopt -o+hj:o:x -l branch:,builddir:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -188,6 +205,10 @@ while [ $# -gt 0 ]; do
 
   --builddir)
     opt_prev=builddir
+    ;;
+
+  --build-tag)
+    opt_prev=build_tag
     ;;
 
   --compress)
@@ -425,6 +446,11 @@ while true; do
        MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
        set -u
        set -e
+
+       if [ -n "${build_tag:-}" ]; then
+         define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/conf/distro/mbl.conf" \
+                     "DISTRO_VERSION" "$build_tag"
+       fi
 
        # This needs to be done after the setup otherwise bitbake does not have
        # visibility of these variables
