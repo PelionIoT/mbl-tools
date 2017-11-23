@@ -95,7 +95,7 @@ while [ $# -gt 0 ]; do
   -o | --outputdir)
     opt_prev=outputdir
     ;;
-  
+
   --tty)
     flag_tty="-t"
     ;;
@@ -153,7 +153,7 @@ mkdir -p "$builddir"
 if [ -n "${inject_mcc_files:-}" ]; then
   mkdir -p "$builddir/inject-mcc"
   for file in ${inject_mcc_files:-}; do
-    base="$(basename "$file")"      
+    base="$(basename "$file")"
     cp "$file" "$builddir/inject-mcc/$base"
     build_args="${build_args:-} --inject-mcc=/work/inject-mcc/$base"
   done
