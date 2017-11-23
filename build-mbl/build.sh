@@ -214,11 +214,11 @@ while [ $# -gt 0 ]; do
   --compress)
     flag_compress=1
     ;;
-  
+
   --no-compress)
     flag_compress=0
     ;;
-  
+
   --downloaddir)
     opt_prev=downloaddir
     ;;
@@ -366,7 +366,7 @@ while true; do
     fi
     (cd "$builddir/mbl-manifest"; repo init -b "$branch" -m "$manifest")
     (cd "$builddir/mbl-manifest"; repo sync)
-    
+
     push_stages pin
     ;;
 
@@ -512,7 +512,7 @@ while true; do
           mkdir -p "$imagedir/dot/"
           bh_path="$builddir/machine-$machine/mbl-manifest/build-mbl/buildhistory/images/${machine/-/_}/glibc/$image"
           for path in "$bh_path/"*.dot; do
-            if [ -e "$path" ]; then          
+            if [ -e "$path" ]; then
               write_info "save artifact %s\n" "$(basename "$path")"
               cp "$path" "$imagedir/dot/"
             fi
@@ -521,7 +521,7 @@ while true; do
           # Build information
           mkdir -p "$imagedir/info/"
           for path in "$bh_path/"*.txt; do
-            if [ -e "$path" ]; then          
+            if [ -e "$path" ]; then
               write_info "save artifact %s\n" "$(basename "$path")"
               cp "$path" "$imagedir/info/"
             fi
