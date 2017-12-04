@@ -466,6 +466,16 @@ while true; do
          export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
        fi
 
+       # If outputdir is specified, the output of bitbake -e is saved in the
+       # machine artifact directory. This command will output the configuration
+       # files and the class files used in the execution environment.
+       if [ -n "${outputdir:-}" ]; then
+         machinedir="$outputdir/machine/$machine"
+         mkdir -p "$machinedir"
+         bitbake -e > bitbake-e.log.t
+         mv -f bitbake-e.log.t "$machinedir/bitbake-e.log"
+       fi
+
        # images is a space separated list of options, it should not be
        # quoted because it will form multiple options rather than one
        # option. However ideally each option in the list should be
