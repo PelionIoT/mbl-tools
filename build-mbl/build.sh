@@ -89,7 +89,7 @@ repo_init_atomic ()
   mv "$path-ri" "$path"
 }
 
-all_machines="imx7s-warp raspberrypi3"
+all_machines="imx7s-warp-mbl raspberrypi3"
 
 default_branch="master"
 default_manifest="default.xml"
@@ -489,7 +489,7 @@ while true; do
           mkdir -p "$imagedir/images"
 
           case $machine in
-          imx7s-warp)
+          imx7s-warp-mbl)
             suffixes="manifest tar.xz wic.gz"
             ;;
           raspberrypi3)
