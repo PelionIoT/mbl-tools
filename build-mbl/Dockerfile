@@ -4,13 +4,6 @@
 
 FROM ubuntu:xenial-20170517.1
 
-RUN apt-get update && apt-get install gosu
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-
-# Use the 'exec' form of ENTRYPOINT to ensure that docker run
-# invocation arguments are appended to the command line.
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
 ## Build environment tooling
 
 RUN apt-get update && apt-get install locales \
@@ -43,6 +36,13 @@ RUN apt-get update && apt-get install -y \
     wget \
     xterm \
     xz-utils
+
+RUN apt-get update && apt-get install gosu
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Use the 'exec' form of ENTRYPOINT to ensure that docker run
+# invocation arguments are appended to the command line.
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 RUN rm -rf /var/lib/apt/lists/*
 
