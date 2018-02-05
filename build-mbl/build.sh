@@ -571,7 +571,7 @@ while true; do
             suffixes="manifest tar.xz wic.gz"
             ;;
           raspberrypi3)
-            suffixes="rpi-sdimg"
+            suffixes="manifest tar.xz wic.gz"
             ;;
           esac
 
