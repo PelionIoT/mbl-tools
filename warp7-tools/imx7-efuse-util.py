@@ -141,10 +141,14 @@ OCOTP_BOOT_CFG0_QSPI            = 0b00000000000000000101000000000000
 OCOTP_BOOT_CFG0_NOR             = 0b00000000000000000110000000000000
 
 
-def fatal(msg, errcode):
-    """Print an error message and exit with a defined exit code."""
-    logging.error("Fatal: {}".format(msg))
-    sys.exit(errcode)
+class ImxEfuseError(Exception):
+    """Custom exception to catch the message and the error code."""
+
+    def __init__(self, message, errorcode):
+        """Exception init method."""
+        super(ImxEfuseError, self).__init__(message)
+        # Set the custom error code
+        self.errorcode = errorcode
 
 
 def open_file(path, mode):
@@ -183,7 +187,7 @@ def seek_to_register(fuse_handle, start_bank, fuse):
     # Validate range
     if fuse >= IMX7S_FUSES_PER_BANK:
         estr = "fuse index {} out of bounds".format(fuse)
-        fatal(estr, errno.EINVAL)
+        raise ImxEfuseError(estr, errno.EINVAL)
 
     # Seek to the bank
     seek_to_bank(fuse_handle, start_bank)
@@ -236,7 +240,7 @@ def read_fuse_int(fuse_handle):
     if chunk == 0:
         estr = "Unable to read fuse bank = {} word {}".format(
             IMX7S_BOOT_CFG_BANK, IMX7S_BOOT_CFG0_WORD)
-        fatal(estr, errno.ENODEV)
+        raise ImxEfuseError(estr, errno.ENODEV)
     fuse = string2dword(chunk)
     return fuse
 
@@ -372,7 +376,7 @@ def write_sec_config_bit(rfuse_handle, wfuse_handle):
     if validate_fuses(rfuse_handle, IMX7S_SRK_FUSE_COUNT) is False:
         dump_boot_fuse(rfuse_handle)
         estr = "Fuse validation fail"
-        fatal(estr, errno.ENODEV)
+        raise ImxEfuseError(estr, errno.ENODEV)
 
     # Seek to bank
     seek_to_register(rfuse_handle, IMX7S_BOOT_CFG_BANK, IMX7S_BOOT_CFG0_WORD)
@@ -427,32 +431,38 @@ def parse_args():
 
 def main():
     """Main execution."""
-    args = parse_args()
+    try:
+        args = parse_args()
 
-    rfuse_handle = open_file(args.keyfile_path, 'rb')
-    if args.dump_fuse_content:
-        dump_path(args.keyfile_path)
-        dump_fuse(rfuse_handle, 0, IMX7S_FUSE_BANK_COUNT)
-    elif args.print_status:
-        dump_path(args.keyfile_path)
-        dump_boot_fuse(rfuse_handle)
-        dump_srk_fuse(rfuse_handle)
-    else:
-        # Open write fuse handle and input fuse keys if appropriate
-        wfuse_handle = open_file(args.keyfile_path, 'wb')
-        if args.keyfile:
-            fuse_map_handle = open_file(args.keyfile, 'a+b')
+        rfuse_handle = open_file(args.keyfile_path, 'rb')
+        if args.dump_fuse_content:
+            dump_path(args.keyfile_path)
+            dump_fuse(rfuse_handle, 0, IMX7S_FUSE_BANK_COUNT)
+        elif args.print_status:
+            dump_path(args.keyfile_path)
+            dump_boot_fuse(rfuse_handle)
+            dump_srk_fuse(rfuse_handle)
+        else:
+            # Open write fuse handle and input fuse keys if appropriate
+            wfuse_handle = open_file(args.keyfile_path, 'wb')
+            if args.keyfile:
+                fuse_map_handle = open_file(args.keyfile, 'a+b')
 
-        # Burn fuses if promted by '-y' on the command line or 'y' at prompt
-        if args.keyfile and prompt_user_write_srk_fuse(args.keyfile,
-                                                       args.keyfile_path,
-                                                       args.yes_all):
-            write_srk_fuse(wfuse_handle, fuse_map_handle)
+            # Burn fuses if promted by '-y' on the command line or 'y' at
+            # prompt
+            if args.keyfile and prompt_user_write_srk_fuse(args.keyfile,
+                                                           args.keyfile_path,
+                                                           args.yes_all):
+                write_srk_fuse(wfuse_handle, fuse_map_handle)
 
-        # Burn the secure boot bit - CAUTION
-        if args.lock and prompt_user_write_sec_config_bit(rfuse_handle,
-                                                          args.yes_all):
-            write_sec_config_bit(rfuse_handle, wfuse_handle)
+            # Burn the secure boot bit - CAUTION
+            if args.lock and prompt_user_write_sec_config_bit(rfuse_handle,
+                                                              args.yes_all):
+                write_sec_config_bit(rfuse_handle, wfuse_handle)
+    except ImxEfuseError as e:
+        logging.error("Fatal: {}".format(e.message))
+        return e.errorcode
+    return 0
 
 
 if __name__ == '__main__':
