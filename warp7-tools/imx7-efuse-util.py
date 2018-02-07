@@ -368,5 +368,6 @@ def main():
         if args.l and prompt_user_write_sec_config_bit(rfuse_handle, args.y):
             write_sec_config_bit(rfuse_handle, wfuse_handle)
 
+
 if __name__ == '__main__':
     sys.exit(main())
