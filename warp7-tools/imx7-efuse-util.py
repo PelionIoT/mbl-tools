@@ -26,6 +26,88 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+"""It provides a way for burning OTP fuses on i.MX7Solo/i.MX7Dual processors.
+
+It performs two core functions
+
+    1) Viewing the current state of the OTP fuses on i.MX7
+
+    Example printing the state of secure boot fuses:
+
+    imx7-efuse-util.py -s
+
+    Path : /sys/bus/nvmem/devices/imx-ocotp0/nvmem
+    Boot Fuse settings
+    OCOTP_BOOT_CFG0 = 0x12002820
+    FORCE_COLD_BOOT = 0
+    BT_FUSE_SEL = 1
+    DIR_BT_DIS = 0
+    SEC_CONFIG = 1
+    Boot Mode = MMC/eMMC
+    Secure fuse keys
+    Bank 6
+    0x0e250e03
+    0x9d560868
+    0xa22f48c7
+    0x02812e14
+    Bank 7
+    0xdde453fc
+    0x7b42dc98
+    0xc2c015d8
+    0x733a36f5
+
+    2) Programming of the OTP fuses on i.MX7
+
+    Example programming of the SRK fuses:
+
+    imx7-efuse-util.py -k SRK_1_2_3_4_fuse.bin
+
+    Write key values in SRK_1_2_3_4_fuse.bin to SRK fuses =>
+    /sys/bus/nvmem/devices/imx-ocotp0/nvmem y/n y
+
+    Key 0 0x0e250e03
+    Key 1 0x9d560868
+    Key 2 0xa22f48c7
+    Key 3 0x02812e14
+    Key 4 0xdde453fc
+    Key 5 0x7b42dc98
+    Key 6 0xc2c015d8
+    Key 7 0x733a36f5
+
+    Example locking part into secure boot mode (caution):
+
+    imx7-efuse-util.py -l
+    Secure fuse keys
+    Bank 6
+    0x0e250e03
+    0x9d560868
+    0xa22f48c7
+    0x02812e14
+    Bank 7
+    0xdde453fc
+    0x7b42dc98
+    0xc2c015d8
+    0x733a36f5
+    Lock part into secure-boot mode with above keys ? y/n y
+    Are you REALLY sure ? y/n y
+    Key 0 0x0e250e03
+    Key 1 0x9d560868
+    Key 2 0xa22f48c7
+    Key 3 0x02812e14
+    Key 4 0xdde453fc
+    Key 5 0x7b42dc98
+    Key 6 0xc2c015d8
+    Key 7 0x733a36f5
+    Boot Fuse settings
+    OCOTP_BOOT_CFG0 = 0x12002820
+    FORCE_COLD_BOOT = 0
+    BT_FUSE_SEL = 1
+    DIR_BT_DIS = 0
+    SEC_CONFIG = 1
+    Boot Mode = MMC/eMMC
+
+"""
+
 from __future__ import print_function
 
 import argparse
@@ -60,14 +142,13 @@ OCOTP_BOOT_CFG0_NOR             = 0b00000000000000000110000000000000
 
 
 def fatal(msg, errcode):
-    """Print an error message and exit with a defined exit code"""
+    """Print an error message and exit with a defined exit code."""
     logging.error("Fatal : " + msg)
     sys.exit(errcode)
 
 
 def open_file(path, mode):
-    """Open a file in the specified mode or bail out trapping the IOError"""
-
+    """Open a file in the specified mode or bail out trapping the IOError."""
     try:
         handle = open(path, mode)
         return handle
@@ -77,7 +158,7 @@ def open_file(path, mode):
 
 
 def string2dword(chunk):
-    """Convert little endian string to little endian dword"""
+    """Convert little endian string to little endian dword."""
     chunk = bytearray(chunk)
     chunk.reverse()
     fuse = int(binascii.hexlify(chunk), 16)
@@ -85,20 +166,20 @@ def string2dword(chunk):
 
 
 def print_fuse(chunk):
-    """Print string formatted little endian to little-endian dword"""
+    """Print string formatted little endian to little-endian dword."""
     fuse = string2dword(chunk)
     print("\t0x%08x" % (fuse))
 
 
 def seek_to_bank(fuse_handle, start_bank):
-    """Move to the offset of the indicated bank in the memory map provided"""
+    """Move to the offset of the indicated bank in the memory map provided."""
     # Calculate offset and seek to the location
     offset = start_bank * IMX7S_FUSES_PER_BANK * IMX7S_BYTES_PER_FUSE
     fuse_handle.seek(offset)
 
 
 def seek_to_register(fuse_handle, start_bank, fuse):
-    """Move to the offset of a given fuse"""
+    """Move to the offset of a given fuse."""
     # Validate range
     if fuse >= IMX7S_FUSES_PER_BANK:
         estr = "fuse index " + str(fuse) + " out of bounds"
@@ -113,7 +194,7 @@ def seek_to_register(fuse_handle, start_bank, fuse):
 
 
 def dump_fuse(fuse_handle, start_bank, bank_count):
-    """Dump the set of fuses starting at start_bank for bank_count banks"""
+    """Dump the set of fuses starting at start_bank for bank_count banks."""
     # Seek to offset of start_bank
     seek_to_bank(fuse_handle, start_bank)
 
@@ -140,6 +221,7 @@ def dump_fuse(fuse_handle, start_bank, bank_count):
 
 
 def prompt(prompt_string, pass_val):
+    """Prompt a string and confirm the valie passed."""
     val = raw_input(prompt_string)
     if val != pass_val:
         print("Aborting operation")
@@ -148,7 +230,7 @@ def prompt(prompt_string, pass_val):
 
 
 def read_fuse_int(fuse_handle):
-    """Read fuse setting"""
+    """Read fuse setting."""
     chunk = fuse_handle.read(IMX7S_BYTES_PER_FUSE)
     if chunk == 0:
         estr = "Unable to read fuse bank = " + str(IMX7S_BOOT_CFG_BANK) + \
@@ -159,7 +241,7 @@ def read_fuse_int(fuse_handle):
 
 
 def dump_boot_fuse(fuse_handle):
-    """Dump boot fuse status
+    """Dump boot fuse status.
 
     Section 6.4.5.24:
         Address: 3035_0000h base + 470h offset = 3035_0470h => OCOTP_BOOT_CFG0
@@ -174,7 +256,6 @@ def dump_boot_fuse(fuse_handle):
             25   => SEC_CONFIG
             19:0 => BOOT_CFG
     """
-
     print('Boot Fuse settings')
 
     # Seek to bank
@@ -209,7 +290,7 @@ def dump_boot_fuse(fuse_handle):
 
 
 def dump_srk_fuse(fuse_handle):
-    """Dump the SRK fuse map"""
+    """Dump the SRK fuse map."""
     print('Secure fuse keys')
 
     # Print from the SRK bank for two fuse bank iterations
@@ -217,7 +298,7 @@ def dump_srk_fuse(fuse_handle):
 
 
 def prompt_user_write_srk_fuse(srk_file, nvmem_path, yesall):
-    """Give the user the chance to abort before we burn SRK fuses"""
+    """Give the user the chance to abort before we burn SRK fuses."""
     if yesall is False:
         pstring = "Write key values in " + srk_file + " to SRK fuses => " \
                   + nvmem_path + " y/n "
@@ -227,7 +308,7 @@ def prompt_user_write_srk_fuse(srk_file, nvmem_path, yesall):
 
 
 def write_srk_fuse(fuse_handle, fuse_map_handle):
-    """Write the SRK fuse map"""
+    """Write the SRK fuse map."""
     # Seek to offset of SRK fuses
     seek_to_bank(fuse_handle, IMX7S_SECURE_FUSE_BANK_START)
 
@@ -248,7 +329,7 @@ def write_srk_fuse(fuse_handle, fuse_map_handle):
 
 
 def prompt_user_write_sec_config_bit(fuse_handle, yesall):
-    """Give the user the chance to abort before we pop the SEC_CONFIG fuse"""
+    """Give the user the chance to abort before we pop the SEC_CONFIG fuse."""
     dump_srk_fuse(fuse_handle)
     if yesall is False:
         pstring = "Lock part into secure-boot mode with above keys? " + " y/n "
@@ -262,7 +343,7 @@ def prompt_user_write_sec_config_bit(fuse_handle, yesall):
 
 
 def validate_fuses(fuse_handle, fuse_count):
-    """Go to the starting fuse bank address"""
+    """Go to the starting fuse bank address."""
     seek_to_bank(fuse_handle, IMX7S_SECURE_FUSE_BANK_START)
 
     # Validate at least one fuse is non-zero
@@ -285,7 +366,7 @@ def validate_fuses(fuse_handle, fuse_count):
 
 
 def write_sec_config_bit(rfuse_handle, wfuse_handle):
-    """Write the SRK fuse map"""
+    """Write the SRK fuse map."""
     # Validate the basic sanity of the fuse setup
     if validate_fuses(rfuse_handle, IMX7S_SRK_FUSE_COUNT) is False:
         dump_boot_fuse(rfuse_handle)
@@ -313,12 +394,12 @@ def write_sec_config_bit(rfuse_handle, wfuse_handle):
 
 
 def dump_path(path):
-    """Show the given path"""
+    """Show the given path."""
     print('Path : %s' % (path))
 
 
 def parse_args():
-    """Extract command line arguments"""
+    """Extract command line arguments."""
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-k',
@@ -344,6 +425,7 @@ def parse_args():
 
 
 def main():
+    """Main execution."""
     args = parse_args()
 
     rfuse_handle = open_file(args.p, 'rb')
