@@ -143,7 +143,7 @@ OCOTP_BOOT_CFG0_NOR             = 0b00000000000000000110000000000000
 
 def fatal(msg, errcode):
     """Print an error message and exit with a defined exit code."""
-    logging.error("Fatal : " + msg)
+    logging.error("Fatal: {}".format(msg))
     sys.exit(errcode)
 
 
@@ -182,7 +182,7 @@ def seek_to_register(fuse_handle, start_bank, fuse):
     """Move to the offset of a given fuse."""
     # Validate range
     if fuse >= IMX7S_FUSES_PER_BANK:
-        estr = "fuse index " + str(fuse) + " out of bounds"
+        estr = "fuse index {} out of bounds".format(fuse)
         fatal(estr, errno.EINVAL)
 
     # Seek to the bank
@@ -232,9 +232,10 @@ def prompt(prompt_string, pass_val):
 def read_fuse_int(fuse_handle):
     """Read fuse setting."""
     chunk = fuse_handle.read(IMX7S_BYTES_PER_FUSE)
+    chunk = 0
     if chunk == 0:
-        estr = "Unable to read fuse bank = " + str(IMX7S_BOOT_CFG_BANK) + \
-               " word " + str(IMX7S_BOOT_CFG0_WORD)
+        estr = "Unable to read fuse bank = {} word {}".format(
+            IMX7S_BOOT_CFG_BANK, IMX7S_BOOT_CFG0_WORD)
         fatal(estr, errno.ENODEV)
     fuse = string2dword(chunk)
     return fuse
@@ -300,8 +301,8 @@ def dump_srk_fuse(fuse_handle):
 def prompt_user_write_srk_fuse(srk_file, nvmem_path, yesall):
     """Give the user the chance to abort before we burn SRK fuses."""
     if yesall is False:
-        pstring = "Write key values in " + srk_file + " to SRK fuses => " \
-                  + nvmem_path + " y/n "
+        pstring = "Write key values in {} to SRK fuses => {} y/n ".format(
+            srk_file, nvmem_path)
         if prompt(pstring, 'y') is False:
             return False
     return True
@@ -332,11 +333,11 @@ def prompt_user_write_sec_config_bit(fuse_handle, yesall):
     """Give the user the chance to abort before we pop the SEC_CONFIG fuse."""
     dump_srk_fuse(fuse_handle)
     if yesall is False:
-        pstring = "Lock part into secure-boot mode with above keys? " + " y/n "
+        pstring = "Lock part into secure-boot mode with above keys? y/n"
         if prompt(pstring, 'y') is False:
             return False
 
-        pstring = "Are you REALLY sure ?" + " y/n "
+        pstring = "Are you REALLY sure ? y/n"
         if prompt(pstring, 'y') is False:
             return False
     return True
