@@ -402,23 +402,23 @@ def parse_args():
     """Extract command line arguments."""
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-k',
+    parser.add_argument('-k', dest='keyfile',
                         help='keyfile containing data to write to fuses')
 
-    parser.add_argument('-p',
+    parser.add_argument('-p', dest='keyfile_path',
                         default='/sys/bus/nvmem/devices/imx-ocotp0/nvmem',
                         help='path to write keyfile to')
 
-    parser.add_argument('-l', action='store_true',
+    parser.add_argument('-l', action='store_true', dest='lock',
                         help='Lock part to secure mode - irrevocable')
 
-    parser.add_argument('-y', action='store_true',
+    parser.add_argument('-y', action='store_true', dest='yes_all',
                         help='Yes to all prompts')
 
-    parser.add_argument('-s', action='store_true',
+    parser.add_argument('-s', action='store_true', dest='print_status',
                         help='Print fuse status')
 
-    parser.add_argument('-d', action='store_true',
+    parser.add_argument('-d', action='store_true', dest='dump_fuse_content',
                         help='Dump entire fuse contents')
 
     return parser.parse_args()
@@ -428,26 +428,29 @@ def main():
     """Main execution."""
     args = parse_args()
 
-    rfuse_handle = open_file(args.p, 'rb')
-    if args.d:
-        dump_path(args.p)
+    rfuse_handle = open_file(args.keyfile_path, 'rb')
+    if args.dump_fuse_content:
+        dump_path(args.keyfile_path)
         dump_fuse(rfuse_handle, 0, IMX7S_FUSE_BANK_COUNT)
-    elif args.s:
-        dump_path(args.p)
+    elif args.print_status:
+        dump_path(args.keyfile_path)
         dump_boot_fuse(rfuse_handle)
         dump_srk_fuse(rfuse_handle)
     else:
         # Open write fuse handle and input fuse keys if appropriate
-        wfuse_handle = open_file(args.p, 'wb')
-        if args.k:
-            fuse_map_handle = open_file(args.k, 'a+b')
+        wfuse_handle = open_file(args.keyfile_path, 'wb')
+        if args.keyfile:
+            fuse_map_handle = open_file(args.keyfile, 'a+b')
 
         # Burn fuses if promted by '-y' on the command line or 'y' at prompt
-        if args.k and prompt_user_write_srk_fuse(args.k, args.p, args.y):
+        if args.keyfile and prompt_user_write_srk_fuse(args.keyfile,
+                                                       args.keyfile_path,
+                                                       args.yes_all):
             write_srk_fuse(wfuse_handle, fuse_map_handle)
 
         # Burn the secure boot bit - CAUTION
-        if args.l and prompt_user_write_sec_config_bit(rfuse_handle, args.y):
+        if args.lock and prompt_user_write_sec_config_bit(rfuse_handle,
+                                                          args.yes_all):
             write_sec_config_bit(rfuse_handle, wfuse_handle)
 
 
