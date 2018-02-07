@@ -154,7 +154,7 @@ def open_file(path, mode):
         return handle
 
     except IOError as e:
-        raise ValueError("%s %s" % (path, str(e)))
+        raise ValueError("{} {}".format(path, e))
 
 
 def string2dword(chunk):
@@ -168,7 +168,7 @@ def string2dword(chunk):
 def print_fuse(chunk):
     """Print string formatted little endian to little-endian dword."""
     fuse = string2dword(chunk)
-    print("\t0x%08x" % (fuse))
+    print("\t0x{0:08x}".format(fuse))
 
 
 def seek_to_bank(fuse_handle, start_bank):
@@ -208,7 +208,7 @@ def dump_fuse(fuse_handle, start_bank, bank_count):
         if i == 0:
             if bank == end_bank:
                 break
-            print("Bank %d" % (bank))
+            print("Bank {}".format(bank))
             bank = bank + 1
         i = i + 1
         if i == IMX7S_FUSES_PER_BANK:
@@ -265,15 +265,15 @@ def dump_boot_fuse(fuse_handle):
     fuse = read_fuse_int(fuse_handle)
 
     # Display bit-contents
-    print('OCOTP_BOOT_CFG0 = 0x%08x' % fuse)
-    print('\tFORCE_COLD_BOOT = %u'
-          % bool((fuse & OCOTP_BOOT_CFG0_FORCE_COLD_BOOT)))
-    print('\tBT_FUSE_SEL     = %u'
-          % bool((fuse & OCOTP_BOOT_CFG0_BT_FUSE_SEL)))
-    print('\tDIR_BT_DIS      = %u'
-          % bool((fuse & OCOTP_BOOT_CFG0_DIR_BT_DIS)))
-    print('\tSEC_CONFIG      = %u'
-          % bool((fuse & OCOTP_BOOT_CFG0_SEC_CONFIG)))
+    print('OCOTP_BOOT_CFG0 = 0x{0:08x}'.format(fuse))
+    print('\tFORCE_COLD_BOOT = {:d}'.format(
+          bool(fuse & OCOTP_BOOT_CFG0_FORCE_COLD_BOOT)))
+    print('\tBT_FUSE_SEL     = {:d}'.format(
+          bool(fuse & OCOTP_BOOT_CFG0_BT_FUSE_SEL)))
+    print('\tDIR_BT_DIS      = {:d}'.format(
+          bool(fuse & OCOTP_BOOT_CFG0_DIR_BT_DIS)))
+    print('\tSEC_CONFIG      = {:d}'.format(
+          bool(fuse & OCOTP_BOOT_CFG0_SEC_CONFIG)))
 
     # Print the boot mode (higher order bits) lower order 'speed' bits TBD
     boot_mode = fuse & OCOTP_BOOT_MODE_MASK
@@ -320,7 +320,7 @@ def write_srk_fuse(fuse_handle, fuse_map_handle):
             break
         fuse = string2dword(chunk)
 
-        print("Key %d 0x%08x" % (i, fuse))
+        print("Key {} 0x{0:08x}".format(i, fuse))
         i = i + 1
 
         # Write key to Linux driver interface
@@ -395,7 +395,7 @@ def write_sec_config_bit(rfuse_handle, wfuse_handle):
 
 def dump_path(path):
     """Show the given path."""
-    print('Path : %s' % (path))
+    print('Path: {}'.format(path))
 
 
 def parse_args():
