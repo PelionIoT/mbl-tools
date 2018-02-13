@@ -325,7 +325,7 @@ def write_srk_fuse(fuse_handle, fuse_map_handle):
             break
         fuse = string2dword(chunk)
 
-        print("Key {0} 0x{1:08x}".format(i, fuse))
+        print("Key {0} 0x{1:08x}".format(fuse_idx, fuse))
         fuse_idx = fuse_idx + 1
 
         # Write key to Linux driver interface
