@@ -203,20 +203,20 @@ def dump_fuse(fuse_handle, start_bank, bank_count):
     seek_to_bank(fuse_handle, start_bank)
 
     # Calculate end bank
-    i = 0
+    fuse_idx = 0
     bank = start_bank
     end_bank = start_bank + bank_count
 
     # Display loop of dword values
     while True:
-        if i == 0:
+        if fuse_idx == 0:
             if bank == end_bank:
                 break
             print("Bank {}".format(bank))
             bank = bank + 1
-        i = i + 1
-        if i == IMX7S_FUSES_PER_BANK:
-            i = 0
+        fuse_idx = fuse_idx + 1
+        if fuse_idx == IMX7S_FUSES_PER_BANK:
+            fuse_idx = 0
         chunk = fuse_handle.read(IMX7S_BYTES_PER_FUSE)
         if chunk:
             print_fuse(chunk)
@@ -317,7 +317,7 @@ def write_srk_fuse(fuse_handle, fuse_map_handle):
     # Seek to offset of SRK fuses
     seek_to_bank(fuse_handle, IMX7S_SECURE_FUSE_BANK_START)
 
-    i = 0
+    fuse_idx = 0
     while True:
         # Read input key
         chunk = fuse_map_handle.read(4)
@@ -326,7 +326,7 @@ def write_srk_fuse(fuse_handle, fuse_map_handle):
         fuse = string2dword(chunk)
 
         print("Key {} 0x{0:08x}".format(i, fuse))
-        i = i + 1
+        fuse_idx = fuse_idx + 1
 
         # Write key to Linux driver interface
         fuse_handle.write(chunk)
@@ -352,9 +352,9 @@ def validate_fuses(fuse_handle, fuse_count):
     seek_to_bank(fuse_handle, IMX7S_SECURE_FUSE_BANK_START)
 
     # Validate at least one fuse is non-zero
-    i = 0
+    fuse_idx = 0
     found = False
-    while i < fuse_count:
+    while fuse_idx < fuse_count:
         # Read input key
         chunk = fuse_handle.read(4)
         if chunk == 0:
@@ -365,7 +365,7 @@ def validate_fuses(fuse_handle, fuse_count):
         if (fuse != 0x00000000):
             found = True
             break
-        i = i + 1
+        fuse_idx = fuse_idx + 1
 
     return found
 
