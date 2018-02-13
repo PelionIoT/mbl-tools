@@ -443,7 +443,7 @@ def main():
             # Open write fuse handle and input fuse keys if appropriate
             wfuse_handle = open_file(args.keyfile_path, 'wb')
             if args.keyfile:
-                fuse_map_handle = open_file(args.keyfile, 'a+b')
+                fuse_map_handle = open_file(args.keyfile, 'rb')
 
             # Burn fuses if promted by '-y' on the command line or 'y' at
             # prompt
