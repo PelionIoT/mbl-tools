@@ -236,7 +236,6 @@ def prompt(prompt_string, pass_val):
 def read_fuse_int(fuse_handle):
     """Read fuse setting."""
     chunk = fuse_handle.read(IMX7S_BYTES_PER_FUSE)
-    chunk = 0
     if chunk == 0:
         estr = "Unable to read fuse bank = {} word {}".format(
             IMX7S_BOOT_CFG_BANK, IMX7S_BOOT_CFG0_WORD)
