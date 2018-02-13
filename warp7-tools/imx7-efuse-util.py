@@ -180,18 +180,18 @@ def seek_to_bank(fuse_handle, start_bank):
     fuse_handle.seek(offset)
 
 
-def seek_to_register(fuse_handle, start_bank, fuse):
+def seek_to_register(fuse_handle, start_bank, fuse_idx):
     """Move to the offset of a given fuse."""
     # Validate range
-    if fuse >= IMX7S_FUSES_PER_BANK:
-        estr = "fuse index {} out of bounds".format(fuse)
+    if fuse_idx >= IMX7S_FUSES_PER_BANK:
+        estr = "fuse index {} out of bounds".format(fuse_idx)
         raise ImxEfuseError(estr, errno.EINVAL)
 
     # Seek to the bank
     seek_to_bank(fuse_handle, start_bank)
 
     # Seek to fuse offset
-    offset = fuse * IMX7S_BYTES_PER_FUSE
+    offset = fuse_idx * IMX7S_BYTES_PER_FUSE
     fuse_handle.seek(offset, os.SEEK_CUR)
 
 
