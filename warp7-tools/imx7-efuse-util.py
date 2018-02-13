@@ -108,8 +108,6 @@ It performs two core functions
 
 """
 
-from __future__ import print_function
-
 import argparse
 import binascii
 import errno
