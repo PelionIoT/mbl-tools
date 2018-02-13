@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (c) 2017 Linaro, Ltd.
 # All rights reserved.
@@ -226,7 +226,7 @@ def dump_fuse(fuse_handle, start_bank, bank_count):
 
 def prompt(prompt_string, pass_val):
     """Prompt a string and confirm the valie passed."""
-    val = raw_input(prompt_string)
+    val = input(prompt_string)
     if val != pass_val:
         print("Aborting operation")
         return False
