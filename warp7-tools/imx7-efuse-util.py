@@ -121,7 +121,8 @@ import logging
 IMX7S_FUSES_PER_BANK            = 0x04
 IMX7S_BYTES_PER_FUSE            = 0x04
 IMX7S_FUSE_BANK_COUNT           = 0x10
-IMX7S_SRK_FUSE_COUNT            = 0x08
+IMX7S_NUM_SRK_FUSES             = 2
+IMX7S_SRK_SIZE                  = IMX7S_BYTES_PER_FUSE * IMX7S_NUM_SRK_FUSES
 IMX7S_SECURE_FUSE_BANK_START    = 0x06  # Ref Manual section 6.4.5.41
 IMX7S_BOOT_CFG_BANK             = 0x01  # Ref Manual Table 6-19
 IMX7S_BOOT_CFG0_WORD            = 0x03
@@ -296,7 +297,7 @@ def dump_srk_fuse(fuse_handle):
     print('Secure fuse keys')
 
     # Print from the SRK bank for two fuse bank iterations
-    dump_fuse(fuse_handle, IMX7S_SECURE_FUSE_BANK_START, 2)
+    dump_fuse(fuse_handle, IMX7S_SECURE_FUSE_BANK_START, IMX7S_NUM_SRK_FUSES)
 
 
 def prompt_user_write_srk_fuse(srk_file, nvmem_path, yesall):
@@ -317,7 +318,7 @@ def write_srk_fuse(fuse_handle, fuse_map_handle):
     fuse_idx = 0
     while True:
         # Read input key
-        chunk = fuse_map_handle.read(4)
+        chunk = fuse_map_handle.read(IMX7S_BYTES_PER_FUSE)
         if chunk == 0:
             break
         fuse = string2dword(chunk)
@@ -353,7 +354,7 @@ def validate_fuses(fuse_handle, fuse_count):
     found = False
     while fuse_idx < fuse_count:
         # Read input key
-        chunk = fuse_handle.read(4)
+        chunk = fuse_handle.read(IMX7S_BYTES_PER_FUSE)
         if chunk == 0:
             break
         fuse = string2dword(chunk)
@@ -370,7 +371,7 @@ def validate_fuses(fuse_handle, fuse_count):
 def write_sec_config_bit(rfuse_handle, wfuse_handle):
     """Write the SRK fuse map."""
     # Validate the basic sanity of the fuse setup
-    if validate_fuses(rfuse_handle, IMX7S_SRK_FUSE_COUNT) is False:
+    if validate_fuses(rfuse_handle, IMX7S_SRK_SIZE) is False:
         dump_boot_fuse(rfuse_handle)
         estr = "Fuse validation fail"
         raise ImxEfuseError(estr, errno.ENODEV)
