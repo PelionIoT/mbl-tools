@@ -142,6 +142,23 @@ define_conf()
   rm -f "$path.new"
 }
 
+extra_bitbake_info()
+{
+  local package="$1"
+  local output_path="$2"
+  local tmpf="$output_path/bitbake.tmp"
+  local envf="$output_path/bitbake.env"
+  local ret
+  bitbake -e -b "$package" > "$tmpf"
+  ret=$?
+  if [ $ret -eq 0 ]; then
+    # Extract the license extra information
+    egrep '^(LICENSE=|SUMMARY=|HOMEPAGE=|PV=|PN=|PR=|PF=)' "$tmpf" > "$envf"
+  fi
+  rm -f "$tmpf"
+  return $ret
+}
+
 ## Setup the yocto source archiver
 ## PATH: The path to local.conf
 ## ARCHIVER: The bitbake archiver source mode to install.  One of
@@ -550,6 +567,30 @@ while true; do
        # quoted.
        # shellcheck disable=SC2086
        bitbake $images
+
+       # Create extra bitbake info
+       bblicenses="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc/deploy/licenses"
+       packages=$(ls -1 "$bblicenses")
+       for pkg in $packages; do
+         printf "%s: retrieving extra bitbake package info\n" "$pkg"
+         # Package name without native extension
+         pn=${pkg/-native/}
+         if [ -f "$bblicenses/$pkg/recipeinfo" ]; then
+           # Make full package version name (to match bb file)
+           pvstr=$(egrep '^PV:' "$bblicenses/$pkg/recipeinfo")
+           pvn="${pn}_${pvstr/PV: /}"
+           set +e
+           if ! extra_bitbake_info "$pvn" "$bblicenses/$pkg"; then
+             # Try again with just package name
+             if ! extra_bitbake_info "$pn" "$bblicenses/$pkg"; then
+                printf "warning: could not retrieve extra bitbake info for %s (in %s)\n" "$pkg" "$bblicenses" >&2
+             fi
+           fi
+           set -e
+         else
+           printf "note: ignoring package %s as no recipeinfo\n" "$pkg" >&2
+         fi
+       done
       )
     done
     push_stages artifact
