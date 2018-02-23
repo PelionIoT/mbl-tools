@@ -100,13 +100,25 @@ default_images="mbl-console-image mbl-console-image-test"
 
 # Set of license package name (PN) and package version name (PVN) exceptions
 # This hash array uses a key (PN or PVN) created from reading the recipeinfo
-# Then the key is replaced with value found in this array so that the bitbake
+# Then the key is replaced with a value found in this array so that the bitbake
 # environment display command will find the right package
+# If you are need to choose a particular version of a package, use the full
+# PVN as the key, otherwise converting just the PN might mean choosing that
+# version everytime
 declare -A license_package_exceptions
 license_package_exceptions=(
   ["binutils-cross-arm"]="binutils-cross"
   ["docker"]="docker/docker"
-  ["gcc-cross-arm_7.3.0"]="gcc-cross_7.3")
+  ["gcc-cross-arm_7.3.0"]="gcc-cross_7.3"
+  ["gcc-cross-initial-arm_7.3.0"]="gcc-cross-initial_7.3"
+  ["gcc-runtime_7.3.0"]="gcc-runtime_7.3"
+  ["gnu-config"]="gnu-config_git"
+  ["go-cross-arm"]="go-cross"
+  ["kmod"]="kmod_git"
+  ["libgcc_7.3.0"]="libgcc_7.3"
+  ["libgcc-initial_7.3.0"]="libgcc-initial_7.3"
+  ["ncurses"]="ncurses/ncurses"
+  ["packagegroup-mbl"]="packagegroup-mbl.bb")
 
 # Test if a machine name appears in the all_machines list.
 #
@@ -603,7 +615,7 @@ while true; do
              if ! extra_bitbake_info "$pvn" "$bblicenses/$pkg"; then
                # Try again with just package name
                if ! extra_bitbake_info "$pn" "$bblicenses/$pkg"; then
-                  printf "warning: could not retrieve extra bitbake info for %s (in %s)\n" "$pkg" "$bblicenses" >&2
+                  printf "warning: could not retrieve bitbake info for %s (%s in %s)\n" "$pvn" "$pkg" "$bblicenses" >&2
                fi
              fi
              set -e
