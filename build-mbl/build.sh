@@ -98,6 +98,16 @@ default_machines="raspberrypi3"
 default_distro="mbl"
 default_images="mbl-console-image mbl-console-image-test"
 
+# Set of license package name (PN) and package version name (PVN) exceptions
+# This hash array uses a key (PN or PVN) created from reading the recipeinfo
+# Then the key is replaced with value found in this array so that the bitbake
+# environment display command will find the right package
+declare -A license_package_exceptions
+license_package_exceptions=(
+  ["binutils-cross-arm"]="binutils-cross"
+  ["docker"]="docker/docker"
+  ["gcc-cross-arm_7.3.0"]="gcc-cross_7.3")
+
 # Test if a machine name appears in the all_machines list.
 #
 
@@ -149,7 +159,7 @@ extra_bitbake_info()
   local tmpf="$output_path/bitbake.tmp"
   local envf="$output_path/bitbake.env"
   local ret
-  bitbake -e -b "$package" > "$tmpf"
+  bitbake -e -b "$package" > "$tmpf" 2>&1
   ret=$?
   if [ $ret -eq 0 ]; then
     # Extract the license extra information
@@ -263,8 +273,9 @@ url="$default_url"
 distro="$default_distro"
 flag_compress=1
 flag_archiver=""
+flag_licenses=0
 
-args=$(getopt -o+hj:o:x -l archive-source,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l archive-source,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -326,6 +337,10 @@ while [ $# -gt 0 ]; do
 
   -j | --jobs)
     opt_prev=flag_jobs
+    ;;
+
+  --licenses)
+    flag_licenses=1
     ;;
 
   --machine)
@@ -568,29 +583,35 @@ while true; do
        # shellcheck disable=SC2086
        bitbake $images
 
-       # Create extra bitbake info
-       bblicenses="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc/deploy/licenses"
-       packages=$(ls -1 "$bblicenses")
-       for pkg in $packages; do
-         printf "%s: retrieving extra bitbake package info\n" "$pkg"
-         # Package name without native extension
-         pn=${pkg/-native/}
-         if [ -f "$bblicenses/$pkg/recipeinfo" ]; then
-           # Make full package version name (to match bb file)
-           pvstr=$(egrep '^PV:' "$bblicenses/$pkg/recipeinfo")
-           pvn="${pn}_${pvstr/PV: /}"
-           set +e
-           if ! extra_bitbake_info "$pvn" "$bblicenses/$pkg"; then
-             # Try again with just package name
-             if ! extra_bitbake_info "$pn" "$bblicenses/$pkg"; then
-                printf "warning: could not retrieve extra bitbake info for %s (in %s)\n" "$pkg" "$bblicenses" >&2
+       if [ "$flag_licenses" -eq 1 ]; then
+         # Create extra bitbake info
+         bblicenses="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc/deploy/licenses"
+         packages=$(ls -1 "$bblicenses")
+         for pkg in $packages; do
+           printf "%s: retrieving extra bitbake package info\n" "$pkg"
+           # Package name without native extension
+           pn=${pkg/-native/}
+           if [ -f "$bblicenses/$pkg/recipeinfo" ]; then
+             # Check for PN exceptions (replacing the package name if found)
+             pn=${license_package_exceptions[$pn]:-$pn}
+             # Make full package version name (to match bb file)
+             pvstr=$(egrep '^PV:' "$bblicenses/$pkg/recipeinfo")
+             pvn="${pn}_${pvstr/PV: /}"
+             # Check for PVN exceptions (replacing the package version name if found)
+             pvn=${license_package_exceptions[$pvn]:-$pvn}
+             set +e
+             if ! extra_bitbake_info "$pvn" "$bblicenses/$pkg"; then
+               # Try again with just package name
+               if ! extra_bitbake_info "$pn" "$bblicenses/$pkg"; then
+                  printf "warning: could not retrieve extra bitbake info for %s (in %s)\n" "$pkg" "$bblicenses" >&2
+               fi
              fi
+             set -e
+           else
+             printf "note: ignoring package %s as no recipeinfo\n" "$pkg" >&2
            fi
-           set -e
-         else
-           printf "note: ignoring package %s as no recipeinfo\n" "$pkg" >&2
-         fi
-       done
+         done
+       fi
       )
     done
     push_stages artifact
