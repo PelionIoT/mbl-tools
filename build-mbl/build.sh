@@ -109,14 +109,13 @@ declare -A license_package_exceptions
 license_package_exceptions=(
   ["binutils-cross-arm"]="binutils-cross"
   ["docker"]="docker/docker"
-  ["gcc-cross-arm_7.3.0"]="gcc-cross_7.3"
-  ["gcc-cross-initial-arm_7.3.0"]="gcc-cross-initial_7.3"
-  ["gcc-runtime_7.3.0"]="gcc-runtime_7.3"
+  ["gcc-cross-arm"]="gcc-cross"
+  ["gcc-cross-initial-arm"]="gcc-cross-initial"
   ["gnu-config"]="gnu-config_git"
   ["go-cross-arm"]="go-cross"
   ["kmod"]="kmod_git"
-  ["libgcc_7.3.0"]="libgcc_7.3"
-  ["libgcc-initial_7.3.0"]="libgcc-initial_7.3"
+  ["libtool"]="libtool-native"
+  ["mbl-console-image"]="mbl-console-image.bb"
   ["ncurses"]="ncurses/ncurses"
   ["packagegroup-mbl"]="packagegroup-mbl.bb")
 
@@ -164,20 +163,24 @@ define_conf()
   rm -f "$path.new"
 }
 
+# Extract the bitbake information into an env file, or store the failed output
+# in an out file for later review
+
 extra_bitbake_info()
 {
   local package="$1"
   local output_path="$2"
-  local tmpf="$output_path/bitbake.tmp"
+  local tmpf="$output_path/bitbake.out"
   local envf="$output_path/bitbake.env"
   local ret
-  bitbake -e -b "$package" > "$tmpf" 2>&1
+  printf "%s\nbitbake -e -b %s\n" "$(date)" "$package" >> "$tmpf"
+  bitbake -e -b "$package" >> "$tmpf" 2>&1
   ret=$?
   if [ $ret -eq 0 ]; then
     # Extract the license extra information
     egrep '^(LICENSE=|SUMMARY=|HOMEPAGE=|PV=|PN=|PR=|PF=)' "$tmpf" > "$envf"
+    rm -f "$tmpf"
   fi
-  rm -f "$tmpf"
   return $ret
 }
 
@@ -611,14 +614,20 @@ while true; do
              pvn="${pn}_${pvstr/PV: /}"
              # Check for PVN exceptions (replacing the package version name if found)
              pvn=${license_package_exceptions[$pvn]:-$pvn}
-             set +e
+             # Create short pvn (without last digit of version and following string)
+             # E.g. flibble_1.0.7+git0ef3 becomes flibble_1.0
+             # Complex reg expression, so can't use bash search/replace
+             # shellcheck disable=SC2001
+             pvn_short=$(echo "$pvn" | sed -e 's|\(.*\)\.[^.]*$|\1|')
              if ! extra_bitbake_info "$pvn" "$bblicenses/$pkg"; then
-               # Try again with just package name
-               if ! extra_bitbake_info "$pn" "$bblicenses/$pkg"; then
-                  printf "warning: could not retrieve bitbake info for %s (%s in %s)\n" "$pvn" "$pkg" "$bblicenses" >&2
+               # Try again with short version
+               if ! extra_bitbake_info "$pvn_short" "$bblicenses/$pkg"; then
+                 # Try again with just package name
+                 if ! extra_bitbake_info "$pn" "$bblicenses/$pkg"; then
+                    printf "warning: could not retrieve bitbake info for %s (%s in %s)\n" "$pvn" "$pkg" "$bblicenses" >&2
+                 fi
                fi
              fi
-             set -e
            else
              printf "note: ignoring package %s as no recipeinfo\n" "$pkg" >&2
            fi
