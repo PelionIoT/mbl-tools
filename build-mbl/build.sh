@@ -98,13 +98,10 @@ default_machines="raspberrypi3"
 default_distro="mbl"
 default_images="mbl-console-image mbl-console-image-test"
 
-# Set of license package name (PN) and package version name (PVN) exceptions
-# This hash array uses a key (PN or PVN) created from reading the recipeinfo
+# Set of license package name (PN) exceptions
+# This hash array uses a key (PN) created from reading the recipeinfo
 # Then the key is replaced with a value found in this array so that the bitbake
 # environment display command will find the right package
-# If you are need to choose a particular version of a package, use the full
-# PVN as the key, otherwise converting just the PN might mean choosing that
-# version everytime
 declare -A license_package_exceptions
 license_package_exceptions=(
   ["binutils-cross-arm"]="binutils-cross"
@@ -612,21 +609,17 @@ while true; do
              # Make full package version name (to match bb file)
              pvstr=$(egrep '^PV:' "$bblicenses/$pkg/recipeinfo")
              pvn="${pn}_${pvstr/PV: /}"
-             # Check for PVN exceptions (replacing the package version name if found)
-             pvn=${license_package_exceptions[$pvn]:-$pvn}
              # Create short pvn (without last digit of version and following string)
              # E.g. flibble_1.0.7+git0ef3 becomes flibble_1.0
              # Complex reg expression, so can't use bash search/replace
              # shellcheck disable=SC2001
              pvn_short=$(echo "$pvn" | sed -e 's|\(.*\)\.[^.]*$|\1|')
-             if ! extra_bitbake_info "$pvn" "$bblicenses/$pkg"; then
-               # Try again with short version
-               if ! extra_bitbake_info "$pvn_short" "$bblicenses/$pkg"; then
-                 # Try again with just package name
-                 if ! extra_bitbake_info "$pn" "$bblicenses/$pkg"; then
-                    printf "warning: could not retrieve bitbake info for %s (%s in %s)\n" "$pvn" "$pkg" "$bblicenses" >&2
-                 fi
-               fi
+             # First try the PVN, then the short PVN and finally the PN to get the
+             # package information
+             if ! ( extra_bitbake_info "$pvn" "$bblicenses/$pkg" ||
+                    extra_bitbake_info "$pvn_short" "$bblicenses/$pkg" ||
+                    extra_bitbake_info "$pn" "$bblicenses/$pkg" ); then
+               printf "warning: could not retrieve bitbake info for %s (%s in %s)\n" "$pvn" "$pkg" "$bblicenses" >&2
              fi
            else
              printf "note: ignoring package %s as no recipeinfo\n" "$pkg" >&2
