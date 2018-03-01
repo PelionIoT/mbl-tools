@@ -181,6 +181,53 @@ extra_bitbake_info()
   return $ret
 }
 
+# Get all the extra bitbake information for all the packages used in
+# the build to help with license review
+
+retrieve_extra_package_info()
+{
+  local bblicenses=$1
+  local packages
+  local pn
+  local pvn
+  local pvn_short
+  local pkg
+  local pvstr
+
+  packages=$(ls -1 "$bblicenses")
+  for pkg in $packages; do
+    printf "%s: retrieving extra bitbake package info\n" "$pkg"
+
+    if [ -f "$bblicenses/$pkg/recipeinfo" ]; then
+      # Package name without native extension
+      pn=${pkg/-native/}
+
+      # Check for PN exceptions (replacing the package name if found)
+      pn=${license_package_exceptions[$pn]:-$pn}
+
+      # Make full package version name (to match bb file)
+      pvstr=$(egrep '^PV:' "$bblicenses/$pkg/recipeinfo")
+      pvn="${pn}_${pvstr/PV: /}"
+
+      # Create short pvn (without last digit of version and following string)
+      # E.g. flibble_1.0.7+git0ef3 becomes flibble_1.0
+      # Complex reg expression, so can't use bash search/replace
+      # shellcheck disable=SC2001
+      pvn_short=$(echo "$pvn" | sed -e 's|\(.*\)\.[^.]*$|\1|')
+
+      # First try the PVN, then the short PVN and finally the PN to get the
+      # package information
+      if ! ( extra_bitbake_info "$pvn" "$bblicenses/$pkg" ||
+             extra_bitbake_info "$pvn_short" "$bblicenses/$pkg" ||
+             extra_bitbake_info "$pn" "$bblicenses/$pkg" ); then
+        printf "warning: could not retrieve bitbake info for %s (%s in %s)\n" "$pvn" "$pkg" "$bblicenses" >&2
+      fi
+    else
+      printf "note: ignoring package %s as no recipeinfo\n" "$pkg" >&2
+    fi
+  done
+}
+
 ## Setup the yocto source archiver
 ## PATH: The path to local.conf
 ## ARCHIVER: The bitbake archiver source mode to install.  One of
@@ -596,35 +643,8 @@ while true; do
        bitbake $images
 
        if [ "$flag_licenses" -eq 1 ]; then
-         # Create extra bitbake info
-         bblicenses="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc/deploy/licenses"
-         packages=$(ls -1 "$bblicenses")
-         for pkg in $packages; do
-           printf "%s: retrieving extra bitbake package info\n" "$pkg"
-           # Package name without native extension
-           pn=${pkg/-native/}
-           if [ -f "$bblicenses/$pkg/recipeinfo" ]; then
-             # Check for PN exceptions (replacing the package name if found)
-             pn=${license_package_exceptions[$pn]:-$pn}
-             # Make full package version name (to match bb file)
-             pvstr=$(egrep '^PV:' "$bblicenses/$pkg/recipeinfo")
-             pvn="${pn}_${pvstr/PV: /}"
-             # Create short pvn (without last digit of version and following string)
-             # E.g. flibble_1.0.7+git0ef3 becomes flibble_1.0
-             # Complex reg expression, so can't use bash search/replace
-             # shellcheck disable=SC2001
-             pvn_short=$(echo "$pvn" | sed -e 's|\(.*\)\.[^.]*$|\1|')
-             # First try the PVN, then the short PVN and finally the PN to get the
-             # package information
-             if ! ( extra_bitbake_info "$pvn" "$bblicenses/$pkg" ||
-                    extra_bitbake_info "$pvn_short" "$bblicenses/$pkg" ||
-                    extra_bitbake_info "$pn" "$bblicenses/$pkg" ); then
-               printf "warning: could not retrieve bitbake info for %s (%s in %s)\n" "$pvn" "$pkg" "$bblicenses" >&2
-             fi
-           else
-             printf "note: ignoring package %s as no recipeinfo\n" "$pkg" >&2
-           fi
-         done
+         # Get the extra bitbake package info that aids license review
+         retrieve_extra_package_info "$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc/deploy/licenses"
        fi
       )
     done
