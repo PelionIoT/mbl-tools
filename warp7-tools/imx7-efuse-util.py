@@ -235,7 +235,7 @@ def prompt(prompt_string, pass_val):
 def read_fuse_int(fuse_handle):
     """Read fuse setting."""
     chunk = fuse_handle.read(IMX7S_BYTES_PER_FUSE)
-    if chunk == 0:
+    if len(chunk) == 0:
         estr = "Unable to read fuse bank = {} word {}".format(
             IMX7S_BOOT_CFG_BANK, IMX7S_BOOT_CFG0_WORD)
         raise ImxEfuseError(estr, errno.ENODEV)
@@ -319,7 +319,7 @@ def write_srk_fuse(fuse_handle, fuse_map_handle):
     while True:
         # Read input key
         chunk = fuse_map_handle.read(IMX7S_BYTES_PER_FUSE)
-        if chunk == 0:
+        if len(chunk) == 0:
             break
         fuse = string2dword(chunk)
 
@@ -355,7 +355,7 @@ def validate_fuses(fuse_handle, fuse_count):
     while fuse_idx < fuse_count:
         # Read input key
         chunk = fuse_handle.read(IMX7S_BYTES_PER_FUSE)
-        if chunk == 0:
+        if len(chunk) == 0:
             break
         fuse = string2dword(chunk)
 
