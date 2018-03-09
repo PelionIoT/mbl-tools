@@ -310,6 +310,7 @@ usage: build.sh [OPTION] [STAGE]..
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys.
+  --licenses            Collect extra build license info. Default disabled.
   --machine=MACHINE     Add a machine to build.  Default ${default_machines}.
   --manifest=MANIFEST   Name the manifest file. Default ${default_manifest}.
   -o, --outputdir PATH  Directory to output build artifacts.
