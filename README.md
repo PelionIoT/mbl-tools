@@ -1,7 +1,11 @@
-# README #
+# mbed Linux (mbl) mbl-tools Repository
+
+### Purpose
 
 This repository provides a collection of tools and recipes related to
 the build and test of mbed Linux.
+
+For more information, please see [meta-mbl][meta-mbl] for more information.
 
 ### Building Mbed Linux (MBL) ###
 
@@ -131,3 +135,18 @@ typically used to spin up a container and execute the build script
 build.sh.  The directory used for the build can be passed to the
 build.sh script by argument.  Typical usage would be to map a
 build directory into the container as the volume path /optee.
+
+### License
+
+Please see the [License][mbl-license] document for more information.
+
+### Contributing
+
+Please see the [Contributing][mbl-contributing] document for more information.
+
+
+
+[meta-mbl]: https://github.com/ARMmbed/meta-mbl/blob/master/README.md
+[mbl-license]: LICENSE.md
+[mbl-contributing]: CONTRIBUTING.md
+
