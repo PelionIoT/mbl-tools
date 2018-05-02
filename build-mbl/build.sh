@@ -665,10 +665,10 @@ while true; do
 
           case $machine in
           imx7s-warp-mbl)
-            suffixes="manifest tar.xz wic.gz"
+            suffixes="manifest tar.xz wic.gz wic.bmap"
             ;;
           raspberrypi3)
-            suffixes="manifest tar.xz wic.gz"
+            suffixes="manifest tar.xz wic.gz wic.bmap"
             ;;
           esac
 
