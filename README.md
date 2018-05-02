@@ -114,28 +114,6 @@ the meantime, the build scripts provide a work around:
 ./mbl-tools/build-mbl/run-me.sh --inject-mcc mbed_cloud_dev_credentials.c --inject-mcc update_default_resources.c --
 ```
 
-### Building OP-TEE ###
-
-#### Quick Start
-
-Build OP-TEE for Raspberry PI 3 (RPi3):
-
-```
-./mbl-tools/build-optee/run-me.sh --target rpi3
-```
-
-### OP-TEE Build Image
-
-The op-tee build image provides a canned docker image capable of build
-a minimal OP-TEE system using https://github.com/OP-TEE/manifest.git
-
-The image contains a base ubuntu image with minimal set of tools
-required and a script to drive the build process.  The image is
-typically used to spin up a container and execute the build script
-build.sh.  The directory used for the build can be passed to the
-build.sh script by argument.  Typical usage would be to map a
-build directory into the container as the volume path /optee.
-
 ### License
 
 Please see the [License][mbl-license] document for more information.
