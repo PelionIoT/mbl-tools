@@ -89,12 +89,12 @@ repo_init_atomic ()
   mv "$path-ri" "$path"
 }
 
-all_machines="imx7s-warp-mbl raspberrypi3"
+all_machines="imx7s-warp-mbl raspberrypi3-mbl"
 
 default_branch="master"
 default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
-default_machines="raspberrypi3"
+default_machines="raspberrypi3-mbl"
 default_distro="mbl"
 default_images="mbl-console-image mbl-console-image-test"
 
@@ -667,7 +667,7 @@ while true; do
           imx7s-warp-mbl)
             suffixes="manifest tar.xz wic.gz wic.bmap"
             ;;
-          raspberrypi3)
+          raspberrypi3-mbl)
             suffixes="manifest tar.xz wic.gz wic.bmap"
             ;;
           esac
