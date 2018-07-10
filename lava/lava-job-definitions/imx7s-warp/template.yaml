@@ -1,0 +1,100 @@
+device_type: imx7s-warp
+
+job_name: MBL {{build_tag}}
+timeouts:
+  job:
+    minutes: 100
+  action:
+    minutes: 50
+  connection:
+    minutes: 20
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 50
+    to: u-boot-ums
+    os: oe
+    image:
+      url: {{ image_url }}
+      compression: gz
+      root_partition: 2
+
+- boot:
+    method: u-boot
+    commands: ums
+    auto_login:
+      login_prompt: 'imx7s-warp-mbl login:'
+      username: 'root'
+    prompts:
+      - 'root@imx7s-warp-mbl:~#'
+    timeout:
+      minutes: 50
+- test:
+    timeout:
+      minutes: 50
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: mbl-test
+          description: "MBL basic test"
+        run:
+          steps:
+            - uname -a
+      name: mbl-test
+      path: inline/mbl-test.yaml
+    - path: automated/linux/v4l2/v4l2-compliance.yaml
+      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      history: false
+      name: v4l2-compliance
+      from: git
+      branch: linaro-mbl
+    - path: automated/linux/optee/optee-xtest.yaml
+      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      history: false
+      name: optee-xtest
+      from: git
+      branch: linaro-mbl
+    - path: automated/linux/mbl/mbl_auto.yaml
+      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      history: false
+      name: mbl_auto
+      from: git
+      branch: linaro-mbl
+    - path: automated/linux/badblocks/badblocks.yaml
+      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      history: false
+      name: badblocks
+      from: git
+      branch: linaro-mbl
+    - path: automated/linux/memtester/memtester.yaml
+      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      history: false
+      name: memtester
+      from: git
+      branch: linaro-mbl
+
+metadata:
+    build url: "{{ build_url }}"
+
+{% if notify_user or notify_email -%}
+notify:
+    recipients:
+    {% if notify_user -%}
+    - to:
+       method: email
+       user: {{ notify_user }}
+    {% endif -%}
+    {%- if notify_email -%}
+    - to:
+       method: email
+       email: {{ notify_email }}
+    {% endif -%}
+    criteria:
+      status: finished
+    verbosity: verbose
+{% endif %}
