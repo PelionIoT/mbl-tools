@@ -132,7 +132,7 @@ class LAVAServer(object):
         return job_info_url
 
 
-def _parse_arguments():
+def _parse_arguments(cli_args):
     """Arguments parser."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--lava-server",
@@ -181,7 +181,7 @@ def _parse_arguments():
                         action='store_true',
                         dest="dry_run")
 
-    args = parser.parse_args()
+    args = parser.parse_args(cli_args)
 
     # Setting default build tag name based on lava username
     default_build_tag = "{} build".format(args.lava_username)
@@ -206,11 +206,11 @@ def _enable_debug_logging(debug=False):
     logger.setLevel(logging_level)
 
 
-def _main():
+def _main(args):
     """Main execution of the application."""
     try:
         # Get all the arguments
-        args = _parse_arguments()
+        args = _parse_arguments(args)
 
         # Set the logging level
         _enable_debug_logging(args.debug)
@@ -247,4 +247,4 @@ def _main():
 
 
 if __name__ == "__main__":
-    sys.exit(_main())
+    sys.exit(_main(sys.argv[1:]))

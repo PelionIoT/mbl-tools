@@ -180,9 +180,31 @@ class TestLAVAServer(object):
 class TestParseArguments(object):
     def test__parse_arguments(self):
         # Set up Mock objects
+        cli_args = []
+        cli_args.extend(["--lava-server", "lava.server"])
+        cli_args.extend(["--lava-username", "lava_username"])
+        cli_args.extend(["--lava-token", "lava_token"])
+        cli_args.extend(["--device-type", "imx7s-warp"])
+        cli_args.extend(["--image-url", "http://image.url/image.wic.gz"])
+
         # Call the method under test
+        args = _parse_arguments(cli_args)
+
         # Check the results
-        assert True
+        # Mandatory args
+        assert args.lava_server == "lava.server"
+        assert args.lava_username == "lava_username"
+        assert args.lava_token == "lava_token"
+        assert args.device_type == "imx7s-warp"
+        assert args.image_url == "http://image.url/image.wic.gz"
+
+        # Optional args
+        assert args.build_tag == "lava_username build"
+        assert args.build_url == "-"
+        assert args.template_path == "lava-job-definitions"
+        assert args.template_names == ["template.yaml"]
+        assert args.debug is False
+        assert args.dry_run is False
 
 
 def test__enable_debug_logging(monkeypatch):
