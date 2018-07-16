@@ -216,8 +216,29 @@ def test__enable_debug_logging(monkeypatch):
     assert logger.level == logging.DEBUG
 
 
-def test__main():
+def test__main(monkeypatch):
     # Set up Mock objects
+    cli_args = []
+    cli_args.extend(["--lava-server", "lava.server"])
+    cli_args.extend(["--lava-username", "lava_username"])
+    cli_args.extend(["--lava-token", "lava_token"])
+    cli_args.extend(["--device-type", "imx7s-warp"])
+    cli_args.extend(["--image-url", "http://image.url/image.wic.gz"])
+
+    mock_process = MagicMock(return_value=["job1", "job2"])
+    monkeypatch.setattr(LAVATemplates, "process", mock_process)
+
+    mock_connect = MagicMock()
+    monkeypatch.setattr(LAVAServer, "_connect", mock_connect)
+    mock_submit_job = MagicMock()
+    monkeypatch.setattr(LAVAServer, "submit_job", mock_submit_job)
+
     # Call the method under test
+    _main(cli_args)
+
     # Check the results
-    assert True
+    mock_process.assert_called_once_with('http://image.url/image.wic.gz',
+                                         'lava_username build', '-')
+    mock_connect.assert_called_once_with()
+    mock_submit_job.assert_has_calls([call('job1'), call('job2')],
+                                     any_order=True)
