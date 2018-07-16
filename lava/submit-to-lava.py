@@ -15,42 +15,42 @@ default_template_name = "template.yaml"
 
 class LAVATemplates(object):
     """LAVA templates class."""
-    def __init__(self, lava_template_names, template_path, device_type,
+    def __init__(self, template_path, device_type, lava_template_names,
                  dry_run):
-        self.lava_template_names = lava_template_names
         self.template_path = template_path
         self.device_type = device_type
+        self.lava_template_names = lava_template_names
         self.dry_run = dry_run
 
     def process(self, image_url, build_tag, build_url):
         """It processes templates rendering with the right values."""
         lava_jobs = []
         for template_name in self.lava_template_names:
-            template = self._load_template(template_name, self.template_path,
-                                           self.device_type)
+            template = self._load_template(template_name)
             lava_job = template.render(image_url=image_url,
                                        build_tag=build_tag,
                                        build_url=build_url)
             lava_jobs.append(lava_job)
             if self.dry_run:
-                self._dump_job(lava_job, self.device_type, template_name)
+                self._dump_job(lava_job, template_name)
         return lava_jobs
 
-    def _dump_job(self, job, device_type, template_name):
+    def _dump_job(self, job, template_name):
         """It dumps LAVA job into yaml files under tmp/ directory structure."""
         output_path = "tmp"
-        testpath = os.path.join(output_path, device_type, template_name)
+        testpath = os.path.join(output_path, self.device_type, template_name)
         logging.info("Dumping job data into {}".format(testpath))
         if not os.path.exists(os.path.dirname(testpath)):
             os.makedirs(os.path.dirname(testpath))
         with open(os.path.join(testpath), 'w') as f:
             f.write(job)
 
-    def _load_template(self, template_name, template_path, device_type):
+    def _load_template(self, template_name):
         """It returns a jinja2 template starting from a yaml file on disk."""
         try:
             if template_name:
-                template_full_path = os.path.join(template_path, device_type)
+                template_full_path = os.path.join(self.template_path,
+                                                  self.device_type)
                 template_loader = jinja2.FileSystemLoader(
                     searchpath=template_full_path)
                 template_env = jinja2.Environment(loader=template_loader)
@@ -66,9 +66,9 @@ class LAVAServer(object):
 
     def __init__(self, server_url, username, token, dry_run):
         self.base_url = self._normalise_url(server_url)
-        self.api_url = self._get_api_url(self.base_url, username, token)
-        self.job_info_url = self._get_job_info_url(self.base_url)
-        self.connection = self._connect(self.api_url)
+        self.api_url = self._get_api_url(username, token)
+        self.job_info_url = self._get_job_info_url()
+        self.connection = self._connect()
         self.dry_run = dry_run
 
     def submit_job(self, job):
@@ -98,10 +98,10 @@ class LAVAServer(object):
             lava_job_urls.append(self.job_info_url.format(job_id))
         return lava_job_urls
 
-    def _connect(self, api_url):
+    def _connect(self):
         """It creates a xmlrpc client using LAVA url API."""
         try:
-            connection = xmlrpc.client.ServerProxy(api_url)
+            connection = xmlrpc.client.ServerProxy(self.api_url)
             logging.debug("Connected to LAVA: {}".format(connection))
         except (xmlrpc.client.ProtocolError, xmlrpc.client.Fault) as e:
             raise e
@@ -115,17 +115,17 @@ class LAVAServer(object):
         logging.debug("Base LAVA url: {}".format(server_url))
         return server_url
 
-    def _get_api_url(self, base_url, username, token):
+    def _get_api_url(self, username, token):
         """It returns LAVA API url."""
-        url = urllib.parse.urlsplit(base_url)
+        url = urllib.parse.urlsplit(self.base_url)
         api_url = "{}://{}:{}@{}/RPC2".format(url.scheme, username, token,
                                               url.netloc)
         logging.debug("API LAVA url: {}".format(api_url))
         return api_url
 
-    def _get_job_info_url(self, base_url):
+    def _get_job_info_url(self):
         """It returns LAVA base url for job details."""
-        url = urllib.parse.urlsplit(base_url)
+        url = urllib.parse.urlsplit(self.base_url)
         job_info_url = "{}://{}/scheduler/job/{{}}".format(url.scheme,
                                                            url.netloc)
         logging.debug("Job info LAVA url: {}".format(job_info_url))
@@ -216,8 +216,8 @@ def _main():
         _enable_debug_logging(args.debug)
 
         # Load LAVA templates
-        lava_template = LAVATemplates(args.template_names, args.template_path,
-                                      args.device_type, args.dry_run)
+        lava_template = LAVATemplates(args.template_path, args.device_type,
+                                      args.template_names, args.dry_run)
 
         # Create LAVA jobs yaml file from templates
         lava_jobs = lava_template.process(args.image_url, args.build_tag,
