@@ -185,11 +185,13 @@ class TestParseArguments(object):
         assert True
 
 
-def test__enable_debug_logging():
-    # Set up Mock objects
+def test__enable_debug_logging(monkeypatch):
     # Call the method under test
+    _enable_debug_logging(debug=True)
+
     # Check the results
-    assert True
+    logger = logging.getLogger()
+    assert logger.level == logging.DEBUG
 
 
 def test__main():
