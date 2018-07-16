@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, call
+import xmlrpc.client
 
 
 # I need to load the main file
@@ -83,36 +84,116 @@ class TestLAVATemplates(object):
 
 
 class TestLAVAServer(object):
+    server_url = "http://lava.server.url"
+    username = "username"
+    token = "token"
+    dry_run = False
+
     def test___init__(self):
-        assert False
+        # Call the method under test
+        ls = LAVAServer(self.server_url, self.username, self.token,
+                        self.dry_run)
+
+        # Check the results
+        assert ls.base_url == "http://lava.server.url"
+        assert ls.api_url == "http://username:token@lava.server.url/RPC2"
+        assert ls.job_info_url == "http://lava.server.url/scheduler/job/{}"
+        assert isinstance(ls.connection, xmlrpc.client.ServerProxy)
+        assert ls.dry_run is False
 
     def test_submit_job(self):
-        assert False
+        # Set up Mock objects
+        ls = LAVAServer(self.server_url, self.username, self.token,
+                        self.dry_run)
+        ls.connection = MagicMock()
+        ls.connection.scheduler.submit_job.return_value = 5
+
+        # Call the method under test
+        job_ids = ls.submit_job("job definition")
+
+        # Check the results
+        assert job_ids == [5]
+        ls.connection.scheduler.submit_job.assert_called_once_with(
+            "job definition")
 
     def test_get_job_urls(self):
-        assert False
+        # Set up Mock objects
+        ls = LAVAServer(self.server_url, self.username, self.token,
+                        self.dry_run)
+
+        # Call the method under test
+        job_urls = ls.get_job_urls([2, 3])
+
+        # Check the results
+        assert job_urls == ['http://lava.server.url/scheduler/job/2',
+                            'http://lava.server.url/scheduler/job/3']
 
     def test__connect(self):
-        assert False
+        # Set up Mock objects
+        ls = LAVAServer(self.server_url, self.username, self.token,
+                        self.dry_run)
+
+        # Call the method under test
+        connection = ls._connect()
+
+        # Check the results
+        assert isinstance(connection, xmlrpc.client.ServerProxy)
 
     def test__normalise_url(self):
-        assert False
+        # Set up Mock objects
+        ls = LAVAServer(self.server_url, self.username, self.token,
+                        self.dry_run)
+
+        # Call the method under test
+        url_without_scheme = ls._normalise_url("url.without.http")
+        url_with_http = ls._normalise_url("http://url.without.https")
+        url_with_https = ls._normalise_url("https://url.with.https")
+
+        # Check the results
+        assert url_without_scheme == "https://url.without.http"
+        assert url_with_http == "http://url.without.https"
+        assert url_with_https == "https://url.with.https"
 
     def test__get_api_url(self):
-        assert False
+        # Set up Mock objects
+        ls = LAVAServer(self.server_url, self.username, self.token,
+                        self.dry_run)
+
+        # Call the method under test
+        api_url = ls._get_api_url(self.username, self.token)
+
+        # Check the results
+        assert api_url == "http://username:token@lava.server.url/RPC2"
 
     def test__get_job_info_url(self):
-        assert False
+        # Set up Mock objects
+        ls = LAVAServer(self.server_url, self.username, self.token,
+                        self.dry_run)
+
+        # Call the method under test
+        job_info_url = ls._get_job_info_url()
+
+        # Check the results
+        assert job_info_url == "http://lava.server.url/scheduler/job/{}"
 
 
 class TestParseArguments(object):
     def test__parse_arguments(self):
-        assert False
+        # Set up Mock objects
+        # Call the method under test
+        # Check the results
+        assert True
 
 
 def test__enable_debug_logging():
-    assert False
+    # Set up Mock objects
+    # Call the method under test
+    # Check the results
+    assert True
 
 
 def test__main():
-    assert False
+    # Set up Mock objects
+    # Call the method under test
+    # Check the results
+    assert True
