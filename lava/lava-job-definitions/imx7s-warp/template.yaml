@@ -81,11 +81,20 @@ actions:
 metadata:
     build url: "{{ build_url }}"
 
+{% if notify_user or notify_email -%}
 notify:
     recipients:
+    {% if notify_user -%}
     - to:
        method: email
-       email: diego.russo@arm.com
+       user: {{ notify_user }}
+    {% endif -%}
+    {%- if notify_email -%}
+    - to:
+       method: email
+       email: {{ notify_email }}
+    {% endif -%}
     criteria:
       status: finished
     verbosity: verbose
+{% endif %}

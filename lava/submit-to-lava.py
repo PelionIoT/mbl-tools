@@ -22,14 +22,17 @@ class LAVATemplates(object):
         self.lava_template_names = lava_template_names
         self.dry_run = dry_run
 
-    def process(self, image_url, build_tag, build_url):
+    def process(self, image_url, build_tag, build_url, notify_user,
+            notify_email):
         """It processes templates rendering with the right values."""
         lava_jobs = []
         for template_name in self.lava_template_names:
             template = self._load_template(template_name)
             lava_job = template.render(image_url=image_url,
                                        build_tag=build_tag,
-                                       build_url=build_url)
+                                       build_url=build_url,
+                                       notify_user=notify_user,
+                                       notify_email=notify_email)
             lava_jobs.append(lava_job)
             if self.dry_run:
                 self._dump_job(lava_job, template_name)
@@ -42,7 +45,7 @@ class LAVATemplates(object):
         logging.info("Dumping job data into {}".format(testpath))
         if not os.path.exists(os.path.dirname(testpath)):
             os.makedirs(os.path.dirname(testpath))
-        with open(testpath, 'w') as f:
+        with open(testpath, "w") as f:
             f.write(job)
 
     def _load_template(self, template_name):
@@ -170,15 +173,24 @@ def _parse_arguments(cli_args):
                         dest="template_names",
                         nargs="+",
                         default=[default_template_name])
+    parser.add_argument("--notify-user",
+                        help="Enable email notification to the user",
+                        action="store_true",
+                        dest="notify_user",
+                        default=False)
+    parser.add_argument("--notify-email",
+                        help="Enable email notification to a custom email",
+                        dest="notify_email",
+                        default=None)
     parser.add_argument("--debug",
                         help="Enable debug messages",
-                        action='store_true',
+                        action="store_true",
                         dest="debug",
                         default=False)
     parser.add_argument("--dry-run",
                         help="""Prepare and write templates to tmp/.
-                        Don't submit to actual servers.""",
-                        action='store_true',
+                        Don"t submit to actual servers.""",
+                        action="store_true",
                         dest="dry_run")
 
     return parser.parse_args(cli_args)
@@ -191,10 +203,14 @@ def _set_default_args(args):
     args.build_tag = args.build_tag if args.build_tag else default_build_tag
     logging.debug("Using build_tag: {}".format(args.build_tag))
 
-    # Setting null build_url if it doesn't exist
+    # Setting null build_url if it doesn"t exist
     default_build_url = "-"
     args.build_url = args.build_url if args.build_url else default_build_url
     logging.debug("Using build_url: {}".format(args.build_url))
+
+    # Setting notify_user to the same user who has submitted the job
+    if args.notify_user:
+        args.notify_user = args.lava_username
 
     return args
 
@@ -227,7 +243,8 @@ def _main(args):
 
         # Create LAVA jobs yaml file from templates
         lava_jobs = lava_template.process(args.image_url, args.build_tag,
-                                          args.build_url)
+                                          args.build_url, args.notify_user,
+                                          args.notify_email)
 
         # Instantiate a LAVA server
         lava_server = LAVAServer(args.lava_server, args.lava_username,

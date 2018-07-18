@@ -30,13 +30,16 @@ class TestLAVATemplates(object):
         lt._dump_job = MagicMock()
 
         # Call the method under test
-        lava_jobs = lt.process("img_url", "build_tag", "build_url")
+        lava_jobs = lt.process("img_url", "build_tag", "build_url",
+                               "notify_user", "notify_email")
 
         # Check the results
-        lt._load_template.assert_called_with('lava_template_name')
-        template_mock.render.assert_called_with(build_tag='build_tag',
-                                                build_url='build_url',
-                                                image_url='img_url')
+        lt._load_template.assert_called_with("lava_template_name")
+        template_mock.render.assert_called_with(build_tag="build_tag",
+                                                build_url="build_url",
+                                                image_url="img_url",
+                                                notify_user="notify_user",
+                                                notify_email="notify_email")
         lt._dump_job.assert_called_with("some yaml string",
                                         "lava_template_name")
         assert lava_jobs == ["some yaml string"]
@@ -56,7 +59,7 @@ class TestLAVATemplates(object):
 
         # Check the results
         expected_full_path = "tmp/imx7s-warp/template.yaml"
-        calls = [call(expected_full_path, 'w'),
+        calls = [call(expected_full_path, "w"),
                  call().__enter__().write(job_content)]
         mock_open.assert_has_calls(calls, any_order=True)
 
@@ -74,12 +77,12 @@ class TestLAVATemplates(object):
         lt._load_template("template name")
 
         # Check the results
-        calls = [call(searchpath='/template/path/imx7s-warp'),
-                 call().get_template('template name')]
+        calls = [call(searchpath="/template/path/imx7s-warp"),
+                 call().get_template("template name")]
         mock_jinja2_fs_loader.assert_called_once_with(
-            searchpath='/template/path/imx7s-warp')
+            searchpath="/template/path/imx7s-warp")
         mock_jinja2_env.assert_has_calls(
-            [call().get_template('template name')],
+            [call().get_template("template name")],
             any_order=True)
 
 
@@ -125,8 +128,8 @@ class TestLAVAServer(object):
         job_urls = ls.get_job_urls([2, 3])
 
         # Check the results
-        assert job_urls == ['http://lava.server.url/scheduler/job/2',
-                            'http://lava.server.url/scheduler/job/3']
+        assert job_urls == ["http://lava.server.url/scheduler/job/2",
+                            "http://lava.server.url/scheduler/job/3"]
 
     def test__connect(self):
         # Set up Mock objects
@@ -203,6 +206,8 @@ class TestParseArguments(object):
         assert args.build_url is None
         assert args.template_path == "lava-job-definitions"
         assert args.template_names == ["template.yaml"]
+        assert args.notify_user == False
+        assert args.notify_email is None
         assert args.debug is False
         assert args.dry_run is False
 
@@ -212,6 +217,7 @@ class TestParseArguments(object):
         args.lava_username = "lava_username"
         args.build_tag = None
         args.build_url = None
+        args.notify_user = True
 
         # Call the method under test
         args = _set_default_args(args)
@@ -219,6 +225,7 @@ class TestParseArguments(object):
         # Check the results
         assert args.build_tag == "lava_username build"
         assert args.build_url == "-"
+        assert args.notify_user == "lava_username"
 
 
 def test__enable_debug_logging(monkeypatch):
@@ -251,8 +258,9 @@ def test__main(monkeypatch):
     _main(cli_args)
 
     # Check the results
-    mock_process.assert_called_once_with('http://image.url/image.wic.gz',
-                                         'lava_username build', '-')
+    mock_process.assert_called_once_with("http://image.url/image.wic.gz",
+                                         "lava_username build", "-", False,
+                                          None)
     mock_connect.assert_called_once_with()
-    mock_submit_job.assert_has_calls([call('job1'), call('job2')],
+    mock_submit_job.assert_has_calls([call("job1"), call("job2")],
                                      any_order=True)
