@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+# Copyright (c) 2017 ARM Ltd.
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import argparse
 import logging
 import sys
