@@ -206,7 +206,7 @@ class TestParseArguments(object):
         assert args.build_url is None
         assert args.template_path == "lava-job-definitions"
         assert args.template_names == ["template.yaml"]
-        assert args.notify_user == False
+        assert args.notify_user is False
         assert args.notify_email is None
         assert args.debug is False
         assert args.dry_run is False
@@ -260,7 +260,7 @@ def test__main(monkeypatch):
     # Check the results
     mock_process.assert_called_once_with("http://image.url/image.wic.gz",
                                          "lava_username build", "-", False,
-                                          None)
+                                         None)
     mock_connect.assert_called_once_with()
     mock_submit_job.assert_has_calls([call("job1"), call("job2")],
                                      any_order=True)

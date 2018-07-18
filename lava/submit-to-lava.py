@@ -23,7 +23,7 @@ class LAVATemplates(object):
         self.dry_run = dry_run
 
     def process(self, image_url, build_tag, build_url, notify_user,
-            notify_email):
+                notify_email):
         """It processes templates rendering with the right values."""
         lava_jobs = []
         for template_name in self.lava_template_names:
