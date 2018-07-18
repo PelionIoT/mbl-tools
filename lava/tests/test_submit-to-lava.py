@@ -5,6 +5,14 @@
 from unittest.mock import MagicMock, call
 import xmlrpc.client
 
+""" Pytest tests
+
+Pytest is the framework used to run tests. It autodiscovers tests by the name
+of the class or method/function. More info about autodiscovery:
+https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
+
+Pytest documentation can be found here: https://docs.pytest.org/en/latest/
+"""
 
 # I need to load the main file
 exec(open("./submit-to-lava.py").read())
