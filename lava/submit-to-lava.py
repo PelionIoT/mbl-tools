@@ -42,7 +42,7 @@ class LAVATemplates(object):
         logging.info("Dumping job data into {}".format(testpath))
         if not os.path.exists(os.path.dirname(testpath)):
             os.makedirs(os.path.dirname(testpath))
-        with open(os.path.join(testpath), 'w') as f:
+        with open(testpath, 'w') as f:
             f.write(job)
 
     def _load_template(self, template_name):
