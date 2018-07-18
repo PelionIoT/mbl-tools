@@ -62,7 +62,7 @@ while [ $# -gt 0 ]; do
   shift 1
 done
 
-# Let's validate $cmd
+# Validate $cmd
 if [ -n "${cmd:-}" ]; then
   case $cmd in
     submit)

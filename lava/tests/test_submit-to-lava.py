@@ -14,7 +14,8 @@ https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 Pytest documentation can be found here: https://docs.pytest.org/en/latest/
 """
 
-# I need to load the main file
+# The main file needs to be loaded and executed. "import" would't work because
+# the parent directory is not in the sys.path and it is not a module.
 exec(open("./submit-to-lava.py").read())
 
 
@@ -66,6 +67,7 @@ class TestLAVATemplates(object):
 
         mock_open = MagicMock()
         monkeypatch.setattr("builtins.open", mock_open)
+
         # Call the method under test
         lt._dump_job(job_content, template_name)
 

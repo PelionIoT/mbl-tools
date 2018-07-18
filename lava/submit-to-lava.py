@@ -29,7 +29,7 @@ class LAVATemplates(object):
 
     def process(self, image_url, build_tag, build_url, notify_user,
                 notify_email):
-        """It processes templates rendering with the right values."""
+        """Process templates rendering them with the right values."""
         lava_jobs = []
         for template_name in self.lava_template_names:
             template = self._load_template(template_name)
@@ -44,7 +44,7 @@ class LAVATemplates(object):
         return lava_jobs
 
     def _dump_job(self, job, template_name):
-        """It dumps LAVA job into yaml files under tmp/ directory structure."""
+        """Dump LAVA job into yaml files under tmp/ directory structure."""
         output_path = "tmp"
         testpath = os.path.join(output_path, self.device_type, template_name)
         logging.info("Dumping job data into {}".format(testpath))
@@ -54,7 +54,7 @@ class LAVATemplates(object):
             f.write(job)
 
     def _load_template(self, template_name):
-        """It returns a jinja2 template starting from a yaml file on disk."""
+        """Return a jinja2 template starting from a yaml file on disk."""
         try:
             if template_name:
                 template_full_path = os.path.join(self.template_path,
@@ -100,14 +100,14 @@ class LAVAServer(object):
         return job_ids
 
     def get_job_urls(self, job_ids):
-        """Given a list of job IDs, it returns their full urls."""
+        """Return a list of job urls with the right IDs."""
         lava_job_urls = []
         for job_id in job_ids:
             lava_job_urls.append(self.job_info_url.format(job_id))
         return lava_job_urls
 
     def _connect(self):
-        """It creates a xmlrpc client using LAVA url API."""
+        """Create a xmlrpc client using LAVA url API."""
         try:
             connection = xmlrpc.client.ServerProxy(self.api_url)
             logging.debug("Connected to LAVA: {}".format(connection))
@@ -116,7 +116,7 @@ class LAVAServer(object):
         return connection
 
     def _normalise_url(self, server_url):
-        """It returns LAVA base url."""
+        """Return LAVA base url."""
         if not (server_url.startswith("http://") or
                 server_url.startswith("https://")):
             server_url = "https://{}".format(server_url)
@@ -124,7 +124,7 @@ class LAVAServer(object):
         return server_url
 
     def _get_api_url(self, username, token):
-        """It returns LAVA API url."""
+        """Return LAVA API url."""
         url = urllib.parse.urlsplit(self.base_url)
         api_url = "{}://{}:{}@{}/RPC2".format(url.scheme, username, token,
                                               url.netloc)
@@ -132,7 +132,7 @@ class LAVAServer(object):
         return api_url
 
     def _get_job_info_url(self):
-        """It returns LAVA base url for job details."""
+        """Return LAVA base url for job details."""
         url = urllib.parse.urlsplit(self.base_url)
         job_info_url = "{}://{}/scheduler/job/{{}}".format(url.scheme,
                                                            url.netloc)
@@ -202,18 +202,18 @@ def _parse_arguments(cli_args):
 
 
 def _set_default_args(args):
-    """ The method sets default arguments """
-    # Setting default build tag name based on lava username
+    """Set default arguments """
+    # Set default build tag name based on lava username
     default_build_tag = "{} build".format(args.lava_username)
     args.build_tag = args.build_tag if args.build_tag else default_build_tag
     logging.debug("Using build_tag: {}".format(args.build_tag))
 
-    # Setting null build_url if it doesn"t exist
+    # Set null build_url if it doesn't exist
     default_build_url = "-"
     args.build_url = args.build_url if args.build_url else default_build_url
     logging.debug("Using build_url: {}".format(args.build_url))
 
-    # Setting notify_user to the same user who has submitted the job
+    # Set notify_user to the same user who has submitted the job
     if args.notify_user:
         args.notify_user = args.lava_username
 
