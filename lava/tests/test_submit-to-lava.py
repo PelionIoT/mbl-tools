@@ -199,12 +199,26 @@ class TestParseArguments(object):
         assert args.image_url == "http://image.url/image.wic.gz"
 
         # Optional args
-        assert args.build_tag == "lava_username build"
-        assert args.build_url == "-"
+        assert args.build_tag is None
+        assert args.build_url is None
         assert args.template_path == "lava-job-definitions"
         assert args.template_names == ["template.yaml"]
         assert args.debug is False
         assert args.dry_run is False
+
+    def test__set_default_args(self):
+        # Set up Mock objects
+        args = MagicMock()
+        args.lava_username = "lava_username"
+        args.build_tag = None
+        args.build_url = None
+
+        # Call the method under test
+        args = _set_default_args(args)
+
+        # Check the results
+        assert args.build_tag == "lava_username build"
+        assert args.build_url == "-"
 
 
 def test__enable_debug_logging(monkeypatch):

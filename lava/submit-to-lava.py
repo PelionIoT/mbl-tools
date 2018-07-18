@@ -181,8 +181,11 @@ def _parse_arguments(cli_args):
                         action='store_true',
                         dest="dry_run")
 
-    args = parser.parse_args(cli_args)
+    return parser.parse_args(cli_args)
 
+
+def _set_default_args(args):
+    """ The method sets default arguments """
     # Setting default build tag name based on lava username
     default_build_tag = "{} build".format(args.lava_username)
     args.build_tag = args.build_tag if args.build_tag else default_build_tag
@@ -214,6 +217,9 @@ def _main(args):
 
         # Set the logging level
         _enable_debug_logging(args.debug)
+
+        # Set default args
+        args = _set_default_args(args)
 
         # Load LAVA templates
         lava_template = LAVATemplates(args.template_path, args.device_type,
