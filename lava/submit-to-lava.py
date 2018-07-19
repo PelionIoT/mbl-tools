@@ -100,7 +100,7 @@ class LAVAServer(object):
         return job_ids
 
     def get_job_urls(self, job_ids):
-        """Return a list of job urls with the right IDs."""
+        """Given a list of job IDs, return their full urls."""
         lava_job_urls = []
         for job_id in job_ids:
             lava_job_urls.append(self.job_info_url.format(job_id))
