@@ -13,10 +13,10 @@ https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
 Pytest documentation can be found here: https://docs.pytest.org/en/latest/
 
-The aim of this file is to provide a basic test test coverage for every class
+The aim of this file is to provide a basic unit test coverage for every class
 and method in submit-to-lava.py file.
 
-The structure follows the same same structure of the module it is testing.
+The structure follows the same structure of the module it is testing.
 Every test is prefixed with "test_" followed by the name of the method under
 test.
 
@@ -28,10 +28,10 @@ The generic structure of every test is:
 Sometime there is no need to set up mock objects hence it is skipped.
 
 In order to check the results, python assert and mock asserts are used.
-Every test has a docstring which exmplains what the test is testing/expecting.
+Every test has a docstring which explains what the test is testing/expecting.
 """
 
-# The main file needs to be loaded and executed. "import" would't work because
+# The main file needs to be loaded and executed. "import" wouldn't work because
 # the parent directory is not in the sys.path and it is not a module.
 exec(open("./submit-to-lava.py").read())
 
@@ -147,7 +147,7 @@ class TestLAVATemplates(object):
 
 
 class TestLAVAServer(object):
-    """Test mothods in LAVAServer class."""
+    """Test methods in LAVAServer class."""
 
     # Define common parameter which are used for every test
     server_url = "http://lava.server.url"
@@ -198,7 +198,7 @@ class TestLAVAServer(object):
         """Test _get_job_urls() method
 
         Given a list of job IDs, check if the method returns the urls correctly
-        formatted. In this case ther is nothing to mock.
+        formatted. In this case there is nothing to mock.
         """
         # Set up Mock objects
         ls = LAVAServer(self.server_url, self.username, self.token,

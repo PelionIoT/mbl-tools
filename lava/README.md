@@ -9,7 +9,7 @@ populated and submitted to LAVA
 * `README.md`: this file
 * `requirements.txt`: python dependencies. This file is automatically used by
 the docker image creation. Otherwise it can be used by the user to install
-dependencies in his/her won environment
+dependencies in his/her own environment
 * `run-me.sh`: bash script which encapsulates docker logic for running python
 scripts
 * `submit-to-lava.py`: python script used to submit jobs to LAVA. See below how
@@ -21,7 +21,7 @@ of choice). See below how to run them.
 
 Docker is used to set up an environment where all dependencies are installed
 for running submit-to-lava.py and its unit tests. Those are python libraries
-and the content of this directory. This is facilitateid by run-me.sh and
+and the content of this directory. This is facilitated by run-me.sh and
 Dockerfile.
 A user though might decide not to user docker at all and run the script in
 his/her own environment. Required libraries are listed in requirements.txt
