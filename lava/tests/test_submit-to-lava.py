@@ -232,6 +232,8 @@ class TestLAVAServer(object):
         Check if the method behaves correctly depending on the input. If no
         scheme is passed, an https:// is added. If a scheme is passed, it keeps
         the same scheme.
+        NOTE: this test is checking three different behaviours of the same
+        method.
         """
         # Set up Mock objects
         ls = LAVAServer(self.server_url, self.username, self.token,
