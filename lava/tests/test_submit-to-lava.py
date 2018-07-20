@@ -12,6 +12,23 @@ of the class or method/function. More info about autodiscovery:
 https://docs.pytest.org/en/latest/goodpractices.html#test-discovery
 
 Pytest documentation can be found here: https://docs.pytest.org/en/latest/
+
+The aim of this file is to provide a basic test test coverage for every class
+and method in submit-to-lava.py file.
+
+The structure follows the same same structure of the module it is testing.
+Every test is prefixed with "test_" followed by the name of the method under
+test.
+
+The generic structure of every test is:
+    * Set up Mock objects
+    * Call the method under test
+    * Check the results
+
+Sometime there is no need to set up mock objects hence it is skipped.
+
+In order to check the results, python assert and mock asserts are used.
+Every test has a docstring which exmplains what the test is testing/expecting.
 """
 
 # The main file needs to be loaded and executed. "import" would't work because
@@ -20,20 +37,40 @@ exec(open("./submit-to-lava.py").read())
 
 
 class TestLAVATemplates(object):
+    """Test methods in LAVATemplates class."""
+
+    # Define common parameter which are used for every test
     lava_template_names = ["lava_template_name"]
     template_path = "/template/path"
     device_type = "imx7s-warp"
     dry_run = True
 
     def test___init__(self):
+        """Test __init__() method
+
+        Check if the arguments passed are really set in the instance.
+        """
+        # Call the method under test
         lt = LAVATemplates(self.template_path, self.device_type,
                            self.lava_template_names, self.dry_run)
+
+        # Check the results
         assert lt.lava_template_names == self.lava_template_names
         assert lt.template_path == self.template_path
         assert lt.device_type == self.device_type
         assert lt.dry_run == self.dry_run
 
     def test_process(self):
+        """Test process() method
+
+        The test check the following:
+        * if _load_template is called with the name of the template to load
+        * if the template is rendered with the right parameters
+        * if _dump_job is called with job content and the template name
+        * if process() returns a list of string (lava job).
+
+        The test though doesn't check if the template is valid or not.
+        """
         # Set up Mock objects
         lt = LAVATemplates(self.template_path, self.device_type,
                            self.lava_template_names, self.dry_run)
@@ -58,6 +95,11 @@ class TestLAVATemplates(object):
         assert lava_jobs == ["some yaml string"]
 
     def test__dump_job(self, monkeypatch):
+        """Test _dump_job() method
+
+        Check if the method writes the content to the path both specified as
+        arguments. This is done mocking builtin.open method.
+        """
         # Set up Mock objects
         lt = LAVATemplates(self.template_path, self.device_type,
                            self.lava_template_names, self.dry_run)
@@ -78,11 +120,17 @@ class TestLAVATemplates(object):
         mock_open.assert_has_calls(calls, any_order=True)
 
     def test__load_template(self, monkeypatch):
+        """Test _load_template()
+
+        Check if the jinja2 methods are called with the correct arguments.
+        Jinja2 objects are all mocked.
+        """
         # Set up Mock objects
         lt = LAVATemplates(self.template_path, self.device_type,
                            self.lava_template_names, self.dry_run)
 
-        mock_jinja2_fs_loader = MagicMock()
+        mock_template_loader = MagicMock()
+        mock_jinja2_fs_loader = MagicMock(return_value=mock_template_loader)
         mock_jinja2_env = MagicMock()
         monkeypatch.setattr("jinja2.FileSystemLoader", mock_jinja2_fs_loader)
         monkeypatch.setattr("jinja2.Environment", mock_jinja2_env)
@@ -91,22 +139,30 @@ class TestLAVATemplates(object):
         lt._load_template("template name")
 
         # Check the results
-        calls = [call(searchpath="/template/path/imx7s-warp"),
-                 call().get_template("template name")]
         mock_jinja2_fs_loader.assert_called_once_with(
             searchpath="/template/path/imx7s-warp")
         mock_jinja2_env.assert_has_calls(
-            [call().get_template("template name")],
-            any_order=True)
+            [call(loader=mock_template_loader),
+             call().get_template("template name")])
 
 
 class TestLAVAServer(object):
+    """Test mothods in LAVAServer class."""
+
+    # Define common parameter which are used for every test
     server_url = "http://lava.server.url"
     username = "username"
     token = "token"
     dry_run = False
 
     def test___init__(self):
+        """Test __init__() method
+
+        Check if the method setup the correct values based on the arguments
+        passed. In fact based on server_url, username and token, the method
+        calls other instance methods to set base_url, api_url and job_info_url.
+        The connection should be xmlrpc ServerProxy instance.
+        """
         # Call the method under test
         ls = LAVAServer(self.server_url, self.username, self.token,
                         self.dry_run)
@@ -119,6 +175,11 @@ class TestLAVAServer(object):
         assert ls.dry_run is False
 
     def test_submit_job(self):
+        """Test submit_job() method
+
+        Check if the xmlrpc scheduler submit_job method is called with the
+        expected data and if it returns a list of job IDs.
+        """
         # Set up Mock objects
         ls = LAVAServer(self.server_url, self.username, self.token,
                         self.dry_run)
@@ -134,6 +195,11 @@ class TestLAVAServer(object):
             "job definition")
 
     def test_get_job_urls(self):
+        """Test _get_job_urls() method
+
+        Given a list of job IDs, check if the method returns the urls correctly
+        formatted. In this case ther is nothing to mock.
+        """
         # Set up Mock objects
         ls = LAVAServer(self.server_url, self.username, self.token,
                         self.dry_run)
@@ -146,6 +212,10 @@ class TestLAVAServer(object):
                             "http://lava.server.url/scheduler/job/3"]
 
     def test__connect(self):
+        """Test _connect() method
+
+        Check if the method returns an instance of ServerProxy.
+        """
         # Set up Mock objects
         ls = LAVAServer(self.server_url, self.username, self.token,
                         self.dry_run)
@@ -157,6 +227,12 @@ class TestLAVAServer(object):
         assert isinstance(connection, xmlrpc.client.ServerProxy)
 
     def test__normalise_url(self):
+        """Test _normalise() method
+
+        Check if the method behaves correctly depending on the input. If no
+        scheme is passed, an https:// is added. If a scheme is passed, it keeps
+        the same scheme.
+        """
         # Set up Mock objects
         ls = LAVAServer(self.server_url, self.username, self.token,
                         self.dry_run)
@@ -172,6 +248,10 @@ class TestLAVAServer(object):
         assert url_with_https == "https://url.with.https"
 
     def test__get_api_url(self):
+        """Test _get_api_url() method
+
+        Check if the method returns the correct LAVA API url.
+        """
         # Set up Mock objects
         ls = LAVAServer(self.server_url, self.username, self.token,
                         self.dry_run)
@@ -183,6 +263,11 @@ class TestLAVAServer(object):
         assert api_url == "http://username:token@lava.server.url/RPC2"
 
     def test__get_job_info_url(self):
+        """Test _het_job_info_url() method
+
+        Check if the method returns the correct url for checking job info. The
+        url ends with {} because it will be formatted with a job ID.
+        """
         # Set up Mock objects
         ls = LAVAServer(self.server_url, self.username, self.token,
                         self.dry_run)
@@ -195,7 +280,14 @@ class TestLAVAServer(object):
 
 
 class TestParseArguments(object):
+    """Test methods for dealing with arguments."""
+
     def test__parse_arguments(self):
+        """Test _parse_arguments() function.
+
+        Check if the arguments parser sets the correct values in the namespace.
+        It checks if optional arguments are set to the correct default values.
+        """
         # Set up Mock objects
         cli_args = []
         cli_args.extend(["--lava-server", "lava.server"])
@@ -226,6 +318,11 @@ class TestParseArguments(object):
         assert args.dry_run is False
 
     def test__set_default_args(self):
+        """Test _set_default_args() method.
+
+        Check if the method set the correct default arguments if the they are
+        not set by the user.
+        """
         # Set up Mock objects
         args = MagicMock()
         args.lava_username = "lava_username"
@@ -243,6 +340,10 @@ class TestParseArguments(object):
 
 
 def test__enable_debug_logging(monkeypatch):
+    """Test _enable_debug_logging() function.
+
+    Check if the correct level of logging is set depending on debug argument.
+    """
     # Call the method under test
     _enable_debug_logging(debug=True)
 
@@ -252,6 +353,12 @@ def test__enable_debug_logging(monkeypatch):
 
 
 def test__main(monkeypatch):
+    """Test _main() function.
+
+    Check if main executes core methods in order to have a correct behaviour.
+    It mocks methods of both LAVATemplates and LAVAServer classes which are
+    directly call in the main.
+    """
     # Set up Mock objects
     cli_args = []
     cli_args.extend(["--lava-server", "lava.server"])

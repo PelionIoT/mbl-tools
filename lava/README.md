@@ -1,3 +1,32 @@
+# Content
+
+Here the list of files present in this directory.
+
+* `Dockerfile`: it is used to create a container with all dependencies needed
+for running submit-to-lava.py and its tests
+* `lava-job-definitions` directory: it contains job jinja2 templates which are
+populated and submitted to LAVA
+* `README.md`: this file
+* `requirements.txt`: python dependencies. This file is automatically used by
+the docker image creation. Otherwise it can be used by the user to install
+dependencies in his/her won environment
+* `run-me.sh`: bash script which encapsulates docker logic for running python
+scripts
+* `submit-to-lava.py`: python script used to submit jobs to LAVA. See below how
+to run it
+* `tests` directory: unit tests for submit-to-lava.py (pytest is the framework
+of choice). See below how to run them.
+
+# Docker vs native
+
+Docker is used to set up an environment where all dependencies are installed
+for running submit-to-lava.py and its unit tests. Those are python libraries
+and the content of this directory. This is facilitateid by run-me.sh and
+Dockerfile.
+A user though might decide not to user docker at all and run the script in
+his/her own environment. Required libraries are listed in requirements.txt
+file.
+
 # LAVA client
 
 ## LAVA installation
@@ -5,7 +34,8 @@ Before submitting a job to LAVA, you should have a running infrastructure where
 to submit jobs to. More info: https://validation.linaro.org/static/docs/v2/
 
 ## Submit jobs to LAVA
-In order to submit jobs to LAVA you need at least the following info:
+In order to submit jobs to LAVA you need at least the following info (these are
+mandatory parameters to submit-to-lava.py):
 
 * lava-server: lava server url
 * lava-username: user used for LAVA authentication

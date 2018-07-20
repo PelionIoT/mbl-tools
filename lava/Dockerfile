@@ -16,6 +16,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Set the container entrypoint to be the python interpreter. This is executed
-# in the working directory and it has visibility of teh file copied in the
+# in the working directory and it has visibility of the file copied in the
 # previous command
 ENTRYPOINT [ "python" ]
