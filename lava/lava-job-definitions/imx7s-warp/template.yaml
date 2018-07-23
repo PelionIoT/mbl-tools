@@ -81,7 +81,7 @@ actions:
 metadata:
     build url: "{{ build_url }}"
 
-{% if notify_user or notify_email -%}
+{% if notify_user or notify_emails -%}
 notify:
     recipients:
     {% if notify_user -%}
@@ -89,11 +89,11 @@ notify:
        method: email
        user: {{ notify_user }}
     {% endif -%}
-    {%- if notify_email -%}
+    {%- for email in notify_emails -%}
     - to:
        method: email
-       email: {{ notify_email }}
-    {% endif -%}
+       email: {{ email }}
+    {% endfor -%}
     criteria:
       status: finished
     verbosity: verbose
