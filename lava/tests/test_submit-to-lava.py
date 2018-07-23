@@ -81,7 +81,7 @@ class TestLAVATemplates(object):
 
         # Call the method under test
         lava_jobs = lt.process("img_url", "build_tag", "build_url",
-                               "notify_user", "notify_email")
+                               "notify_user", ["notify_email"])
 
         # Check the results
         lt._load_template.assert_called_with("lava_template_name")
@@ -89,7 +89,7 @@ class TestLAVATemplates(object):
                                                 build_url="build_url",
                                                 image_url="img_url",
                                                 notify_user="notify_user",
-                                                notify_email="notify_email")
+                                                notify_emails=["notify_email"])
         lt._dump_job.assert_called_with("some yaml string",
                                         "lava_template_name")
         assert lava_jobs == ["some yaml string"]
@@ -315,7 +315,7 @@ class TestParseArguments(object):
         assert args.template_path == "lava-job-definitions"
         assert args.template_names == ["template.yaml"]
         assert args.notify_user is False
-        assert args.notify_email is None
+        assert args.notify_emails == []
         assert args.debug is False
         assert args.dry_run is False
 
@@ -382,8 +382,7 @@ def test__main(monkeypatch):
 
     # Check the results
     mock_process.assert_called_once_with("http://image.url/image.wic.gz",
-                                         "lava_username build", "-", False,
-                                         None)
+                                         "lava_username build", "-", False, [])
     mock_connect.assert_called_once_with()
     mock_submit_job.assert_has_calls([call("job1"), call("job2")],
                                      any_order=True)

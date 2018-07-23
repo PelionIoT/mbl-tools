@@ -28,7 +28,7 @@ class LAVATemplates(object):
         self.dry_run = dry_run
 
     def process(self, image_url, build_tag, build_url, notify_user,
-                notify_email):
+                notify_emails):
         """Process templates rendering them with the right values."""
         lava_jobs = []
         for template_name in self.lava_template_names:
@@ -37,7 +37,7 @@ class LAVATemplates(object):
                                        build_tag=build_tag,
                                        build_url=build_url,
                                        notify_user=notify_user,
-                                       notify_email=notify_email)
+                                       notify_emails=notify_emails)
             lava_jobs.append(lava_job)
             if self.dry_run:
                 self._dump_job(lava_job, template_name)
@@ -183,10 +183,11 @@ def _parse_arguments(cli_args):
                         action="store_true",
                         dest="notify_user",
                         default=False)
-    parser.add_argument("--notify-email",
-                        help="Enable email notification to a custom email",
-                        dest="notify_email",
-                        default=None)
+    parser.add_argument("--notify-emails",
+                        help="Enable email notification to custom emails",
+                        dest="notify_emails",
+                        nargs="+",
+                        default=[])
     parser.add_argument("--debug",
                         help="Enable debug messages",
                         action="store_true",
@@ -249,7 +250,7 @@ def _main(args):
         # Create LAVA jobs yaml file from templates
         lava_jobs = lava_template.process(args.image_url, args.build_tag,
                                           args.build_url, args.notify_user,
-                                          args.notify_email)
+                                          args.notify_emails)
 
         # Instantiate a LAVA server
         lava_server = LAVAServer(args.lava_server, args.lava_username,
