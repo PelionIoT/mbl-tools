@@ -20,13 +20,16 @@ usage: run-me.sh [OPTION] -- [command arguments]
   -c, --cmd             Execute a command.
                         Available commands are: submit, test
   -h, --help            Print brief usage information and exit.
+  --tty                 Enable tty creation (default).
+  --no-tty              Disable tty creation.
   -x                    Enable shell debugging in this script.
 
 EOF
 }
 
+flag_tty="-t"
 
-args=$(getopt -o+c:hx -l cmd:,help -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+c:hx -l cmd:,help,tty,no-tty -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -48,6 +51,14 @@ while [ $# -gt 0 ]; do
   -h | --help)
     usage
     exit 0
+    ;;
+
+  --tty)
+    flag_tty="-t"
+    ;;
+
+  --no-tty)
+    flag_tty=
     ;;
 
   -x)
@@ -91,4 +102,4 @@ docker build -t "$imagename" "$execdir"
 # want that instance quoted because that would inject single quotes in the
 # command line
 # shellcheck disable=SC2086
-docker run --rm -it "$imagename" $cmd "$@"
+docker run --rm -i $flag_tty "$imagename" $cmd "$@"
