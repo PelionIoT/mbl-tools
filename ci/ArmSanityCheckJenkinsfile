@@ -1,3 +1,7 @@
+/* Copyright (c) 2018 ARM Ltd.
+
+   SPDX-License-Identifier: Apache-2.0 */
+
 @Library('mbl-jenkins-library@master') _
 
 sanityCheckPipeline {
