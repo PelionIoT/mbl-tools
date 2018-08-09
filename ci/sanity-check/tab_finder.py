@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Copyright (c) 2018 ARM Ltd.
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Check tabs existence on shell scripts."""
 
 import argparse
