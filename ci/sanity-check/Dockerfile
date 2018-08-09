@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-FROM ubuntu:xenial-20170517.1
+FROM ubuntu:bionic-20180724.1
 
 RUN apt-get update && apt-get install locales \
     && dpkg-reconfigure locales \
@@ -12,9 +12,11 @@ RUN apt-get update && apt-get install locales \
 ENV LANG=en_US.UTF-8
 
 RUN apt-get update && apt-get install -y \
-    pep8 \
-    python \
+    python3 \
+    python3-pip \
     shellcheck
+
+RUN pip3 install pycodestyle pep257 black
 
 RUN rm -rf /var/lib/apt/lists/*
 
@@ -22,4 +24,4 @@ RUN rm -rf /var/lib/apt/lists/*
 # delivery the build products.
 RUN mkdir -m 777 /work
 
-COPY sanity-check.sh sanity_check.py ./
+COPY sanity-check.sh tab_finder.py ./

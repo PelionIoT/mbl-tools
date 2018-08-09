@@ -1,10 +1,20 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+"""Check tabs existence on shell scripts."""
 
 import argparse
 import sys
 
 
-def check(path):
+def check_tabs(path):
+    """Check tabs existence for given path.
+
+    Count the number of tabs found on a given path
+
+    :param: path of the file to analyse
+    :return: number of errors
+
+    """
     error_count = 0
 
     with open(path) as fd:
@@ -13,21 +23,24 @@ def check(path):
             lineno += 1
 
             if "\t" in line:
-                sys.stderr.write("%s:%d: error: TAB character instead of "
-                                 "SPACEs.\n" % (path, lineno))
+                sys.stderr.write(
+                    "%s:%d: error: TAB character instead of "
+                    "SPACEs.\n" % (path, lineno)
+                )
                 error_count += 1
 
     return error_count
 
 
 def main(args):
+    """Main execution."""
     parser = argparse.ArgumentParser()
     parser.add_argument("FILE", nargs="*")
     args = parser.parse_args(args)
 
     error_count = 0
     for path in args.FILE:
-        error_count += check(path)
+        error_count += check_tabs(path)
 
     return 0 if error_count == 0 else 1
 
