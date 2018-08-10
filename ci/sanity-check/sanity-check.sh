@@ -8,18 +8,67 @@ set -e
 set -u
 set -o pipefail
 
-execdir="$(dirname "$0")"
-
-rootdir="$(pwd)"
-if [ $# -gt 0 ]; then
-  rootdir="$1"
-  shift
-fi
-
+execdir="$(readlink -e "$(dirname "$0")")"
 rc=0
 
+usage()
+{
+  cat <<EOF
+
+usage: sanity-check.sh [OPTION] -- [sanity-check.sh arguments]
+
+  -h, --help            Print brief usage information and exit.
+  --workdir PATH        Specify the directory to check. Default PWD.
+  -x                    Enable shell debugging in this script.
+
+EOF
+}
+
+args=$(getopt -o+hx -l help,workdir: -n "$(basename "$0")" -- "$@")
+eval set -- "$args"
+while [ $# -gt 0 ]; do
+  if [ -n "${opt_prev:-}" ]; then
+    eval "$opt_prev=\$1"
+    opt_prev=
+    shift 1
+    continue
+  elif [ -n "${opt_append:-}" ]; then
+    eval "$opt_append=\"\${$opt_append:-} \$1\""
+    opt_append=
+    shift 1
+    continue
+  fi
+  case $1 in
+  -h | --help)
+    usage
+    exit 0
+    ;;
+
+  --workdir)
+    opt_prev=workdir
+    ;;
+
+  -x)
+    set -x
+    ;;
+
+  --)
+    shift
+    break 2
+    ;;
+  esac
+  shift 1
+done
+
+if [ -z "${workdir:-}" ]; then
+  workdir="$(pwd)"
+fi
+
+workdir=$(readlink -f "$workdir")
+
+
 # Collect all shell files
-SHELL_FILES=$(find "$rootdir" -type f | while read -r in; do if file -i "${in}" | grep -q text/x-shellscript; then echo "${in}" ; fi ; done)
+SHELL_FILES=$(find "$workdir" -type f | while read -r in; do if file -i "${in}" | grep -q text/x-shellscript; then echo "${in}" ; fi ; done)
 
 # Custom script to check tabs existence in shell scripts
 printf "Running tab_finder.py on shell files...\n"
@@ -30,7 +79,7 @@ printf "Running shellcheck on shell files...\n"
 echo "$SHELL_FILES" | xargs --no-run-if-empty shellcheck --format=gcc  || rc=1
 
 # Collect all Python files
-PYTHON_FILES=$(find "$rootdir" -type f | while read -r in; do if file -i "${in}" | grep -q x-python; then echo "${in}" ; fi ; done)
+PYTHON_FILES=$(find "$workdir" -type f | while read -r in; do if file -i "${in}" | grep -q x-python; then echo "${in}" ; fi ; done)
 
 # Run black on python files - https://black.readthedocs.io/en/stable/
 printf "Running black on python files...\n"

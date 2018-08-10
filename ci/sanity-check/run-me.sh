@@ -27,7 +27,7 @@ usage()
 {
   cat <<EOF
 
-usage: run-me.sh [OPTION] -- [build.sh arguments]
+usage: run-me.sh [OPTION] -- [run-me.sh arguments]
 
   -h, --help            Print brief usage information and exit.
   --image-name NAME     Specify the docker image name to build. Default ${default_imagename}.
@@ -101,4 +101,4 @@ docker run --rm -i $flag_tty \
        --name "$default_containername" \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
        -v "$workdir":/work "$imagename" \
-       ./sanity-check.sh /work
+       ./sanity-check.sh --workdir /work
