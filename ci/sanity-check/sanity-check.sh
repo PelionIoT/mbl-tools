@@ -11,6 +11,17 @@ set -o pipefail
 execdir="$(readlink -e "$(dirname "$0")")"
 rc=0
 
+find_files_with_mime()
+{
+  local mime="$1"
+  find "$workdir" -type f | \
+    while read -r file_path; do
+      if file -i "${file_path}" | grep -q "$mime";
+        then printf "%s " "${file_path}";
+      fi;
+    done
+}
+
 usage()
 {
   cat <<EOF
@@ -66,11 +77,8 @@ fi
 
 workdir=$(readlink -f "$workdir")
 
-
 # Collect all shell files
-SHELL_FILES=$(find "$workdir" -type f | \
-              while read -r in; do if file -i "${in}" | \
-              grep -q text/x-shellscript; then printf "%s\n" "${in}"; fi; done)
+SHELL_FILES=$(find_files_with_mime "text/x-shellscript")
 
 # Custom script to check tabs existence in shell scripts
 printf "Running tab_finder.py on shell files...\n"
@@ -81,9 +89,7 @@ printf "Running shellcheck on shell files...\n"
 printf "%s" "$SHELL_FILES" | xargs --no-run-if-empty shellcheck --format=gcc  || rc=1
 
 # Collect all Python files
-PYTHON_FILES=$(find "$workdir" -type f | \
-               while read -r in; do if file -i "${in}" | \
-               grep -q x-python; then printf "%s\n" "${in}"; fi; done)
+PYTHON_FILES=$(find_files_with_mime "text/x-python")
 
 # Run black on python files - https://black.readthedocs.io/en/stable/
 printf "Running black on python files...\n"

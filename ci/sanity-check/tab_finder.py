@@ -28,8 +28,8 @@ def check_tabs(path):
 
             if "\t" in line:
                 sys.stderr.write(
-                    "%s:%d: error: TAB character instead of "
-                    "SPACEs.\n" % (path, lineno)
+                    "{}:{}: error: TAB character instead of "
+                    "SPACEs.\n".format(path, lineno)
                 )
                 error_count += 1
 

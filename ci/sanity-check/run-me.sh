@@ -101,4 +101,5 @@ docker run --rm -i $flag_tty \
        --name "$default_containername" \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
        -v "$workdir":/work "$imagename" \
-       ./sanity-check.sh --workdir /work
+       ./sanity-check.sh --workdir /work \
+       "$@"
