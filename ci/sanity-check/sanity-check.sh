@@ -68,7 +68,9 @@ workdir=$(readlink -f "$workdir")
 
 
 # Collect all shell files
-SHELL_FILES=$(find "$workdir" -type f | while read -r in; do if file -i "${in}" | grep -q text/x-shellscript; then echo "${in}" ; fi ; done)
+SHELL_FILES=$(find "$workdir" -type f | \
+              while read -r in; do if file -i "${in}" | \
+              grep -q text/x-shellscript; then echo "${in}" ; fi ; done)
 
 # Custom script to check tabs existence in shell scripts
 printf "Running tab_finder.py on shell files...\n"
@@ -79,7 +81,9 @@ printf "Running shellcheck on shell files...\n"
 echo "$SHELL_FILES" | xargs --no-run-if-empty shellcheck --format=gcc  || rc=1
 
 # Collect all Python files
-PYTHON_FILES=$(find "$workdir" -type f | while read -r in; do if file -i "${in}" | grep -q x-python; then echo "${in}" ; fi ; done)
+PYTHON_FILES=$(find "$workdir" -type f | \
+               while read -r in; do if file -i "${in}" | \
+               grep -q x-python; then echo "${in}" ; fi ; done)
 
 # Run black on python files - https://black.readthedocs.io/en/stable/
 printf "Running black on python files...\n"
