@@ -76,7 +76,7 @@ SHELL_FILES=$(find "$workdir" -type f | \
 printf "Running tab_finder.py on shell files...\n"
 printf "%s" "$SHELL_FILES" | xargs --no-run-if-empty "$execdir/tab_finder.py" || rc=1
 
-# Run shellcheck on bash files
+# Run shellcheck on shell files
 printf "Running shellcheck on shell files...\n"
 printf "%s" "$SHELL_FILES" | xargs --no-run-if-empty shellcheck --format=gcc  || rc=1
 
