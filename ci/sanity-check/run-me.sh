@@ -9,8 +9,8 @@ set -u
 
 execdir="$(readlink -e "$(dirname "$0")")"
 
-default_imagename="mbl-tools-checker-env"
-default_containername="mbl-tools-checker-container.$$"
+default_imagename="mbl-sanity-check-env"
+default_containername="mbl-sanity-check-container.$$"
 
 trap cleanup 0
 
