@@ -14,7 +14,7 @@ rc=0
 find_files_with_mime()
 {
   local mime="$1"
-  find "$workdir" -type f | \
+  find "$workdir" -type f -not -path "*/\.git/*" | \
     while read -r file_path; do
       if file -i "${file_path}" | grep -q "$mime";
         then printf "%s " "${file_path}";
