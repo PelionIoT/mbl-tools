@@ -93,7 +93,7 @@ PYTHON_FILES=$(find_files_with_mime "text/x-python")
 
 # Run black on python files - https://black.readthedocs.io/en/stable/
 printf "Running black on python files...\n"
-printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty black -v --check --diff || rc=1
+printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty black --line-length 79 -v --check --diff || rc=1
 
 # Run pycodestyle on python files
 printf "Running pycodestyle on python files...\n"
