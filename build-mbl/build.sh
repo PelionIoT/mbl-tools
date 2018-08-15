@@ -49,7 +49,7 @@ push_stages ()
 pop_stages ()
 {
   item=${stages[0]}
-  unset stages[0]
+  unset 'stages[0]'
   stages=("${stages[@]:-}")
 }
 
@@ -175,7 +175,7 @@ extra_bitbake_info()
   ret=$?
   if [ $ret -eq 0 ]; then
     # Extract the license extra information
-    egrep '^(LICENSE=|SUMMARY=|HOMEPAGE=|PV=|PN=|PR=|PF=)' "$tmpf" > "$envf"
+    grep -E '^(LICENSE=|SUMMARY=|HOMEPAGE=|PV=|PN=|PR=|PF=)' "$tmpf" > "$envf"
     rm -f "$tmpf"
   fi
   return $ret
@@ -206,7 +206,7 @@ retrieve_extra_package_info()
       pn=${license_package_exceptions[$pn]:-$pn}
 
       # Make full package version name (to match bb file)
-      pvstr=$(egrep '^PV:' "$bblicenses/$pkg/recipeinfo")
+      pvstr=$(grep -E '^PV:' "$bblicenses/$pkg/recipeinfo")
       pvn="${pn}_${pvstr/PV: /}"
 
       # Create short pvn (without last digit of version and following string)
@@ -431,7 +431,7 @@ while [ $# -gt 0 ]; do
   shift 1
 done
 
-if [ -n "${external_manifest:-}" -a -n "${manifest:-}" ]; then
+if [ -n "${external_manifest:-}" ] && [ -n "${manifest:-}" ]; then
     printf "error: --external-manifest and --manifest are mutually exclusive.\n" >&2
     exit 3
 fi
@@ -577,6 +577,7 @@ while true; do
       (cd "$builddir/machine-$machine/mbl-manifest"
        set +u
        set +e
+       # shellcheck disable=SC1091
        MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
        set -u
        set -e
@@ -602,6 +603,7 @@ while true; do
       (cd "$builddir/machine-$machine/mbl-manifest"
        set +u
        set +e
+       # shellcheck disable=SC1091
        MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
        set -u
        set -e
