@@ -6,7 +6,7 @@
 
 """Submit to LAVA application.
 
-This application is responsible to submit jobs to lava
+This application is responsible to submit jobs to LAVA.
 """
 import argparse
 import logging
