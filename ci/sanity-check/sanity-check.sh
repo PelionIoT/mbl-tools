@@ -28,7 +28,7 @@ find_files_with_mime()
   # variable which needs to exist in the current process.
   while read -r dir_path; do
     nosanitycheck_dirs+=" -o \( -path ${dir_path} -prune \)"
-  done < <(find "$workdir" -name .nosanitycheck -exec dirname {} \;)
+  done < <(find "$workdir" -name .nosanitycheck -printf "%h\n")
 
   # Performs the find command with the following conditions:
   # * type is a file
