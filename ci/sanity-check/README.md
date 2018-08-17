@@ -42,6 +42,33 @@ $ ./sanity-check.sh --workdir /path/to/your/project
 
 This will run the sanity checks on your project. Output will be printed on screen with the results.
 
+## Skipping directories
+
+You can disable sanity check for a specific sub-tree, placing an empty file named `.nosanitycheck` in the root of the sub-tree you want to skip. Example:
+
+```
+$ tree /path/to/workdir
+/path/to/workdir           
+├── dir1
+│   ├── .nosanitycheck
+│   └── file1                
+└── dir2
+    ├── subdir2
+    │   ├── .nosanitycheck
+    │   ├── file2
+    │   └── subdir3
+    │       └── file3
+    ├── file4
+    └── file5
+```
+
+If you run the sanity check on the above tree, the following directories are skipped:
+* `dir1` and its contents (`file1`)
+* the whole sub-tree with root `subdir2`: `file2` and `file3`
+
+In the above case only `file4` and `file5` will be checked.
+
+
 [shellcheck]: https://www.shellcheck.net/
 [black]: https://black.readthedocs.io/en/stable/
 [pycodestyle]: https://pypi.org/project/pycodestyle/
