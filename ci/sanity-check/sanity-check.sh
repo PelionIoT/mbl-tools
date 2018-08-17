@@ -14,7 +14,29 @@ rc=0
 find_files_with_mime()
 {
   local mime="$1"
-  find "$workdir" -type f -not -path "*/\.git/*" | \
+  local nosanitycheck_dirs=""
+
+  # If a directory contains .nosanitycheck, the whole subtree will be ignored
+  # This is done in two steps:
+  # * build a list find all directories to be ignored
+  # * pass this list to find command
+
+  # Find all directories to be ignored and stores the result in a find option
+  # format. This is done finding .nosanitycheck files and getting the full path
+  # of the containing directory (using dirname)
+  # NOTE: process substitution has to be used in order to redirect stdout to a
+  # variable which needs to exist in the current process.
+  while read -r dir_path; do
+    nosanitycheck_dirs+=" -o \( -path ${dir_path} -prune \)"
+  done < <(find "$workdir" -name .nosanitycheck -printf "%h\n")
+
+  # Performs the find command with the following conditions:
+  # * type is a file
+  # * .git directories are all ignored
+  # * directories containing .nosanitycheck are skipped
+  # NOTE: eval is needed here because it doesn't escape \( \) when it expands
+  # $nosanitycheck_dirs variable
+  eval "find $workdir -type f -not -path \"*/\.git/*\" $nosanitycheck_dirs" | \
     while read -r file_path; do
       if file -i "${file_path}" | grep -q "$mime";
         then printf "%s " "${file_path}";
