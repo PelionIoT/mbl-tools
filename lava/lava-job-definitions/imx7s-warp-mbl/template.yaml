@@ -26,10 +26,10 @@ actions:
     method: u-boot
     commands: ums
     auto_login:
-      login_prompt: 'imx7s-warp-mbl login:'
+      login_prompt: '(.*) login:'
       username: 'root'
     prompts:
-      - 'root@imx7s-warp-mbl:~#'
+      - 'root@(.*):~#'
     timeout:
       minutes: 50
 - test:
