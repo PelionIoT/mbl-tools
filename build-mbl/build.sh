@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Copyright (c) 2017 ARM Ltd.
+# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
 #
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Workspace layout:
 # --buildir ROOT
