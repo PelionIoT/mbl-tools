@@ -1,3 +1,7 @@
+# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 device_type: imx7s-warp-mbl
 
 job_name: MBL {{build_tag}}
