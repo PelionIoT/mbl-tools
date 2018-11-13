@@ -25,9 +25,22 @@ MRR_MANIFEST_REMOTE_KEY = "github"
 MRR_URL_PREFIX = "armmbed"
 MRR_URL_PATTERN = "ssh://git@github.com:/{}/{}.git"
 MBL_MANIFEST_REPO_BASE_NAME = "mbl-manifest"
-MBL_MANIFEST_REPO_URL = MRR_URL_PATTERN.format(
-    MRR_URL_PREFIX,
-    MBL_MANIFEST_REPO_BASE_NAME)
+MBL_MANIFEST_REPO_URL = MRR_URL_PATTERN.format(MRR_URL_PREFIX, MBL_MANIFEST_REPO_BASE_NAME)
+YOCTO_STABLE_BRANCHNAME_TO_BITBAKEVER_DICT = { # This dictionary must be maintained 
+    "thud" : "1.40",
+    "sumo" : "1.38",
+    "rocko" : "1.36",
+    "pyro" : "1.34",
+    "morty" : "1.32",
+    "krogoth" : "1.30",
+    "jethro" : "1.28",
+    "fido" : "1.26",
+    "dizzy" : "1.24",
+    "daisy" : "1.22",
+    "dora" : "1.20",
+    "dylan" : "1.18",
+    "danny" : "1.16"  
+}
 
 #
 #   Global functions
@@ -90,6 +103,7 @@ class RepoManifestFile(object):
         # dictionary : key is a repository base name, value is 
         # This dictionary holds all RepoManifestProject objects with repository names as key
         self.base_name_to_proj_dict = base_name_to_proj_dict
+             
                 
 #
 #   RepoManifestXml Class
@@ -165,14 +179,22 @@ class ReleaseManager(object):
         parser = self.get_argument_parser()
         self.args = parser.parse_args()
         
+        # validate that 'yocto_release_codename' exist in YOCTO_STABLE_BRANCHNAME_TO_BITBAKEVER_DICT
+        # from time to time youcto project will advance and script will exit with an error on new release code names
+        if self.args.yocto_release_codename not in YOCTO_STABLE_BRANCHNAME_TO_BITBAKEVER_DICT:
+            raise argparse.ArgumentTypeError("yocto_release_codename {} does not exist in "
+            "YOCTO_STABLE_BRANCHNAME_TO_BITBAKEVER_DICT!\n(You will have to update this dictionary "
+            "with the new yocto version and the matching bitbake version)".format(self.args.yocto_release_codename))
+        
         # Set verbose log level if enabled by user and log command line arguments
         if self.args.verbose:
             self.logger.setLevel(logging.DEBUG)
             self.logger.debug("Command line arguments:{}".format(self.args))  
+            
         #create a temporary folder to clone repositories in
         self.tmpdirname = tempfile.TemporaryDirectory(prefix="mbl_")
         self.logger.debug("Temporary folder: %s" % self.tmpdirname.name) 
-                
+                             
 
     # Costume action - check that the given manifest branch exist in mbl-manifest
     class StoreValidManifestBranchName(argparse.Action):
@@ -380,7 +402,7 @@ class ReleaseManager(object):
             for future in concurrent.futures.as_completed(future_to_git_url, MAX_TMO_SEC):
                 git_url = future_to_git_url[future]                
                 result = future.result()
-                if result:
+                if result == True:
                     raise argparse.ArgumentTypeError(
                       "Branch %s found on %s" % (self.args.create_branch_name, git_url)
                     )    
@@ -395,9 +417,9 @@ class ReleaseManager(object):
             for future in concurrent.futures.as_completed(future_to_git_url, MAX_TMO_SEC):
                 git_url = future_to_git_url[future]                
                 result = future.result()
-                if not result:
+                if result == False:
                     raise argparse.ArgumentTypeError(
-                      "Branch %s found on %s" % (self.args.yocto_release_codename, git_url)
+                      "Branch %s not found on %s" % (self.args.yocto_release_codename, git_url)
                     )                 
         
 def _main():    
