@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 
+#TODO - add to explenation
+#https://wiki.yoctoproject.org/wiki/Stable_branch_maintenance
+'''
+Arm MRRs	Arm owned Manifest Referenced Repositories
+Non-Arm MRRs	Community (or Linaro) owned Manifest Referenced Repositories
+MRR	Manifest Referenced Repository - a repository referenced in a repo manifest file (in the mbl-manifest repo)
+'''
+
 """Part of mbl-tools. 
 Tag new development and release branches on all manifest files and internally linkes repositories."""
 from git import Repo
@@ -11,11 +19,15 @@ import os, glob, git, sys, logging, argparse, tempfile, concurrent.futures
 module_name = "ReleaseManager"
 __version__ = "1.0.0"
 
-# set constants
-MAX_TMO = 20
-MBL_MANIFEST_REPO_NAME = "mbl-manifest"
-ARMMBED_GITHUB_PREFIX = "armmbed"
-GITHUB_URL_PATTERN = "git@github.com:/{}/{}.git"
+# constants
+MAX_TMO_SEC = 20
+MRR_MANIFEST_REMOTE_KEY = "github"
+MRR_URL_PREFIX = "armmbed"
+MRR_URL_PATTERN = "ssh://git@github.com:/{}/{}.git"
+MBL_MANIFEST_REPO_BASE_NAME = "mbl-manifest"
+MBL_MANIFEST_REPO_URL = MRR_URL_PATTERN.format(
+    MRR_URL_PREFIX,
+    MBL_MANIFEST_REPO_BASE_NAME)
 
 #
 #   Global functions
@@ -32,8 +44,10 @@ def lsremote(url):
 
 # Returns True if 'branch_name' exist in remote repository in URL 'repo_url'
 def is_branch_exist_in_remote_repo(repo_url, branch_name):
-    refs=lsremote(repo_url) 
-    if 'refs/heads/' + branch_name in refs: return True; return False
+    refs = lsremote(repo_url) 
+    if 'refs/heads/' + branch_name in refs: 
+        return True 
+    return False
 
 # Returns True is 'branch_name' is a valid git branch name
 def is_valid_git_branch_name(branch_name):
@@ -51,36 +65,69 @@ def clone_get_repo(dest_full_path, url, checkout_branch_name="master"):
     assert cloned_repo.__class__ is Repo
     return cloned_repo
 
-    
+#
+#   RepoManifestFile Class
+#
+########################################################################
+class RepoManifestFile(object):
+    def __init__(self, fn, tree, root, default_rev, 
+                 remote_name_to_fetch_prefix_dict, base_name_to_proj_dict):            
+        #file name
+        self.file_name = fn
+        # entire element hierarchy
+        self.tree = tree
+        
+        # root ElementTree of file prase 
+        self.root = root
+        
+        # default revision (branch or tag) to checkout when not specified in project
+        self.default_rev = default_rev
+        
+        # dictionary : key is a remote name, value is a fetch prefix URL
+        # This  dictionary golds all fetch URLs with a remote name as key
+        self.remote_name_to_fetch_prefix_dict = remote_name_to_fetch_prefix_dict
+        
+        # dictionary : key is a repository base name, value is 
+        # This dictionary holds all RepoManifestProject objects with repository names as key
+        self.base_name_to_proj_dict = base_name_to_proj_dict
+                
 #
 #   RepoManifestXml Class
 #
 ########################################################################
-class RepoManifestXmlDB(object):
-    def __init__(self, full_name, prefix, base_name):
+class RepoManifestProject(object):
+    def __init__(self, full_name, prefix, base_name, remote, url, revision):
         self.full_name = full_name
         self.prefix = prefix
         self.base_name = base_name
-        self.remote = ""           
-        self.url = "" 
-        self.revision = ""    
+        self.remote = remote           
+        self.url = url
+        self.revision = revision
+        
+        # an ARM MRR must have project with :
+        # remote -> MRR_MANIFEST_REMOTE_KEY = "github"
+        # prefix -> MRR_URL_PREFIX = "armmbed"
+        if (self.prefix == MRR_URL_PREFIX) and (self.remote == MRR_MANIFEST_REMOTE_KEY):
+            self.isArmMRR = True
+        else: 
+            self.isArmMRR = False
 #
 #   GitRepository Class
 #
 ########################################################################
 class GitRepository(object):
-    def __init__(self, github_prefix, _base_name, clone_base_path, checkout_branch_name="master"):
+    def __init__(self, github_prefix, base_name, clone_base_path, checkout_branch_name="master"):
         # name
-        self.name = _base_name
+        self.name = base_name
         
         # checkout branch name
         self.checkout_branch_name = checkout_branch_name
         
         # full clone path
-        self.clone_path = os.path.join(clone_base_path, _base_name)
+        self.clone_path = os.path.join(clone_base_path, base_name)
         
         # repo url
-        self.url = GITHUB_URL_PATTERN.format(github_prefix, _base_name)
+        self.url = MRR_URL_PATTERN.format(github_prefix, base_name)
         
         # clone and get git.Repo object
         self.obj_repo = clone_get_repo(self.clone_path, self.url, self.checkout_branch_name)
@@ -105,8 +152,15 @@ class ReleaseManager(object):
         key : manifest file base name, without the suffix '.xml'
         value : GitRepository object
         '''
-        self.repo_dict = {}
-                             
+        self.repo_base_name_to_git_repo_dict = {}
+        
+        # list of RepoManifestFile objects
+        self.manifest_file_list = []
+                
+        # set of URLs to check - build both sets to check state afterwards
+        self.mrr_url_set = set()
+        self.non_mrr_url_set = set()
+        
         # parse arguments
         parser = self.get_argument_parser()
         self.args = parser.parse_args()
@@ -128,8 +182,7 @@ class ReleaseManager(object):
                 raise argparse.ArgumentTypeError(
                   "Branch %s is invalid!" % manifest_branch_name
                 )           
-            mbl_manifest_git_url = GITHUB_URL_PATTERN.format(ARMMBED_GITHUB_PREFIX, MBL_MANIFEST_REPO_NAME)
-            if not is_branch_exist_in_remote_repo(mbl_manifest_git_url, manifest_branch_name):
+            if not is_branch_exist_in_remote_repo(MBL_MANIFEST_REPO_URL, manifest_branch_name):
                 raise argparse.ArgumentTypeError(
                   "Branch %s not found on %s" % (manifest_branch_name, mbl_manifest_url)
               )                            
@@ -143,26 +196,9 @@ class ReleaseManager(object):
             if not is_valid_git_branch_name(create_branch_name):
                 raise argparse.ArgumentTypeError("Branch %s is invalid!" % create_branch_name) 
             
-            '''
-             git_url_list = [ mbl_manifest_url ]
-                     
-             for url in arm_mrr_dict.values():
-                 git_url_list.append(url)
-                     
-             # check that non of the repositories in 'list' has a branch called 'create_branch_name'
-             with concurrent.futures.ThreadPoolExecutor(max_workers=len(git_url_list)) as executor:
-                 future_to_git_url = {
-                     executor.submit(is_branch_exist_in_remote_repo, url, create_branch_name): 
-                     url for url in git_url_list
-                 }
-                 for future in concurrent.futures.as_completed(future_to_git_url, max_tmo):
-                     git_url = future_to_git_url[future]                
-                     result = future.result()
-                     if result:
-                         raise argparse.ArgumentTypeError(
-                           "Branch %s found on %s" % (create_branch_name, git_url)
-                         )                    
-            '''                            
+            # Comment : at this stage, check only if branch name is legal.
+            # We will check if branch exist on remote later on
+           
             setattr(namespace, self.dest, create_branch_name)
        
     # Costume action - check that the given yocto release is valid.
@@ -185,7 +221,7 @@ class ReleaseManager(object):
             repo_list = values
             for elem in repo_list:                       
                 try:   
-                    url = GITHUB_URL_PATTERN.format(ARMMBED_GITHUB_PREFIX, elem)
+                    url = MRR_URL_PATTERN.format(MRR_URL_PREFIX, elem)
                     refs=lsremote(url)
                     if not refs:
                         raise argparse.ArgumentTypeError(
@@ -222,7 +258,7 @@ class ReleaseManager(object):
             metavar="",
             action=self.StoreValidManifestBranchName, 
             default="master",
-            help="Name of an already exist branch on %s repository to clone from" % MBL_MANIFEST_REPO_NAME,
+            help="Name of an already exist branch on %s repository to clone from" % MBL_MANIFEST_REPO_BASE_NAME,
         )
         
         parser.add_argument(
@@ -233,10 +269,11 @@ class ReleaseManager(object):
             default="meta-mbl mbl-core",
             action=self.StoreAdditionalRepositoryNames, 
             help="""A list of Arm managed repository names to create a branch <create_branch_name> for. 
-            Each name should be only the "humanish" base part of the repository URL.
-            For example: the name 'mbl-core' will point to 'git@github.com:ARMmbed/mbl-core.git'
-            Each name must not be included in any of the manifest files in mbl-manifest repository.
-            If mbl-core is included in the list, meta-mbl/conf/distro/mbl-linked-repositories.conf will be updated accordingly."""        
+            Each name should be only the 'humanish' base part of the repository URL.
+            For example: the name 'mbl-core' refers to URL 'git@github.com:/ARMmbed/mbl-core.git'
+            Each name must not be included in the project/name value any of the manifest files in 
+            mbl-manifest repository.If mbl-core is included in the list, 
+            meta-mbl/conf/distro/mbl-linked-repositories.conf will be updated accordingly."""        
         )
         
         parser.add_argument(
@@ -250,12 +287,15 @@ class ReleaseManager(object):
     
     def parse_manifest_files(self):
         ## clone mbl-manifest repository first and checkout manifest_branch_name
-        self.repo_dict[MBL_MANIFEST_REPO_NAME] = GitRepository(
-            ARMMBED_GITHUB_PREFIX, MBL_MANIFEST_REPO_NAME, self.tmpdirname.name, self.args.manifest_branch_name)       
+        self.repo_base_name_to_git_repo_dict[MBL_MANIFEST_REPO_BASE_NAME] = GitRepository(
+            MRR_URL_PREFIX, 
+            MBL_MANIFEST_REPO_BASE_NAME, 
+            self.tmpdirname.name, 
+            self.args.manifest_branch_name)       
 
         # get all files ending with .xml inside this directory. We assume they are all manifest files
         xml_file_list = []
-        path = os.path.join(self.repo_dict[MBL_MANIFEST_REPO_NAME].clone_path, "*.xml")
+        path = os.path.join(self.repo_base_name_to_git_repo_dict[MBL_MANIFEST_REPO_BASE_NAME].clone_path, "*.xml")
         for file_name in glob.glob(path):
             xml_file_list.append(os.path.abspath(file_name))
         
@@ -271,50 +311,108 @@ class ReleaseManager(object):
             b. 'remote' - 2.b name - should be replace with fetch in order to fetch the repository
             c. 'revision' - this one is optional tag or branch (head) name. If not exist, assign revision from 1.a
         '''        
-        #parse all xml files, create a XXXXXXXXXXXXXXXX object for each and store in XXXXX
-        for fn in xml_file_list:
+        #parse all xml files, create a RepoManifestFile object for each and store in manifest_file_list
+        for fn in xml_file_list:            
             # get root
             tree = ET.parse(fn)
+            
+            #root element of the tree
             root = tree.getroot()
             
-            # get default
+            # get default, if not found, set to master
             node = tree.find('./default')
-            default_rev = node.get('revision')            
-            if not default_rev: default_rev = "master";
+            default_rev = "master"
+            if node:
+                default_rev = node.get("revision", "master")            
             
             # get remotes - store in a dictionary { name : fetch }
-            name_to_fetch_dict = {}
+            remote_name_to_fetch_prefix_dict = {}
             for atype in root.findall('remote'):
-                name_to_fetch_dict[atype.get('name')] = atype.get('fetch')
+                remote_name_to_fetch_prefix_dict[atype.get('name')] = atype.get('fetch')
 
             # get projects - store in a base project name to
-            name_to_proj_dict = {}
+            base_name_to_proj_dict = {}
             for atype in root.findall('project'):                                
                 #get name and split to prefix and base name
                 full_name = atype.get('name')
                 prefix, base_name = full_name.rsplit('/', 1)
-                if base_name in name_to_proj_dict:
+                if base_name in base_name_to_proj_dict:
                     raise ValueError("File %s : project %s repeats multiple times!".format(fn, base_name))
-                proj = RepoManifestXmlDB(full_name, prefix, base_name)
                 
                 #get remote and build url
-                proj.remote = atype.get('remote')                
-                proj.url = name_to_fetch_dict[proj.remote] + ":/" + proj.full_name + ".git"
+                remote = atype.get('remote')                
+                url = remote_name_to_fetch_prefix_dict[remote] + ":/" + full_name + ".git"
                 
                 #set revision
-                proj.revision = atype.get('revision')
-                if not proj.revision: proj.revision = default_rev;
-                name_to_fetch_dict[base_name] = proj
+                revision = atype.get('revision')
+                if not revision: revision = default_rev;
+                
+                #create project and insert to dictionary
+                proj = RepoManifestProject(full_name, prefix, base_name, remote, url, revision)                
+                base_name_to_proj_dict[base_name] = proj
             
-            todo - store in XXXXX 
-                                            
+            rmf = RepoManifestFile(fn, tree, root, default_rev, 
+                                   remote_name_to_fetch_prefix_dict, base_name_to_proj_dict)
+            self.manifest_file_list.append(rmf)
+            
+    def validate_remote_repositories_state(self):
+                           
+        # build dictionary from all Arm MRR, mbl-manifest and additional_repository_names
+        self.mrr_url_set.add(MBL_MANIFEST_REPO_URL)
+        for elem in self.args.additional_repository_names:
+            self.mrr_url_set.add(MRR_URL_PATTERN.format(MRR_URL_PREFIX, elem))
+            
+        for f in self.manifest_file_list:
+            for name, project in f.base_name_to_proj_dict.items():
+                # key is the base name and v is the project object
+                if project.isArmMRR:
+                    self.mrr_url_set.add(project.url)
+                else: 
+                    self.non_mrr_url_set.add(project.url)
+
+        # check concurrently that none of the repositories in mrr_url_set 
+        # has a branch called 'create_branch_name'
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.mrr_url_set)) as executor:
+            future_to_git_url = {
+                executor.submit(is_branch_exist_in_remote_repo, url, self.args.create_branch_name): 
+                url for url in self.mrr_url_set
+            }
+            for future in concurrent.futures.as_completed(future_to_git_url, MAX_TMO_SEC):
+                git_url = future_to_git_url[future]                
+                result = future.result()
+                if result:
+                    raise argparse.ArgumentTypeError(
+                      "Branch %s found on %s" % (self.args.create_branch_name, git_url)
+                    )    
+        
+        # check concurrently that none of the repositories in non_mrr_url_set 
+        # has a branch called 'yocto_release_codename'
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.non_mrr_url_set)) as executor:
+            future_to_git_url = {
+                executor.submit(is_branch_exist_in_remote_repo, url, self.args.yocto_release_codename): 
+                url for url in self.non_mrr_url_set
+            }
+            for future in concurrent.futures.as_completed(future_to_git_url, MAX_TMO_SEC):
+                git_url = future_to_git_url[future]                
+                result = future.result()
+                if not result:
+                    raise argparse.ArgumentTypeError(
+                      "Branch %s found on %s" % (self.args.yocto_release_codename, git_url)
+                    )                 
+        
 def _main():    
-    #create and initialize a release manager object
+    # Create and initialize a release manager object
     rm = ReleaseManager()    
     
-    #clone the manifest repository and parse its xml files to build MRR list
+    # Clone the manifest repository and parse its xml files into database
     rm.parse_manifest_files()
     
+    '''
+    For all MRRs and additional_repository_names and mbl-manifest : check that : 'create_branch_name' does not exist
+    For all non-MRRs - check that 'yocto_release_codename' branch exist
+    '''
+    rm.validate_remote_repositories_state()
+                
     #TODO - remove
     print("dummy")
     
