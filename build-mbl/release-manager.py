@@ -193,10 +193,10 @@ class ReleaseManager(object):
             
         #create a temporary folder to clone repositories in
         self.tmpdirname = tempfile.TemporaryDirectory(prefix="mbl_")
-        self.logger.debug("Temporary folder: %s" % self.tmpdirname.name) 
-                             
+        self.logger.debug("Temporary folder: %s" % self.tmpdirname.name)                              
 
     # Costume action - check that the given manifest branch exist in mbl-manifest
+    ###############################################################
     class StoreValidManifestBranchName(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             manifest_branch_name = values
@@ -209,9 +209,11 @@ class ReleaseManager(object):
                   "Branch %s not found on %s" % (manifest_branch_name, mbl_manifest_url)
               )                            
             setattr(namespace, self.dest, manifest_branch_name)
-        
-     # Costume action - check that the given create branch name does not exist in mbl-manifest 
-     # or any of the arm_mrr_dict key repositories
+     
+    '''   
+    # Costume action - check that the given create branch name does not exist in mbl-manifest 
+    # or any of the arm_mrr_dict key repositories
+    ###############################################################
     class StoreValidCreateBranchName(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             create_branch_name = values
@@ -227,6 +229,7 @@ class ReleaseManager(object):
     # At this stage script check that string consists of alphabetic characters only.
     # TODO : parse release names from: https://wiki.yoctoproject.org/wiki/Releases and check that name 
     # is one of  the code names
+    ###############################################################
     class StoreValidYoctoReleaseName(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             yocto_release_codename = values        
@@ -236,7 +239,7 @@ class ReleaseManager(object):
                 )                    
                                         
             setattr(namespace, self.dest, yocto_release_codename)
-    
+    '''
     #TODO    
     class StoreAdditionalRepositoryNames(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
@@ -263,16 +266,18 @@ class ReleaseManager(object):
         )
                     
         parser.add_argument(
-            "create_branch_name",
-            action=self.StoreValidCreateBranchName,
-            help="Name of branch to be created across all internally linked repository repositories and Arm-MRRs"
+            "create_refs_input_file_path",
+            #action=self.StoreValidFilePath,
+            help="Path to a json file according to the format XXXXX, holding pairs of (key, value)."                               
         )
         
+        '''
         parser.add_argument(
             "yocto_release_codename",
             action=self.StoreValidYoctoReleaseName,
             help="Name of yocto release codename (see https://wiki.yoctoproject.org/wiki/Releases)",
         )
+        '''
     
         parser.add_argument(
             "-m",
@@ -283,6 +288,7 @@ class ReleaseManager(object):
             help="Name of an already exist branch on %s repository to clone from" % MBL_MANIFEST_REPO_BASE_NAME,
         )
         
+        '''
         parser.add_argument(
             "-a",
             "--additional_repository_names",
@@ -297,6 +303,7 @@ class ReleaseManager(object):
             mbl-manifest repository.If mbl-core is included in the list, 
             meta-mbl/conf/distro/mbl-linked-repositories.conf will be updated accordingly."""        
         )
+        '''
         
         parser.add_argument(
             "-v",
