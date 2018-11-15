@@ -32,7 +32,7 @@ usage: run-me.sh [OPTION] -- [build.sh arguments]
 
   --builddir PATH       Specify the root of the build tree.  Default ${default_builddir}.
   --downloaddir PATH    Use PATH to store downloaded packages.
-  --external-manifest=PATH
+  --external-manifest PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
   --image-name NAME     Specify the docker image name to build. Default ${default_imagename}.

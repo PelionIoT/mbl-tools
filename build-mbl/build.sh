@@ -302,7 +302,7 @@ usage: build.sh [OPTION] [STAGE]..
   --builddir DIR        Use DIR for build, default CWD.
   --build-tag TAG       Specify a unique version tag to identify the build.
   --downloaddir DIR     Use DIR to store downloaded packages. Default \$builddir/download
-  --external-manifest=PATH
+  --external-manifest PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
   --image IMAGE         Select an alternative image.  Default $default_images.
@@ -311,10 +311,10 @@ usage: build.sh [OPTION] [STAGE]..
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys.
   --licenses            Collect extra build license info. Default disabled.
-  --machine=MACHINE     Add a machine to build.  Default ${default_machines}.
-  --manifest=MANIFEST   Name the manifest file. Default ${default_manifest}.
+  --machine MACHINE     Add a machine to build.  Default ${default_machines}.
+  --manifest MANIFEST   Name the manifest file. Default ${default_manifest}.
   -o, --outputdir PATH  Directory to output build artifacts.
-  --url=URL             Name the URL to clone. Default ${default_url}.
+  --url URL             Name the URL to clone. Default ${default_url}.
   -x                    Enable shell debugging in this script.
 
   STAGE                 Start execution at STAGE, default previous
