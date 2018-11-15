@@ -40,7 +40,7 @@ branches include: 'rocko', 'pyro' etc
 For example, to build the tip of the rocko release branch:
 
 ```
-./mbl-tools/build-mbl/run-me.sh -- --branch=rocko
+./mbl-tools/build-mbl/run-me.sh -- --branch rocko
 ```
 
 The build process involves the download of many source artifacts.  It
@@ -53,7 +53,7 @@ between successive builds, pass the --downloaddir option to run-me.sh:
 
 ```
 mkdir downloads
-./mbl-tools/build-mbl/run-me.sh --downloaddir=$(pwd)/downloads -- --branch=rocko
+./mbl-tools/build-mbl/run-me.sh --downloaddir $(pwd)/downloads -- --branch rocko
 ```
 
 The build scripts will by default create and use a build directory
@@ -61,7 +61,7 @@ under the current working directory.  An alternative build directory
 can be specified using the --builddir option to run-me.sh:
 
 ```
-./mbl-tools/build-mbl/run-me.sh --builddir=my-build-dir --branch=master
+./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --branch master
 ```
 
 Use the --help option to the run-me.sh script to get brief usage
@@ -77,7 +77,7 @@ specify which directory the build artifacts should be placed in:
 
 ```
 mkdir artifacts
-./mbl-tools/build-mbl/run-me.sh --outputdir=artifacts --branch=master
+./mbl-tools/build-mbl/run-me.sh --outputdir artifacts --branch master
 ```
 
 #### Pinned Manifests and Rebuilds
@@ -91,7 +91,7 @@ get the build artifacts:
 
 ```
 mkdir artifacts
-./mbl-tools/build-mbl/run-me.sh --outputdir=artifacts --branch=master
+./mbl-tools/build-mbl/run-me.sh --outputdir artifacts --branch master
 ```
 
 This will produce the file: pinned-manifest.xml in the directory
@@ -100,7 +100,7 @@ specified with --outputdir.
 To re-build using a previously pinned manifest use the --external-manifest option:
 
 ```
-./mbl-tools/build-mbl/run-me.sh --external-manifest=pinned-manifest.xml
+./mbl-tools/build-mbl/run-me.sh --external-manifest pinned-manifest.xml
 ```
 
 #### Mbed Cloud Client Credentials
