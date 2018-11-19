@@ -10,6 +10,8 @@ been extensively tested.  If not supplied the revision given by
 the remote element is used if applicable, else the default
 element is used.
 
+add section for lined repos. we expect exact file stcurture with no multi lines.
+
 
 The Mbed Linux OS  Release Manager, used by mbl-tools, receives as an input a JSON format configuration file. The file holds a main dictionary of (***main key***, value) pairs. A main key must belong to one of 3 types:
 1. A manifest file name matching a Git repo manifest file that must exist in armmbed/mbl-manifest repository (without the '.XML' suffix). For example : the key 'default' will match the default.xml file, and the sub-dictionary value matched by 'default' will hold pairs of (repository name, new revision).
