@@ -19,6 +19,7 @@ Tag new development and release branches on all manifest files and internally li
 from git import Repo
 import xml.etree.ElementTree as ET
 import os, glob, git, sys, json, logging, argparse, tempfile, concurrent.futures, ntpath
+from pprint import pprint, pformat
 
 #TODO - change name??
 module_name = "ReleaseManager"
@@ -27,145 +28,169 @@ __version__ = "1.0.0"
 # constants
 INPUT_FILE_COMMON_SD_KEY_NAME = "_common_"
 INPUT_FILE_ADDITIONAL_SD_KEY_NAME = "_additional_"
-MAX_TMO_SEC = 20
+MAX_TMO_SEC = 20000                                     # TODO - make it 20
 MRR_MANIFEST_REMOTE_KEY = "github"
 REF_PREFIX = "refs/"
 REF_BRANCH_PREFIX = "refs/heads/"
 REF_TAG_PREFIX = "refs/tags/"
 HASH_FIXED_LEN = 40
-MRR_URL_PREFIX = "armmbed"
-MRR_URL_PATTERN = "ssh://git@github.com:/{}/{}.git"
-MBL_MANIFEST_REPO_SHORT_NAME = "mbl-manifest"
-MBL_MANIFEST_REPO_NAME = "{}/{}".format(MRR_URL_PREFIX, MBL_MANIFEST_REPO_SHORT_NAME)        # armmbed/mbl-manifest
-MBL_MANIFEST_REPO_URL = MRR_URL_PATTERN.format(MRR_URL_PREFIX, MBL_MANIFEST_REPO_SHORT_NAME) # ssh://git@github.com:/armmbed/mbl-manifest.git
+INPUT_FILE_NAME = "update.json"
 
+# remote URL constants 
+ARM_MRR_REMOTE = "ssh://git@github.com"
+ARM_MRR_URL_PATTERN = "ssh://git@github.com:/{}/{}.git"
+ARM_MRR_REPO_NAME_PREFIX = "armmbed"
+MBL_MANIFEST_REPO_SHORT_NAME = "mbl-manifest"
+MBL_MANIFEST_REPO_NAME = "{}/{}".format(ARM_MRR_REPO_NAME_PREFIX, MBL_MANIFEST_REPO_SHORT_NAME) # armmbed/mbl-manifest
 
 #
 #   Global functions
 #
 
-# Returns a dictionary of remote refs
-def lsremote(url):
-    remote_refs = {}
-    g = git.cmd.Git()
-    for ref in g.ls_remote(url).split('\n'):
-        hash_ref_list = ref.split('\t')
-        remote_refs[hash_ref_list[1]] = hash_ref_list[0]
-    return remote_refs
+class GlobalFuncs:
+    @staticmethod
+    def build_url_from_base_repo_name(remote, prefix, base_name):
+        return "{}:/{}/{}.git".format(remote, prefix, base_name)
+
+    @staticmethod
+    def build_url_from_full_repo_name(remote, name):
+        return "{}:/{}.git".format(remote, name)
+
+    # Returns a dictionary of remote refs
+    @staticmethod
+    def lsremote(url):
+        remote_refs = {}
+        g = git.cmd.Git()
+        for ref in g.ls_remote(url).split('\n'):
+            hash_ref_list = ref.split('\t')
+            remote_refs[hash_ref_list[1]] = hash_ref_list[0]
+        return remote_refs
 
 
-# Returns True if 'branch_name' exist in remote repository in URL 'repo_url'
-def is_branch_exist_in_remote_repo(repo_url, branch_name, is_base_name):
-    refs = lsremote(repo_url) 
-    if is_base_name:
-        if 'refs/heads/' + branch_name in refs: 
-            return True 
-    if branch_name in refs:
+    # Returns True if 'branch_name' exist in remote repository in URL 'repo_url'
+    @staticmethod
+    def is_branch_exist_in_remote_repo(repo_url, branch_name, is_base_name):
+        refs = GlobalFuncs.lsremote(repo_url)
+        if is_base_name:
+            if 'refs/heads/' + branch_name in refs:
+                return True
+        if branch_name in refs:
+            return True
+        return False
+
+    # Returns True if 'branch_name' exist in remote repository in URL 'repo_url'
+    @staticmethod
+    def is_tag_exist_in_remote_repo(repo_url, tag_name, is_base_name):
+        refs = GlobalFuncs.lsremote(repo_url)
+        if is_base_name:
+            if 'refs/tags/' + branch_name in refs:
+                return True
+        if tag_name in refs:
+            return True
+        return False
+
+    @staticmethod
+    def get_file_name_from_path(path, no_suffix_flag):
+        ret = ntpath.basename(path)
+        if (no_suffix_flag):
+            tup = os.path.splitext(ret)
+            ret = tup[0]
+        return ret
+
+    @staticmethod
+    def get_base_rev_name(full_rev_name):
+        return full_rev_name.rsplit("/", 1)[1]
+
+    @staticmethod
+    def is_valid_revision(rev):
+        if not GlobalFuncs.is_valid_git_commit_hash(rev) and \
+           not GlobalFuncs.is_valid_git_branch_name(rev) and \
+           not GlobalFuncs.is_valid_git_tag_name(rev):
+            return False
         return True
-    return False
 
-# Returns True if 'branch_name' exist in remote repository in URL 'repo_url'
-def is_tag_exist_in_remote_repo(repo_url, tag_name, is_base_name):
-    refs = lsremote(repo_url) 
-    if is_base_name:
-        if 'refs/tags/' + branch_name in refs: 
-            return True 
-    if tag_name in refs:
+    @staticmethod
+    def is_valid_git_ref_name(ref):
+        if not ref.startswith(REF_PREFIX):
+            return False
+
+        g = git.cmd.Git()
+        try:
+            if g.check_ref_format("--normalize", ref) != ref:
+                raise ValueError
+        except git.GitCommandError:
+            return False
+        except ValueError:
+            return False
         return True
-    return False
 
-def get_file_name_from_path(path, no_suffix_flag):
-    ret = ntpath.basename(path)
-    if (no_suffix_flag):
-        tup = os.path.splitext(ret)
-        ret = tup[0]
-    return ret
+    # A valid commit hash must be 40 characters long and hexadecimal
+    @staticmethod
+    def is_valid_git_commit_hash(commit_hash):
+        if (len(commit_hash) != 40):
+            return False
+        try:
+            int(commit_hash, 16)
+        except ValueError:
+            return False
+        return True
 
-def get_base_rev_name(full_rev_name):
-    return full_rev_name.rsplit("/", 1)[1]
-#
-def is_valid_revision(rev):
-    if not is_valid_git_commit_hash(rev) and \
-       not is_valid_git_branch_name(rev) and \
-       not is_valid_git_tag_name(rev):
-        return False
-    return True
-               
-def is_valid_git_ref_name(ref):
-    if not ref.startswith(REF_PREFIX): 
-        return False   
-    
-    g = git.cmd.Git()
-    try:        
-        if g.check_ref_format("--normalize", ref) != ref:
-            raise ValueError
-    except git.GitCommandError:
-        return False   
-    except ValueError:
-        return False
-    return True
+    @staticmethod
+    def is_valid_git_branch_short_name(branch_name):
+        g = git.cmd.Git()
+        try:
+            if g.check_ref_format("--branch", ref) != ref:
+                raise ValueError
+        except git.GitCommandError:
+            return False
+        except ValueError:
+            return False
+        return True
 
-# A valid commit hash must be 40 characters long and hexadecimal
-def is_valid_git_commit_hash(commit_hash):
-    if (len(commit_hash) != 40):
-        return False
-    try:
-        int(commit_hash, 16)
-    except ValueError:
-        return False
-    return True
+    # Returns True is 'branch_name' is a valid git branch name
+    @staticmethod
+    def is_valid_git_branch_name(branch_name):
+        if not branch_name.startswith(REF_BRANCH_PREFIX):
+            return False
+        return GlobalFuncs.is_valid_git_ref_name(branch_name)
 
-def is_valid_git_branch_short_name(branch_name):
-    g = git.cmd.Git()
-    try:        
-        if g.check_ref_format("--branch", ref) != ref:
-            raise ValueError
-    except git.GitCommandError:
-        return False   
-    except ValueError:
-        return False
-    return True
-
-# Returns True is 'branch_name' is a valid git branch name
-def is_valid_git_branch_name(branch_name):
-    if not branch_name.startswith(REF_BRANCH_PREFIX): 
-        return False   
-    return is_valid_git_ref_name(branch_name)
-
-def is_valid_git_tag_name(tag_name):
-    if not tag_name.startswith(REF_TAG_PREFIX): 
-        return False   
-    return is_valid_git_ref_name(tag_name)
+    @staticmethod
+    def is_valid_git_tag_name(tag_name):
+        if not tag_name.startswith(REF_TAG_PREFIX):
+            return False
+        return GlobalFuncs.is_valid_git_ref_name(tag_name)
 
 
-# Clone a repository from URL 'repo_url' into local path 'dest_full_path',
-# checks out branch 'checkout_branch_name' and returns cloned repo
-def clone_repo(dest_full_path, url, checkout_rev_name="master"):
-    is_commit_hash = False
-    if (is_valid_git_branch_name(checkout_rev_name) and 
-        is_branch_exist_in_remote_repo(url, checkout_rev_name, False)):
-        co_branch = get_base_rev_name(checkout_rev_name)
-    elif (is_valid_git_tag_name(checkout_rev_name) and 
-        is_tag_exist_in_remote_repo(url, checkout_rev_name, False)):
-        co_branch = get_base_rev_name(checkout_rev_name)
-    elif is_valid_git_commit_hash(checkout_rev_name):
-        co_branch = checkout_rev_name
-        is_commit_hash = True
-    else:
-        raise ValueError("Invalid checkout_rev_name %s to checkout after cloning!" % checkout_rev_name)
-    
-    #create folder if not exist
-    if not os.path.exists(dest_full_path):
-        os.makedirs(dest_full_path)
-        
-    #now clone
-    if is_commit_hash:      
-        cloned_repo = Repo.clone_from(url, dest_full_path)
-        cloned_repo.git.checkout(co_branch)
-    else:
-        cloned_repo = Repo.clone_from(url, dest_full_path, branch=co_branch)   
-    assert cloned_repo.__class__ is Repo
-    return cloned_repo
+    # Clone a repository from URL 'repo_url' into local path 'dest_full_path',
+    # Checks out branch 'checkout_branch_name' and returns cloned repo
+    @staticmethod
+    def clone_repo(dest_full_path, url, checkout_rev_name="refs/heads/master"):
+        is_commit_hash = False
+        if (GlobalFuncs.is_valid_git_branch_name(checkout_rev_name) and
+            GlobalFuncs.is_branch_exist_in_remote_repo(url, checkout_rev_name, False)):
+            co_branch = GlobalFuncs.get_base_rev_name(checkout_rev_name)
+        elif (GlobalFuncs.is_valid_git_tag_name(checkout_rev_name) and
+            GlobalFuncs.is_tag_exist_in_remote_repo(url, checkout_rev_name, False)):
+            co_branch = GlobalFuncs.get_base_rev_name(checkout_rev_name)
+        elif GlobalFuncs.is_valid_git_commit_hash(checkout_rev_name):
+            co_branch = checkout_rev_name
+            is_commit_hash = True
+        else:
+            raise ValueError("Invalid checkout_rev_name %s to checkout after cloning!" % checkout_rev_name)
+
+        #create folder if not exist
+        if not os.path.exists(dest_full_path):
+            os.makedirs(dest_full_path)
+
+        #now clone
+        if is_commit_hash:
+            cloned_repo = Repo.clone_from(url, dest_full_path)
+            cloned_repo.git.checkout(co_branch)
+        else:
+            cloned_repo = Repo.clone_from(url, dest_full_path, branch=co_branch)
+        assert cloned_repo.__class__ is Repo
+        return cloned_repo
+
 
 #
 #   RepoManifestFile Class
@@ -173,10 +198,11 @@ def clone_repo(dest_full_path, url, checkout_rev_name="master"):
 ########################################################################
 class RepoManifestFile(object):
     def __init__(self, path, tree, root, default_rev, 
-                 remote_name_to_fetch_prefix_dict, repo_name_to_proj_dict):            
+                 remote_key_to_remote_dict, repo_name_to_proj_dict):
+
         #path + name (with no suffix)
         self.path = path
-        self.base_name = get_file_name_from_path(path, True)
+        self.base_name = GlobalFuncs.get_file_name_from_path(path, True)
                 
         # entire element hierarchy
         self.tree = tree
@@ -189,7 +215,7 @@ class RepoManifestFile(object):
         
         # dictionary : key is a remote name, value is a fetch prefix URL
         # This  dictionary holds all fetch URLs with a remote name as key
-        self.remote_name_to_fetch_prefix_dict = remote_name_to_fetch_prefix_dict
+        self.remote_key_to_remote_dict = remote_key_to_remote_dict
         
         # dictionary : key is a repository short name, value is 
         # This dictionary holds all RepoManifestProject objects with repository names as key
@@ -200,18 +226,19 @@ class RepoManifestFile(object):
 #
 ########################################################################
 class RepoManifestProject(object):
-    def __init__(self, full_name, prefix, short_name, remote, url, revision):
+    def __init__(self, full_name, prefix, short_name, remote_key, url, revision):
+
         self.full_name = full_name
         self.name_prefix = prefix
         self.short_name = short_name
-        self.remote = remote           
+        self.remote_key = remote_key           
         self.url = url
         self.revision = revision        
         
         # an ARM MRR must have project with :
         # remote -> MRR_MANIFEST_REMOTE_KEY = "github"
         # prefix -> MRR_URL_PREFIX = "armmbed"
-        if (self.name_prefix == MRR_URL_PREFIX) and (self.remote == MRR_MANIFEST_REMOTE_KEY):
+        if (self.name_prefix == ARM_MRR_REPO_NAME_PREFIX) and (self.remote_key == MRR_MANIFEST_REMOTE_KEY):
             self.isArmMRR = True
         else: 
             self.isArmMRR = False
@@ -220,24 +247,43 @@ class RepoManifestProject(object):
 #
 ########################################################################
 class GitRepository(object):
-    def __init__(self, name_prefix, short_name, clone_base_path, checkout_ref):
+    def __init__(self, remote, name_prefix, short_name, clone_base_path, checkout_rev):
+        
         # name, name prefix , full name
         self.short_name = short_name
         self.name_prefix = name_prefix
         self.full_name = name_prefix + "/" + short_name
         
+        # remote
+        self.remote = remote
+        
         # checkout branch name
-        self.checkout_ref = checkout_ref
+        self.checkout_rev = checkout_rev
         
         # full clone destination path
         self.clone_dest_path = os.path.join(clone_base_path, self.short_name)
                 
         # repo url
-        self.url = MRR_URL_PATTERN.format(self.name_prefix, self.short_name)
+        self.url = GlobalFuncs.build_url_from_base_repo_name(remote, name_prefix, short_name)
         
         # clone and get git.Repo object
-        self.obj_repo = clone_repo(self.clone_dest_path, self.url, self.checkout_ref)
-                            
+        if (self.checkout_rev.startswith(REF_BRANCH_PREFIX) or 
+            self.checkout_rev.startswith(REF_TAG_PREFIX) or 
+            len(self.checkout_rev) == HASH_FIXED_LEN):
+
+            self.obj_repo = GlobalFuncs.clone_repo(self.clone_dest_path, self.url, self.checkout_rev)
+        else:
+
+            #try to clone as branch
+            try:
+                self.obj_repo = GlobalFuncs.clone_repo(self.clone_dest_path, self.url, REF_BRANCH_PREFIX + self.checkout_rev)
+            except ValueError:
+            #try to clone as tag
+                self.obj_repo = GlobalFuncs.clone_repo(self.clone_dest_path, self.url, self.checkout_rev)
+        
+        logger = logging.getLogger(module_name)
+        logger.info("{} created!".format(self.full_name))
+                   
 #
 #   ReleaseManager Class
 #
@@ -255,7 +301,8 @@ class ReleaseManager(object):
         self.logger.info("Creating {} version {}".format(module_name, __version__))
                 
         '''
-        key : manifest file short name, without the suffix '.xml'
+        TODO : this one should be removed completely or spited to additional release manger and multiple dicts on RepoManifestFile
+        key : manifest name, without the suffix '.xml'
         value : GitRepository object
         '''
         self.repo_name_to_git_repo_dict = {}
@@ -263,24 +310,24 @@ class ReleaseManager(object):
         # list of RepoManifestFile objects
         self.manifest_file_list = []
 
+        #??
         # This is refs_input_file given bu user (parameter refs_input_file_path)   
         # Key - repository name, value is new ref to create or replace in xml file (or both)
         
+        
+        
+        
         # Dictionary of dictionaries created from user input JSON file
-        # Key - file name or the special work 'COMMON'
+        # Key - file name or the special keys INPUT_FILE_COMMON_SD_KEY_NAME, INPUT_FILE_ADDITIONAL_SD_KEY_NAME
         # value - a sub dictionary for this catagory. The common catagory will set the revision for all 
         # projects in all xml files while other catagories are file specific
-        # Each sub-dictionary holds pairs of full repository names and a target revision to replace in XML files and (if type permits)
-        # to create branch/tag on remote
-        self.input_repo_name_to_new_ref_dict = {}
+        # Each sub-dictionary holds pairs of full repository names and a target revision to replace in XML 
+        # files and (if type permits) to create branch/tag on remote
+        self.new_revisions_dict = {}
+
         
-        """delete?
-        # set of URLs to check - build both sets to check state afterwards
-        self.mrr_url_set = set()
-        self.non_mrr_url_set = set()
-        """
-        
-        # list of tuples (url, rev) which have already been updated. In case of an error all remotes revisions must be deleted
+        # list of tuples (url, rev) which have already been updated. In case of an error all remotes revisions 
+        # must be deleted
         self.already_updated_remotes_list = []
         
         # parse arguments
@@ -312,7 +359,7 @@ class ReleaseManager(object):
     class StoreValidCreateBranchName(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             create_branch_name = values
-            if not is_valid_git_branch_name(create_branch_name):
+            if not GlobalFuncs.is_valid_git_branch_name(create_branch_name):
                 raise argparse.ArgumentTypeError("Branch %s is invalid!" % create_branch_name) 
             
             # Comment : at this stage, check only if branch name is legal.
@@ -341,7 +388,7 @@ class ReleaseManager(object):
             for elem in repo_list:                       
                 try:   
                     url = MRR_URL_PATTERN.format(MRR_URL_PREFIX, elem)
-                    refs=lsremote(url)
+                    refs=GlobalFuncs.lsremote(url)
                     if not refs:
                         raise argparse.ArgumentTypeError(
                           "additional_repository_names: the repository url %s does not exist!" % url
@@ -353,15 +400,17 @@ class ReleaseManager(object):
             setattr(namespace, self.dest, values)
          
     '''
-
             
-    def parse_manifest_files(self):
+    def parse_and_validate_manifest_files(self):
+        
         ## clone mbl-manifest repository first and checkout mbl_manifest_clone_ref
-        self.repo_name_to_git_repo_dict[MBL_MANIFEST_REPO_NAME] = GitRepository(
-            MRR_URL_PREFIX, 
+        self.repo_name_to_git_repo_dict[MBL_MANIFEST_REPO_NAME] = self.create_and_update_new_revisions_worker(
+            ARM_MRR_REMOTE,
+            ARM_MRR_REPO_NAME_PREFIX, 
             MBL_MANIFEST_REPO_SHORT_NAME, 
             self.tmpdirname.name, 
-            self.mbl_manifest_clone_ref)       
+            self.mbl_manifest_clone_ref,
+            self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME][MBL_MANIFEST_REPO_NAME][1])
 
         # get all files ending with .xml inside this directory. We assume they are all manifest files
         xml_file_list = []
@@ -397,10 +446,10 @@ class ReleaseManager(object):
             if node:
                 default_rev = node.get("revision", "master")            
             
-            # get remotes - store in a dictionary { name : fetch }
-            remote_name_to_fetch_prefix_dict = {}
+            # get remotes - store in a dictionary { remote key : remote URL prefix }
+            remote_key_to_remote_dict = {}
             for atype in root.findall('remote'):
-                remote_name_to_fetch_prefix_dict[atype.get('name')] = atype.get('fetch')
+                remote_key_to_remote_dict[atype.get('name')] = atype.get('fetch')
 
             # get projects - store in a short project name to
             name_to_proj_dict = {}
@@ -411,9 +460,9 @@ class ReleaseManager(object):
                 if short_name in name_to_proj_dict:
                     raise ValueError("File %s : project %s repeats multiple times!".format(file_path, short_name))
                 
-                #get remote and build url
-                remote = atype.get('remote')                
-                url = remote_name_to_fetch_prefix_dict[remote] + ":/" + full_name + ".git"
+                #get remote key and build url
+                remote_key = atype.get('remote')                
+                url = remote_key_to_remote_dict[remote_key] + ":/" + full_name + ".git"
                 
                 #set revision
                 revision = atype.get('revision')
@@ -421,61 +470,73 @@ class ReleaseManager(object):
                     revision = default_rev
 
                 #create project and insert to dictionary
-                proj = RepoManifestProject(full_name, prefix, short_name, remote, url, revision)                
+                proj = RepoManifestProject(full_name, prefix, short_name, remote_key, url, revision)                
                 name_to_proj_dict[full_name] = proj
             
             rmf = RepoManifestFile(file_path, tree, root, default_rev, 
-                                   remote_name_to_fetch_prefix_dict, name_to_proj_dict)
-            self.manifest_file_list.append(rmf)
-           
-           
-    """delete?  
-    def validate_remote_repositories_state(self):
-                           
-        # build dictionary from all Arm MRR, mbl-manifest and additional_repository_names
-        self.mrr_url_set.add(MBL_MANIFEST_REPO_URL)
-        for elem in self.args.additional_repository_names:
-            self.mrr_url_set.add(MRR_URL_PATTERN.format(MRR_URL_PREFIX, elem))
+                                   remote_key_to_remote_dict, name_to_proj_dict)
+            self.manifest_file_list.append(rmf)                
+          
+    def  validate_remote_repositories_state_helper(self, url, new_rev):
+        #check that new rev does not exist on remote
+        
+        if new_rev.startswith(REF_BRANCH_PREFIX):
+            return GlobalFuncs.is_branch_exist_in_remote_repo(url, new_rev, False)
+        
+        if new_rev.startswith(REF_TAG_PREFIX):
+            return GlobalFuncs.is_tag_exist_in_remote_repo(url, new_rev, False)        
+        
+        return True # fail            
             
-        for f in self.manifest_file_list:
-            for (name, project) in f.short_name_to_proj_dict.items():
-                # key is the short name and v is the project object
-                if project.isArmMRR:
-                    self.mrr_url_set.add(project.url)
-                else: 
-                    self.non_mrr_url_set.add(project.url)
-
+    # rename/ refactor
+    def validate_remote_repositories_state(self):   
+        #check that all branches/tags to be created, are not on remote
+        
+        '''
+        list of  tuples. Each tuple is of length of 4:
+        index 0 : URL to check
+        index 1 : revision to check
+        index 2 : boolean which marks expected result - True if we expect the branch to exist on remote, False if we do not
+                  expect the branch to exist on remote
+        ''' 
+        check_remote_list = []
+        
+        # add all entries from INPUT_FILE_ADDITIONAL_SD_KEY_NAME SD:
+        for (k,v) in self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME].items():
+            url = GlobalFuncs.build_url_from_full_repo_name(ARM_MRR_REMOTE, k)
+            check_remote_list.append( ( url, v[1]) )
+            
+        for file_obj in self.manifest_file_list:            
+            # file_obj is RepoManifestFile
+            for (k,v) in file_obj.repo_name_to_proj_dict.items():
+                # k is a repository name and v is a matching project 
+                url = GlobalFuncs.build_url_from_full_repo_name(file_obj.remote_key_to_remote_dict[v.remote_key], v.full_name)
+                new_ref = self.get_new_ref_from_new_revision_dict(file_obj.base_name, k)
+                if not new_ref:
+                    continue
+                if v.isArmMRR:
+                    # for Arm MRRs check both current revision and new revision
+                    # (since we need to clone and change branch from)
+                    check_remote_list.append( ( url, new_ref) )
+                    
+        self.logger.info("===check_remote_list:")
+        self.logger.info(pformat(check_remote_list))                   
+        
         # check concurrently that none of the repositories in mrr_url_set 
         # has a branch called 'create_branch_name'
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.mrr_url_set)) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(check_remote_list)) as executor:
             future_to_git_url = {
-                executor.submit(is_branch_exist_in_remote_repo, url, self.args.create_branch_name): 
-                url for url in self.mrr_url_set
-            }
+                    executor.submit(self.validate_remote_repositories_state_helper, tup[0], tup[1]): 
+                    tup for tup in check_remote_list
+                }
             for future in concurrent.futures.as_completed(future_to_git_url, MAX_TMO_SEC):
-                git_url = future_to_git_url[future]                
+                tup = future_to_git_url[future]                
                 result = future.result()
                 if result == True:
                     raise argparse.ArgumentTypeError(
-                      "Branch %s found on %s" % (self.args.create_branch_name, git_url)
-                    )    
+                            "revision {} exist on remote url {}".format(tup[1], tup[0]))
+                        
         
-        # check concurrently that none of the repositories in non_mrr_url_set 
-        # has a branch called 'yocto_release_codename'
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.non_mrr_url_set)) as executor:
-            future_to_git_url = {
-                executor.submit(is_branch_exist_in_remote_repo, url, self.args.yocto_release_codename): 
-                url for url in self.non_mrr_url_set
-            }
-            for future in concurrent.futures.as_completed(future_to_git_url, MAX_TMO_SEC):
-                git_url = future_to_git_url[future]                
-                result = future.result()
-                if result == False:
-                    raise argparse.ArgumentTypeError(
-                      "Branch %s not found on %s" % (self.args.yocto_release_codename, git_url)
-                    )                 
-        
-    """
     def dict_raise_on_duplicates(self, ordered_pairs):
         """Reject duplicate keys."""
         d = {}
@@ -487,6 +548,7 @@ class ReleaseManager(object):
         return d    
     
     def revalidate_input_file(self):
+        
         # Check that all file-specific SDs point to actual files
         for file_name in self.new_revisions_dict:
             if (file_name != INPUT_FILE_COMMON_SD_KEY_NAME) and (file_name != INPUT_FILE_ADDITIONAL_SD_KEY_NAME):
@@ -499,12 +561,14 @@ class ReleaseManager(object):
                     mbl_manifest_path = self.repo_name_to_git_repo_dict[MBL_MANIFEST_REPO_NAME].clone_dest_path
                     raise ValueError("main entry key {} in user input file is not found in {}".format(
                             file_name, os.path.join(mbl_manifest_path, file_name + ".xml")))
-                
+                  
+        self.validate_remote_repositories_state()  
+        
     def parse_and_validate_input_file(self):        
         # Open the given input and parse into new_revision_dict dictionary, detect duplicate main key
         with open(self.args.refs_input_file_path, encoding='utf-8') as data_file:            
             self.new_revisions_dict = json.loads(data_file.read(), object_pairs_hook=self.dict_raise_on_duplicates)
-                       
+                      
         # check that exist at least INPUT_FILE_ADDITIONAL_SD_KEY_NAME key with a sub-dictionary that comply with :
         # 1. All pairs are (key, lists of length 2), and the value list must have distinct values
         # 2. armmbed/mbl-manifest repository exist in sub-dictionary
@@ -543,45 +607,96 @@ class ReleaseManager(object):
                         raise ValueError("Invalid input in file {} : "
                                          "key {} found in {} but also in other file specific file SDs!".format(
                                          self.args.refs_input_file_path, key, INPUT_FILE_ADDITIONAL_SD_KEY_NAME))            
-               
-    def get_cur_ref_from_new_revision_dict(self, file_name, proj_name):
-        if (file_name in self.new_revisions_dict) and (proj_name in self.new_revisions_dict[file_name]):
-            return self.new_revisions_dict[file_name][proj_name]
-        if proj_name in self.new_revisions_dict[INPUT_FILE_COMMON_SD_KEY_NAME]:
-            return self.new_revisions_dict[INPUT_FILE_COMMON_SD_KEY_NAME][proj_name]
+         
+          
+    def get_new_ref_from_new_revision_dict(self, sd_key_name, repo_name):
+        if (sd_key_name in self.new_revisions_dict) and (repo_name in self.new_revisions_dict[sd_key_name]):
+            if sd_key_name == INPUT_FILE_ADDITIONAL_SD_KEY_NAME:
+                return self.new_revisions_dict[sd_key_name][repo_name][1]
+            return self.new_revisions_dict[sd_key_name][repo_name]
+        if repo_name in self.new_revisions_dict[INPUT_FILE_COMMON_SD_KEY_NAME]:
+            return self.new_revisions_dict[INPUT_FILE_COMMON_SD_KEY_NAME][repo_name]
         return None
             
+    def create_and_update_new_revisions_worker(self, remote, name_prefix, short_name, clone_base_path, cur_rev, new_rev):
+        try:
+            repo = GitRepository(remote, name_prefix, short_name, clone_base_path, cur_rev)
+
+            new_rev_short = new_rev.rsplit("/", 1)[1]
+
+            # Create the new branch/tag
+            if new_rev.startswith(REF_BRANCH_PREFIX):
+                new_branch = repo.obj_repo.create_head(new_rev_short)
+                assert new_branch.commit == repo.obj_repo.active_branch.commit
+                new_branch.checkout()
+            else:
+                cur_rev_short = cur_rev.rsplit("/", 1)[1]
+                new_tag = repo.obj_repo.create_tag(new_rev_short, ref=repo.obj_repo.active_branch.commit)
+                assert new_tag == repo.obj_repo.active_branch.commit
+                new_tag.checkout()
+
+            return repo
+        except:
+            logger = logging.getLogger(module_name)
+            logger.error("Unexpected error! {}".format(sys.exc_info()[0]))
+            return None
+
     def create_and_update_new_revisions(self):
         
+        # Clone all additional and Arm MRR repositories, concurrently, checkout current revision
+        clone_tup_list = []
         # clone all additional repositories under self.tmpdirname.name
         for (main_key, sd) in self.new_revisions_dict.items():
             for (key, rev) in sd.items():
                 if main_key == INPUT_FILE_ADDITIONAL_SD_KEY_NAME:                      
-                    if key != MBL_MANIFEST_REPO_NAME:
-                        
+                    if key != MBL_MANIFEST_REPO_NAME:                        
                         prefix, name = key.rsplit("/", 1)
-                        self.repo_name_to_git_repo_dict[key] = GitRepository(prefix, name, self.tmpdirname.name, rev[0])
+                        clone_tup_list.append( (key, ARM_MRR_REMOTE, prefix, name, self.tmpdirname.name, rev[0], rev[1]) )
         
-        # clone all Arm MRRs, each one on a sub-folder belong to the file. 
+        # Clone all Arm MRRs, each one on a sub-folder belong to the file. 
         # For example, for default.xml, all matching repos will be cloned under <self.tmpdirname.name>/default/
         for file_obj in self.manifest_file_list:
-            for (name, proj) in (file_obj.repo_name_to_proj_dict.items()):                                
-                if (proj.isArmMRR):                    
-                    cur_ref = self.get_cur_ref_from_new_revision_dict(file_obj.base_name, proj.full_name)
-                    if cur_ref:
-                        prefix, name = proj.full_name.rsplit("/", 1)
-                        self.repo_name_to_git_repo_dict[key] = GitRepository(
-                            prefix, name, os.path.join(self.tmpdirname.name, file_obj.base_name), cur_ref)
-            
+            for (name, proj) in (file_obj.repo_name_to_proj_dict.items()):
+                new_ref = self.get_new_ref_from_new_revision_dict(file_obj.base_name, proj.full_name)
+                if proj.isArmMRR and new_ref:
+                    prefix, name = proj.full_name.rsplit("/", 1)
+
+                    clone_tup_list.append((proj.full_name, file_obj.remote_key_to_remote_dict[proj.remote_key],
+                            prefix, name, os.path.join(self.tmpdirname.name, file_obj.base_name), proj.revision, new_ref))
+                        
+        self.logger.info("=== clone_tup_list:")
+        self.logger.info(pformat(clone_tup_list))                          
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(clone_tup_list)) as executor:
+            future_to_git_url = {
+                    executor.submit(self.create_and_update_new_revisions_worker, tup[1], tup[2], tup[3], tup[4], tup[5], tup[6]):
+                    tup for tup in clone_tup_list
+                }
+
+            for future in concurrent.futures.as_completed(future_to_git_url, MAX_TMO_SEC):
+                tup = future_to_git_url[future]                
+                result = future.result()                
+                if result == None:
+                    raise argparse.ArgumentTypeError(
+                            "revision {} exist on remote url {}".format(tup[1], tup[0]))
+                else:
+                    self.repo_name_to_git_repo_dict[tup[0]] = result
+
+     
     # Costume action - check that the given file path exist on local host
     ###############################################################    
-    class StoreValidFilePath(argparse.Action):
+    class StoreValidFile(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             file_path = values
             if not os.path.isfile(file_path):
                 raise argparse.ArgumentTypeError(
                   "The path %s does not exist!" % file_path
-                )     
+                )
+            filename, file_extension = os.path.splitext(ntpath.basename(file_path))
+            if not file_extension == ".json":
+                raise argparse.ArgumentTypeError(
+                    "File %s does not end with '.json' prefix!" % file_path
+                )
             setattr(namespace, self.dest, file_path)
      
     # Define and parse script input arguments
@@ -594,8 +709,8 @@ class ReleaseManager(object):
                     
         parser.add_argument(
             "refs_input_file_path",
-            action=self.StoreValidFilePath,
-            help="Path to a json file which holds a dictionary of pairs (repository name, ref / hash). For more"
+            action=self.StoreValidFile,
+            help="Path to update.json file which holds a dictionary of pairs (repository name, ref / hash). For more"
             " information and exact format see mbl-tools/build-mbl/README.md."
         )
         
@@ -607,8 +722,10 @@ class ReleaseManager(object):
         )
         
         return parser
-        
+
+
 def _main():
+
     # Create and initialize a release manager object
     rm = ReleaseManager()    
 
@@ -616,7 +733,7 @@ def _main():
     rm.parse_and_validate_input_file()
     
     # Clone the manifest repository and parse its xml files into database
-    rm.parse_manifest_files()
+    rm.parse_and_validate_manifest_files()
       
     # Some more things to validate in input file after parsing both files
     rm.revalidate_input_file()  
@@ -624,9 +741,9 @@ def _main():
     # Update new_revision for all manifest files projects and create reference (where needed on remot Git repositories)
     rm.create_and_update_new_revisions()
    
-    #TODO - remove
+    # TODO - remove
     print("dummy")
-        
-#TODO-change this later on
+
+# TODO-change this later on
 if __name__ == "__main__":
     sys.exit(_main())
