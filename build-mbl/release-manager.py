@@ -359,9 +359,9 @@ class CReleaseManager(object):
     def repo_push(self, repo, new_rev):
 
         if self.args.simulate:
-            self.logger.info("Virtually Pushing {} to {}".format(repo.full_name, new_rev))
+            self.logger.info("Virtually Pushing {} to {}".format(new_rev, repo.full_name))
         else:
-            self.logger.info("Pushing {} to {}".format(repo.full_name, new_rev))
+            self.logger.info("Pushing {} to {}".format(new_rev, repo.full_name))
             repo.handle.git.push('--set-upstream', 'origin', new_rev)
 
     def process_manifest_files(self):
@@ -689,7 +689,7 @@ class CReleaseManager(object):
             assert len(l) == 1
             git_repo.handle.index.commit("release manager automatic commit")
 
-        self.repo_push(git_repo, branch_name)
+        self.repo_push(git_repo, git_repo.handle.active_branch)
 
 
     def update_mbl_linked_repositories_conf(self):
@@ -787,14 +787,21 @@ class CReleaseManager(object):
             "-v",
             "--verbose",
             help="increase output verbosity",
-            action="store_true",
+            action="store_true"
+        )
+
+        parser.add_argument(
+            "-c",
+            "--controlled_mode",
+            help="Prompt before each significant step",
+            action="store_true"
         )
 
         parser.add_argument(
             "-s",
             "--simulate",
-            help="Simulation - do not push to remote, everything else will be executed exactly the same but nothing is actually pushed into remote.",
-            action="store_true",
+            help="Do not push to remote, everything else will be executed exactly the same but nothing is actually pushed into remote.",
+            action="store_true"
         )
         
         return parser
