@@ -1,6 +1,14 @@
 ## JSON Config File Overview - (TODO-traverse one last time and fix)
 # TODO - need to update that all pairs in _additional_ must be (key, list) type
 
+Comments
+definitions :
+Mrr
+Arm MRR
+non Arm MRR
+SD
+revision (Git branch , Git tag, Git commit hash)
+Git ref = Git tag or Git branch
 
 COMMENT
 Add revision definition :
@@ -11,6 +19,27 @@ Tags and/or explicit SHA-1s should work in theory, but have not
 been extensively tested.  If not supplied the revision given by
 the remote element is used if applicable, else the default
 element is used.
+
+Comments:
+"""
+This script can be called from command line, or used from the mbl-tools.
+In short:
+* It received a json formatted file with :
+1) New branch/tag to be created and pushed to remote on Arm MRRs or Arm additional repositories
+2) New branch/tag/commit hash to replace in manifest files
+
+* Clones all repositories of type 1), create branch/tag and push to remote
+* Update armmbed/mbl-manifest repository manifest XML files accordingly, commit and push to remote
+* Update armmbed/meta-mbl/conf/dist/mbl-linked-repositories.conf accoridngly, commit and push to remote
+
+Prerequisite:
+Install gitpython and in_place:
+$ pip3 install gitpython in_place
+"""
+
+COMMENT :
+refer to this link :
+https://wiki.yoctoproject.org/wiki/Stable_branch_maintenance
 
 COMMENT
 add section for lined repos. we expect exact file stcurture with no multi lines.
