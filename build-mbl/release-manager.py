@@ -1,6 +1,23 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 
+import in_place
+import re
+import string
+import ntpath
+import concurrent.futures
+import tempfile
+import argparse
+import logging
+import json
+import sys
+import git
+import glob
+import os
+from git import Repo
+from shutil import copyfile
+from pprint import pprint, pformat
+import xml.etree.ElementTree as ET
 """
 This script can be called from command line, or used from the mbl-tools.
 In short:
@@ -24,11 +41,6 @@ __version__ = "1.0.0"
 # imports
 #
 
-import xml.etree.ElementTree as ET
-import os, glob, git, sys, json, logging, argparse, tempfile, concurrent.futures, ntpath, string, re, in_place
-from pprint import pprint, pformat
-from shutil import copyfile
-from git import Repo
 
 #
 # constants
@@ -53,7 +65,9 @@ ARM_MRR_REMOTE = "ssh://git@github.com"
 ARM_MRR_URL_PATTERN = "ssh://git@github.com:/{}/{}.git"
 ARM_MRR_REPO_NAME_PREFIX = "armmbed"
 MBL_MANIFEST_REPO_SHORT_NAME = "mbl-manifest"
-MBL_MANIFEST_REPO_NAME = "{}/{}".format(ARM_MRR_REPO_NAME_PREFIX, MBL_MANIFEST_REPO_SHORT_NAME) # armmbed/mbl-manifest
+# armmbed/mbl-manifest
+MBL_MANIFEST_REPO_NAME = "{}/{}".format(
+    ARM_MRR_REPO_NAME_PREFIX, MBL_MANIFEST_REPO_SHORT_NAME)
 GIT_REMOTE_NAME = "origin"
 
 #
@@ -197,16 +211,17 @@ class SGlobalFuncs:
         """
         is_commit_hash = False
         if (SGlobalFuncs.is_valid_git_branch_name(checkout_rev_name) and
-            SGlobalFuncs.is_branch_exist_in_remote_repo(url, checkout_rev_name, False)):
+                SGlobalFuncs.is_branch_exist_in_remote_repo(url, checkout_rev_name, False)):
             co_branch = SGlobalFuncs.get_base_rev_name(checkout_rev_name)
         elif (SGlobalFuncs.is_valid_git_tag_name(checkout_rev_name) and
-            SGlobalFuncs.is_tag_exist_in_remote_repo(url, checkout_rev_name, False)):
+              SGlobalFuncs.is_tag_exist_in_remote_repo(url, checkout_rev_name, False)):
             co_branch = SGlobalFuncs.get_base_rev_name(checkout_rev_name)
         elif SGlobalFuncs.is_valid_git_commit_hash(checkout_rev_name):
             co_branch = checkout_rev_name
             is_commit_hash = True
         else:
-            raise ValueError("Invalid checkout_rev_name %s to checkout after cloning!" % checkout_rev_name)
+            raise ValueError(
+                "Invalid checkout_rev_name %s to checkout after cloning!" % checkout_rev_name)
 
         # create folder if not exist
         if not os.path.exists(dest_full_path):
@@ -217,7 +232,8 @@ class SGlobalFuncs:
             cloned_repo = Repo.clone_from(url, dest_full_path)
             cloned_repo.git.checkout(co_branch)
         else:
-            cloned_repo = Repo.clone_from(url, dest_full_path, branch=co_branch)
+            cloned_repo = Repo.clone_from(
+                url, dest_full_path, branch=co_branch)
         assert cloned_repo.__class__ is Repo
         return cloned_repo
 
@@ -235,24 +251,24 @@ class CRepoManifestFile(object):
         # path + short_name (with no suffix)
         self.path = path
         self.filename = filename
-                
+
         # entire element hierarchy
         self.tree = tree
-        
-        # root ElementTree of file prase 
+
+        # root ElementTree of file prase
         self.root = root
-        
+
         # default revision (branch or tag) to checkout when not specified in project
         self.default_rev = default_rev
-        
+
         # dictionary : key is a remote name, value is a fetch prefix URL
         # This  dictionary holds all fetch URLs with a remote name as key
         self.remote_key_to_remote_dict = remote_key_to_remote_dict
-        
-        # dictionary : key is a repository short name, value is 
+
+        # dictionary : key is a repository short name, value is
         # This dictionary holds all CRepoManifestProject objects with repository names as key
         self.repo_name_to_proj_dict = repo_name_to_proj_dict
-                             
+
 #
 #   Class CRepoManifestProject
 #
@@ -287,13 +303,12 @@ class CRepoManifestProject(object):
         # place holder for CGitClonedRepository object
         self.git_cloned_repository = None
 
-
         # An ARM MRR must have project with :
         # remote -> MRR_MANIFEST_REMOTE_KEY = "github"
         # prefix -> MRR_URL_PREFIX = "armmbed"
         if (self.name_prefix == ARM_MRR_REPO_NAME_PREFIX) and (self.remote_key == MRR_MANIFEST_REMOTE_KEY):
             self.isArmMRR = True
-        else: 
+        else:
             self.isArmMRR = False
 
 #
@@ -307,43 +322,48 @@ class CGitClonedRepository(object):
     All cloned repositories are kept under CRepoManifestProject::git_cloned_repository or
     CReleaseManager::additional_repo_name_to_git_cloned_repository_dict
     """
+
     def __init__(self, remote, name_prefix, short_name, clone_base_path, checkout_rev):
-        
+
         # name, name prefix , full name
         self.short_name = short_name
         self.name_prefix = name_prefix
         self.full_name = name_prefix + "/" + short_name
-        
+
         # remote
         self.remote = remote
-        
+
         # checkout branch name
         self.checkout_rev = checkout_rev
-        
+
         # full clone destination path
         self.clone_dest_path = os.path.join(clone_base_path, self.short_name)
-                
-        # repo url
-        self.url = SGlobalFuncs.build_url_from_base_repo_name(remote, name_prefix, short_name)
-        
-        # clone and get git.Repo object
-        if (self.checkout_rev.startswith(REF_BRANCH_PREFIX) or 
-            self.checkout_rev.startswith(REF_TAG_PREFIX) or 
-            len(self.checkout_rev) == HASH_FIXED_LEN):
 
-            self.handle = SGlobalFuncs.clone_repo(self.clone_dest_path, self.url, self.checkout_rev)
+        # repo url
+        self.url = SGlobalFuncs.build_url_from_base_repo_name(
+            remote, name_prefix, short_name)
+
+        # clone and get git.Repo object
+        if (self.checkout_rev.startswith(REF_BRANCH_PREFIX) or
+            self.checkout_rev.startswith(REF_TAG_PREFIX) or
+                len(self.checkout_rev) == HASH_FIXED_LEN):
+
+            self.handle = SGlobalFuncs.clone_repo(
+                self.clone_dest_path, self.url, self.checkout_rev)
         else:
 
             # try to clone as branch
             try:
-                self.handle = SGlobalFuncs.clone_repo(self.clone_dest_path, self.url, REF_BRANCH_PREFIX + self.checkout_rev)
+                self.handle = SGlobalFuncs.clone_repo(
+                    self.clone_dest_path, self.url, REF_BRANCH_PREFIX + self.checkout_rev)
             except ValueError:
-            # try to clone as tag
-                self.handle = SGlobalFuncs.clone_repo(self.clone_dest_path, self.url, self.checkout_rev)
-        
+                # try to clone as tag
+                self.handle = SGlobalFuncs.clone_repo(
+                    self.clone_dest_path, self.url, self.checkout_rev)
+
         logger = logging.getLogger(module_name)
         logger.info("{} created!".format(self.full_name))
-                   
+
 #
 # CReleaseManager
 #
@@ -358,9 +378,10 @@ class CReleaseManager(object):
         logging.basicConfig(
             level=logging.INFO,
             format="\n%(asctime)s - %(name)s - {%(funcName)s:%(lineno)d} - %(levelname)s \n%(message)s",
-        )        
+        )
         self.logger = logging.getLogger(module_name)
-        self.logger.debug("Creating {} version {}".format(module_name, __version__))
+        self.logger.debug("Creating {} version {}".format(
+            module_name, __version__))
 
         # list of CRepoManifestFile objects
         self.manifest_file_name_to_obj_dict = {}
@@ -401,7 +422,7 @@ class CReleaseManager(object):
         if self.args.verbose:
             self.logger.setLevel(logging.DEBUG)
             self.logger.debug("Command line arguments:{}".format(self.args))
-            
+
         # create a temporary folder to clone repositories in
         self.tmpdirname = tempfile.TemporaryDirectory(prefix="mbl_")
         self.logger.debug("Temporary folder: %s" % self.tmpdirname.name)
@@ -419,9 +440,11 @@ class CReleaseManager(object):
     def repo_push(self, repo, new_rev):
         """push a revision to remote repository"""
         if self.args.simulate:
-            self.logger.info("Virtually Pushing {} to {}".format(new_rev, repo.full_name))
+            self.logger.info("Virtually Pushing {} to {}".format(
+                new_rev, repo.full_name))
         else:
-            self.logger.info("Pushing {} to {}".format(new_rev, repo.full_name))
+            self.logger.info("Pushing {} to {}".format(
+                new_rev, repo.full_name))
             repo.handle.git.push(GIT_REMOTE_NAME, new_rev)
             self.already_pushed_repository_list.append((repo, new_rev))
 
@@ -430,20 +453,21 @@ class CReleaseManager(object):
         # clone mbl-manifest repository first and checkout mbl_manifest_clone_ref
         self.additional_repo_name_to_git_cloned_repository_dict[MBL_MANIFEST_REPO_NAME] = self.create_and_update_new_revisions_worker(
             ARM_MRR_REMOTE,
-            ARM_MRR_REPO_NAME_PREFIX, 
-            MBL_MANIFEST_REPO_SHORT_NAME, 
-            self.tmpdirname.name, 
+            ARM_MRR_REPO_NAME_PREFIX,
+            MBL_MANIFEST_REPO_SHORT_NAME,
+            self.tmpdirname.name,
             self.mbl_manifest_clone_ref,
             self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME][MBL_MANIFEST_REPO_NAME][1])
 
         # get all files ending with .xml inside this directory. We assume they are all manifest files
         xml_file_list = []
         path = os.path.join(
-            self.additional_repo_name_to_git_cloned_repository_dict[MBL_MANIFEST_REPO_NAME].clone_dest_path,
+            self.additional_repo_name_to_git_cloned_repository_dict[
+                MBL_MANIFEST_REPO_NAME].clone_dest_path,
             "*.xml")
         for file_name in glob.glob(path):
             xml_file_list.append(os.path.abspath(file_name))
-        
+
         '''
         We are interested in 3 sub-elements types : 
         1. 'default' : defult fetch attributes. Types:
@@ -455,60 +479,67 @@ class CReleaseManager(object):
             a. 'name' - repository prefix concatenated with the repository short name
             b. 'remote' - 2.b name - should be replace with fetch in order to fetch the repository
             c. 'revision' - this one is optional tag or branch (head) name. If not exist, assign revision from 1.a
-        '''        
+        '''
         # parse all xml files, create a CRepoManifestFile object for each and store in manifest_file_name_to_obj_dict
-        for file_path in xml_file_list:            
+        for file_path in xml_file_list:
             # get root
             tree = ET.parse(file_path)
-            
+
             # root element of the tree
             root = tree.getroot()
-            
+
             # get default, if not found, set to master
             node = tree.find('./default')
             default_rev = "master"
             if node:
-                default_rev = node.get("revision", "master")            
-            
+                default_rev = node.get("revision", "master")
+
             # get remotes - store in a dictionary { remote key : remote URL prefix }
             remote_key_to_remote_dict = {}
             for atype in root.findall('remote'):
-                remote_key_to_remote_dict[atype.get('name')] = atype.get('fetch')
+                remote_key_to_remote_dict[atype.get(
+                    'name')] = atype.get('fetch')
 
             # get projects - store in a short project name to
             name_to_proj_dict = {}
-            for atype in root.findall('project'):                                
+            for atype in root.findall('project'):
                 # get name and split to prefix and short name
                 full_name = atype.get('name')
                 prefix, short_name = full_name.rsplit('/', 1)
                 if short_name in name_to_proj_dict:
-                    raise ValueError("File %s : project %s repeats multiple times!".format(file_path, short_name))
-                
-                #get remote key and build url
-                remote_key = atype.get('remote')                
-                url = remote_key_to_remote_dict[remote_key] + ":/" + full_name + ".git"
-                
+                    raise ValueError(
+                        "File %s : project %s repeats multiple times!".format(file_path, short_name))
+
+                # get remote key and build url
+                remote_key = atype.get('remote')
+                url = remote_key_to_remote_dict[remote_key] + \
+                    ":/" + full_name + ".git"
+
                 # get and set new revision
                 revision = atype.get('revision')
                 if not revision:
                     revision = default_rev
 
-                base_name = SGlobalFuncs.get_file_name_from_path(file_path, True)
+                base_name = SGlobalFuncs.get_file_name_from_path(
+                    file_path, True)
 
                 # create project and insert to dictionary
-                proj = CRepoManifestProject(full_name, prefix, short_name, remote_key, url, revision)
+                proj = CRepoManifestProject(
+                    full_name, prefix, short_name, remote_key, url, revision)
                 name_to_proj_dict[full_name] = proj
 
                 # set the new revision, that will save time, we are already in the place we want to change!
-                new_ref = self.get_new_ref_from_new_revision_dict(base_name, full_name)
-                if new_ref == REF_BRANCH_PREFIX +  default_rev:
+                new_ref = self.get_new_ref_from_new_revision_dict(
+                    base_name, full_name)
+                if new_ref == REF_BRANCH_PREFIX + default_rev:
                     del atype.attrib["revision"]
                 else:
                     if new_ref:
-                        atype.set('revision', SGlobalFuncs.get_base_rev_name(new_ref))
+                        atype.set(
+                            'revision', SGlobalFuncs.get_base_rev_name(new_ref))
 
             rmf = CRepoManifestFile(file_path, base_name, tree, root, default_rev,
-                                   remote_key_to_remote_dict, name_to_proj_dict)
+                                    remote_key_to_remote_dict, name_to_proj_dict)
             self.manifest_file_name_to_obj_dict[base_name] = rmf
 
             # backup file
@@ -518,14 +549,14 @@ class CReleaseManager(object):
             rmf.tree.write(file_path)
 
     @staticmethod
-    def  validate_remote_repositories_state_helper(url, new_rev):
+    def validate_remote_repositories_state_helper(url, new_rev):
         """check that new rev does not exist on remote"""
         if new_rev.startswith(REF_BRANCH_PREFIX):
             return SGlobalFuncs.is_branch_exist_in_remote_repo(url, new_rev, False)
         if new_rev.startswith(REF_TAG_PREFIX):
-            return SGlobalFuncs.is_tag_exist_in_remote_repo(url, new_rev, False)        
-        
-        return True # fail            
+            return SGlobalFuncs.is_tag_exist_in_remote_repo(url, new_rev, False)
+
+        return True  # fail
 
     def validate_remote_repositories_state(self):
         """check that all branches/tags to be created, are not on remote"""
@@ -538,41 +569,43 @@ class CReleaseManager(object):
         idx_url = 0
         idx_rev = 1
         check_remote_list = []
-        
+
         # add all entries from INPUT_FILE_ADDITIONAL_SD_KEY_NAME SD:
-        for (k,v) in self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME].items():
+        for (k, v) in self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME].items():
             url = SGlobalFuncs.build_url_from_repo_name(ARM_MRR_REMOTE, k)
-            check_remote_list.append( ( url, v[1]) )
-            
+            check_remote_list.append((url, v[1]))
+
         for file_obj in self.manifest_file_name_to_obj_dict.values():
             # file_obj is CRepoManifestFile
-            for (k,v) in file_obj.repo_name_to_proj_dict.items():
-                # k is a repository name and v is a matching project 
-                url = SGlobalFuncs.build_url_from_repo_name(file_obj.remote_key_to_remote_dict[v.remote_key], v.full_name)
-                new_ref = self.get_new_ref_from_new_revision_dict(file_obj.filename, k)
+            for (k, v) in file_obj.repo_name_to_proj_dict.items():
+                # k is a repository name and v is a matching project
+                url = SGlobalFuncs.build_url_from_repo_name(
+                    file_obj.remote_key_to_remote_dict[v.remote_key], v.full_name)
+                new_ref = self.get_new_ref_from_new_revision_dict(
+                    file_obj.filename, k)
                 if not new_ref:
                     continue
                 if v.isArmMRR:
                     # for Arm MRRs check both current revision and new revision
                     # (since we need to clone and change branch from)
-                    check_remote_list.append( ( url, new_ref) )
-                    
+                    check_remote_list.append((url, new_ref))
+
         self.logger.debug("===check_remote_list:")
         self.logger.debug(pformat(check_remote_list))
-        
-        # check concurrently that none of the repositories in mrr_url_set 
+
+        # check concurrently that none of the repositories in mrr_url_set
         # has a branch called 'create_branch_name'
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(check_remote_list)) as executor:
             future_to_git_url = {
-                    executor.submit(self.validate_remote_repositories_state_helper, tup[idx_url], tup[idx_rev]):
-                    tup for tup in check_remote_list
-                }
+                executor.submit(self.validate_remote_repositories_state_helper, tup[idx_url], tup[idx_rev]):
+                tup for tup in check_remote_list
+            }
             for future in concurrent.futures.as_completed(future_to_git_url, MAX_TMO_SEC):
                 tup = future_to_git_url[future]
                 result = future.result()
                 if result:
                     raise argparse.ArgumentTypeError(
-                            "revision {} exist on remote url {}".format(tup[idx_rev], tup[idx_url]))
+                        "revision {} exist on remote url {}".format(tup[idx_rev], tup[idx_url]))
 
     @staticmethod
     def dict_raise_on_duplicates(ordered_pairs):
@@ -583,10 +616,9 @@ class CReleaseManager(object):
                 raise ValueError("duplicate key: %r" % (k,))
             else:
                 d[k] = v
-        return d    
-    
-    def validate_cross_dependencies(self):
+        return d
 
+    def validate_cross_dependencies(self):
         """
         Check that :
         1. All file-specific SDs point to actual files
@@ -602,7 +634,8 @@ class CReleaseManager(object):
             if file_name != INPUT_FILE_COMMON_SD_KEY_NAME:
                 found = file_name in self.manifest_file_name_to_obj_dict
                 if not found:
-                    mbl_manifest_path = self.repo_name_to_git_repo_dict[MBL_MANIFEST_REPO_NAME].clone_dest_path
+                    mbl_manifest_path = self.repo_name_to_git_repo_dict[
+                        MBL_MANIFEST_REPO_NAME].clone_dest_path
                     raise ValueError("main entry key {} in user input file is not found in {}".format(
                         file_name, os.path.join(mbl_manifest_path, file_name + ".xml")))
 
@@ -610,23 +643,26 @@ class CReleaseManager(object):
             for repo_name in sd:
                 found = False
                 if file_name != INPUT_FILE_COMMON_SD_KEY_NAME:
-                    found = repo_name in self.manifest_file_name_to_obj_dict[file_name].repo_name_to_proj_dict
+                    found = repo_name in self.manifest_file_name_to_obj_dict[
+                        file_name].repo_name_to_proj_dict
                 else:
                     for f in self.manifest_file_name_to_obj_dict.values():
                         if repo_name in f.repo_name_to_proj_dict:
                             found = True
                             break
                 if not found:
-                    raise ValueError("invalid input file : entry ({}, {}) not found!".format(file_name, repo_name))
+                    raise ValueError(
+                        "invalid input file : entry ({}, {}) not found!".format(file_name, repo_name))
 
-        self.validate_remote_repositories_state()  
-        
+        self.validate_remote_repositories_state()
+
     def parse_and_validate_input_file(self):
         """"""
         # Open the given input and parse into new_revision_dict dictionary, detect duplicate main key
         with open(self.args.refs_input_file_path, encoding='utf-8') as data_file:
             try:
-                self.new_revisions_dict = json.loads(data_file.read(), object_pairs_hook=self.dict_raise_on_duplicates)
+                self.new_revisions_dict = json.loads(
+                    data_file.read(), object_pairs_hook=self.dict_raise_on_duplicates)
             except json.decoder.JSONDecodeError as err:
                 self.logger.info("Illegal json file!!", err)
                 sys.exit(-1)
@@ -635,20 +671,22 @@ class CReleaseManager(object):
         # 1. All pairs are (key, lists of length 2), and the value list must have distinct values
         # 2. armmbed/mbl-manifest repository exist in sub-dictionary
         if INPUT_FILE_ADDITIONAL_SD_KEY_NAME not in self.new_revisions_dict:
-            raise ValueError("main entry key %s could not be found in user input file" % INPUT_FILE_ADDITIONAL_SD_KEY_NAME)   
+            raise ValueError("main entry key %s could not be found in user input file" %
+                             INPUT_FILE_ADDITIONAL_SD_KEY_NAME)
         if MBL_MANIFEST_REPO_NAME not in self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME]:
-            raise ValueError("%s key is not found could not be found in user input file under %s" 
-                             % (MBL_MANIFEST_REPO_NAME,INPUT_FILE_ADDITIONAL_SD_KEY_NAME))
+            raise ValueError("%s key is not found could not be found in user input file under %s"
+                             % (MBL_MANIFEST_REPO_NAME, INPUT_FILE_ADDITIONAL_SD_KEY_NAME))
         for l in self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME].values():
             if len(l) != 2:
-                raise ValueError("Bad length for list %s - All lists under key %s in user input file must be of length 2!" 
-                                     % (l,INPUT_FILE_ADDITIONAL_SD_KEY_NAME)) 
+                raise ValueError("Bad length for list %s - All lists under key %s in user input file must be of length 2!"
+                                 % (l, INPUT_FILE_ADDITIONAL_SD_KEY_NAME))
             if l[0] == l[1]:
-                raise ValueError("Bad list %s - non-distinct values under key %s in user input file!" 
-                                     % (l,INPUT_FILE_ADDITIONAL_SD_KEY_NAME))
+                raise ValueError("Bad list %s - non-distinct values under key %s in user input file!"
+                                 % (l, INPUT_FILE_ADDITIONAL_SD_KEY_NAME))
 
         # set the clone ref for mbl-manifest
-        self.mbl_manifest_clone_ref = self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME][MBL_MANIFEST_REPO_NAME][0]
+        self.mbl_manifest_clone_ref = self.new_revisions_dict[
+            INPUT_FILE_ADDITIONAL_SD_KEY_NAME][MBL_MANIFEST_REPO_NAME][0]
 
         """
         do not allow any repo name under common SD to apear in any other SD pair as key
@@ -665,13 +703,13 @@ class CReleaseManager(object):
                     if key in list:
                         raise ValueError("Invalid input in file {} : "
                                          "key {} found in {} but also in other file specific file SDs!".format(
-                            self.args.refs_input_file_path, key, INPUT_FILE_COMMON_SD_KEY_NAME))
+                                             self.args.refs_input_file_path, key, INPUT_FILE_COMMON_SD_KEY_NAME))
             if INPUT_FILE_ADDITIONAL_SD_KEY_NAME in self.new_revisions_dict:
                 for key in self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME].keys():
                     if key in list:
                         raise ValueError("Invalid input in file {} : "
                                          "key {} found in {} but also in other file specific file SDs!".format(
-                                         self.args.refs_input_file_path, key, INPUT_FILE_ADDITIONAL_SD_KEY_NAME))            
+                                             self.args.refs_input_file_path, key, INPUT_FILE_ADDITIONAL_SD_KEY_NAME))
 
         # do not allow for the same repo name in file specific SD to have the same branch name, or the same tag name
         # (equal tag and branch name in seperate repos is allowed, but not recommended!)
@@ -694,11 +732,12 @@ class CReleaseManager(object):
         if repo_name in self.new_revisions_dict[INPUT_FILE_COMMON_SD_KEY_NAME]:
             return self.new_revisions_dict[INPUT_FILE_COMMON_SD_KEY_NAME][repo_name]
         return None
-            
+
     def create_and_update_new_revisions_worker(self, remote, name_prefix, short_name, clone_base_path, cur_rev, new_rev):
         """"""
         try:
-            repo = CGitClonedRepository(remote, name_prefix, short_name, clone_base_path, cur_rev)
+            repo = CGitClonedRepository(
+                remote, name_prefix, short_name, clone_base_path, cur_rev)
 
             new_rev_short = new_rev.rsplit("/", 1)[1]
 
@@ -709,7 +748,8 @@ class CReleaseManager(object):
                 new_branch.checkout()
                 new_rev = new_branch
             else:
-                new_tag = repo.handle.create_tag(new_rev_short, ref=repo.handle.active_branch.commit)
+                new_tag = repo.handle.create_tag(
+                    new_rev_short, ref=repo.handle.active_branch.commit)
                 assert new_tag.commit == repo.handle.active_branch.commit
                 assert new_tag.tag is None
                 new_rev = new_tag
@@ -726,7 +766,8 @@ class CReleaseManager(object):
     def update_mbl_linked_repositories_conf_helper(self, git_repo):
         """"""
         # check if file exist
-        file_path = os.path.join(git_repo.clone_dest_path, MBL_LINKED_REPOSITORIES_REPO_PATH)
+        file_path = os.path.join(
+            git_repo.clone_dest_path, MBL_LINKED_REPOSITORIES_REPO_PATH)
         if not os.path.exists(file_path):
             raise FileNotFoundError("File %s not found!" % file_path)
 
@@ -749,24 +790,30 @@ class CReleaseManager(object):
                     next_line_replace = False
                     for line in file:
                         if line.lower().find("git@github.com/" + repo_name) != -1:
-                            active_branch = self.additional_repo_name_to_git_cloned_repository_dict[repo_name].handle.active_branch
+                            active_branch = self.additional_repo_name_to_git_cloned_repository_dict[
+                                repo_name].handle.active_branch
                             hash = active_branch.commit
                             branch_name = active_branch.name
 
                             if line.find(";branch=") != -1:
-                                matches = re.findall(r';branch=(.+?);', line)  # match text between two quotes
+                                # match text between two quotes
+                                matches = re.findall(r';branch=(.+?);', line)
                                 for m in matches:
-                                    line = line.replace(';%s;' % m, ';branch=%s;' % (branch_name))
+                                    line = line.replace(
+                                        ';%s;' % m, ';branch=%s;' % (branch_name))
 
                             # TODO : replace former line or reformat file..
                             next_line_replace = True
                         elif next_line_replace:
                             if (line.find("\"") == line.rfind("\"") or line.count("\"") != 2):
-                                raise SyntaxError("Bad format for file [{}] in line [{}]".format(file_path, line))
+                                raise SyntaxError(
+                                    "Bad format for file [{}] in line [{}]".format(file_path, line))
 
-                            matches = re.findall(r'\"(.+?)\"', line)  # match text between two quotes
+                            # match text between two quotes
+                            matches = re.findall(r'\"(.+?)\"', line)
                             for m in matches:
-                                line = line.replace('\"%s\"' % m, '\"%s\"' % (hash))
+                                line = line.replace(
+                                    '\"%s\"' % m, '\"%s\"' % (hash))
                             next_line_replace = False
                         file.write(line)
                         is_commit = True
@@ -781,11 +828,13 @@ class CReleaseManager(object):
     def update_mbl_linked_repositories_conf(self):
         """"""
         # update all MBL_LINKED_REPOSITORIES_REPO_NAME repositories
-        if MBL_LINKED_REPOSITORIES_REPO_NAME in  self.additional_repo_name_to_git_cloned_repository_dict:
-            self.update_mbl_linked_repositories_conf_helper(self.additional_repo_name_to_git_cloned_repository_dict[MBL_LINKED_REPOSITORIES_REPO_NAME])
+        if MBL_LINKED_REPOSITORIES_REPO_NAME in self.additional_repo_name_to_git_cloned_repository_dict:
+            self.update_mbl_linked_repositories_conf_helper(
+                self.additional_repo_name_to_git_cloned_repository_dict[MBL_LINKED_REPOSITORIES_REPO_NAME])
         for fo in self.manifest_file_name_to_obj_dict.values():
             if MBL_LINKED_REPOSITORIES_REPO_NAME in fo.repo_name_to_proj_dict:
-                self.update_mbl_linked_repositories_conf_helper(fo.repo_name_to_proj_dict[MBL_LINKED_REPOSITORIES_REPO_NAME].git_cloned_repository)
+                self.update_mbl_linked_repositories_conf_helper(
+                    fo.repo_name_to_proj_dict[MBL_LINKED_REPOSITORIES_REPO_NAME].git_cloned_repository)
 
     def mbl_manifest_repo_push(self):
         repo = self.additional_repo_name_to_git_cloned_repository_dict[MBL_MANIFEST_REPO_NAME]
@@ -800,52 +849,57 @@ class CReleaseManager(object):
         # clone all additional repositories under self.tmpdirname.name
         for (main_key, sd) in self.new_revisions_dict.items():
             for (key, rev) in sd.items():
-                if main_key == INPUT_FILE_ADDITIONAL_SD_KEY_NAME:                      
-                    if key != MBL_MANIFEST_REPO_NAME:                        
+                if main_key == INPUT_FILE_ADDITIONAL_SD_KEY_NAME:
+                    if key != MBL_MANIFEST_REPO_NAME:
                         prefix, name = key.rsplit("/", 1)
-                        clone_tup_list.append( (key, ARM_MRR_REMOTE, prefix, name, self.tmpdirname.name, rev[0], rev[1], main_key) )
-        
-        # Clone all Arm MRRs, each one on a sub-folder belong to the file. 
+                        clone_tup_list.append(
+                            (key, ARM_MRR_REMOTE, prefix, name, self.tmpdirname.name, rev[0], rev[1], main_key))
+
+        # Clone all Arm MRRs, each one on a sub-folder belong to the file.
         # For example, for default.xml, all matching repos will be cloned under <self.tmpdirname.name>/default/
         for file_obj in self.manifest_file_name_to_obj_dict.values():
             for (name, proj) in (file_obj.repo_name_to_proj_dict.items()):
-                new_ref = self.get_new_ref_from_new_revision_dict(file_obj.filename, proj.full_name)
+                new_ref = self.get_new_ref_from_new_revision_dict(
+                    file_obj.filename, proj.full_name)
                 if proj.isArmMRR and new_ref:
                     prefix, name = proj.full_name.rsplit("/", 1)
 
                     clone_tup_list.append((proj.full_name, file_obj.remote_key_to_remote_dict[proj.remote_key],
-                            prefix, name, os.path.join(self.tmpdirname.name, file_obj.filename), proj.revision, new_ref, file_obj.filename))
+                                           prefix, name, os.path.join(self.tmpdirname.name, file_obj.filename), proj.revision, new_ref, file_obj.filename))
 
         self.logger.debug("=== clone_tup_list:")
         self.logger.debug(pformat(clone_tup_list))
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(clone_tup_list)) as executor:
             future_to_git_url = {
-                    executor.submit(self.create_and_update_new_revisions_worker, tup[1], tup[2], tup[3], tup[4], tup[5], tup[6]):
-                    tup for tup in clone_tup_list
-                }
+                executor.submit(self.create_and_update_new_revisions_worker, tup[1], tup[2], tup[3], tup[4], tup[5], tup[6]):
+                tup for tup in clone_tup_list
+            }
 
             for future in concurrent.futures.as_completed(future_to_git_url, MAX_TMO_SEC):
-                tup = future_to_git_url[future]                
-                result = future.result()                
+                tup = future_to_git_url[future]
+                result = future.result()
                 if result == None:
                     raise argparse.ArgumentTypeError(
-                            "revision {} exist on remote url {}".format(tup[1], tup[0]))
+                        "revision {} exist on remote url {}".format(tup[1], tup[0]))
                 else:
                     if tup[7] == INPUT_FILE_ADDITIONAL_SD_KEY_NAME:
                         self.additional_repo_name_to_git_cloned_repository_dict[tup[0]] = result
                     else:
-                        self.manifest_file_name_to_obj_dict[tup[7]].repo_name_to_proj_dict[tup[0]].git_cloned_repository = result
+                        self.manifest_file_name_to_obj_dict[tup[7]
+                                                            ].repo_name_to_proj_dict[tup[0]].git_cloned_repository = result
 
     class StoreValidFile(argparse.Action):
         """argparse gelper class - Costume action - check that the given file path exist on local host"""
+
         def __call__(self, parser, namespace, values, option_string=None):
             file_path = os.path.abspath(values)
             if not os.path.isfile(file_path):
                 raise argparse.ArgumentTypeError(
-                  "The path %s does not exist!" % file_path
+                    "The path %s does not exist!" % file_path
                 )
-            filename, file_extension = os.path.splitext(ntpath.basename(file_path))
+            filename, file_extension = os.path.splitext(
+                ntpath.basename(file_path))
             if not file_extension == ".json":
                 raise argparse.ArgumentTypeError(
                     "File %s does not end with '.json' prefix!" % file_path
@@ -858,14 +912,14 @@ class CReleaseManager(object):
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             description=module_name + " script",
         )
-                    
+
         parser.add_argument(
             "refs_input_file_path",
             action=self.StoreValidFile,
             help="path to update.json file which holds a dictionary of pairs (repository name, branch / tag / hash). \
             For more information and exact format see mbl-tools/build-mbl/README.md."
         )
-        
+
         parser.add_argument(
             "-v",
             "--verbose",
@@ -888,7 +942,7 @@ class CReleaseManager(object):
              actually pushed into remote.",
             action="store_true"
         )
-        
+
         return parser
 
 
