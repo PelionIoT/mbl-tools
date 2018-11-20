@@ -6,6 +6,7 @@
 #
 
 import in_place
+import time
 import re
 import ntpath
 import concurrent.futures
@@ -19,7 +20,7 @@ import glob
 import os
 from git import Repo
 from shutil import copyfile
-from pprint import pprint, pformat
+from pprint import pformat
 import xml.etree.ElementTree as ElementTree
 
 """
@@ -225,15 +226,20 @@ class SGlobalFuncs:
 
         # create folder if not exist
         if not os.path.exists(dest_full_path):
+            logger.info("Creating new folder %s" % dest_full_path)
             os.makedirs(dest_full_path)
 
         # now clone
         if is_commit_hash:
+            logger.info("Cloning repository {} to {} and checking out commit hash {}".format(
+                url, dest_full_path, co_branch))
             cloned_repo = Repo.clone_from(url, dest_full_path)
             cloned_repo.git.checkout(co_branch)
         else:
-            cloned_repo = Repo.clone_from(
-                url, dest_full_path, branch=co_branch)
+            cloned_repo = Repo.clone_from(url, dest_full_path, branch=co_branch)
+            logger.info("Cloning repository {} to {} and checking out branch {}".format(
+                url, dest_full_path, co_branch))
+
         assert cloned_repo.__class__ is Repo
         return cloned_repo
 
@@ -268,6 +274,8 @@ class CRepoManifestFile(object):
         # dictionary : key is a repository short name, value is
         # This dictionary holds all CRepoManifestProject objects with repository names as key
         self.repo_name_to_proj_dict = repo_name_to_proj_dict
+
+        logger.debug("Created new {} : {}".format(type(self).__name__, pformat(locals())))
 
 #
 #   Class CRepoManifestProject
@@ -310,6 +318,8 @@ class CRepoManifestProject(object):
             self.isArmMRR = True
         else:
             self.isArmMRR = False
+
+        logger.debug("Created new {} : {}".format(type(self).__name__, pformat(locals())))
 
 #
 #   Class CGitClonedRepository
@@ -361,7 +371,8 @@ class CGitClonedRepository(object):
                 self.handle = SGlobalFuncs.clone_repo(
                     self.clone_dest_path, self.url, self.checkout_rev)
 
-        logger.info("{} created!".format(self.full_name))
+        logger.debug("Created new {} : {}".format(type(self).__name__, pformat(locals())))
+        logger.info("{} Cloned from remote {} to folder {}".format(self.full_name, self.url, self.clone_dest_path))
 
 #
 # CReleaseManager
@@ -416,6 +427,9 @@ class CReleaseManager(object):
         """
         self.already_pushed_repository_list = []
 
+        # list of string of summary records to be printed at the end of the script running
+        self.op_summary_list = []
+
         # parse arguments
         parser = self.get_argument_parser()
         self.args = parser.parse_args()
@@ -429,6 +443,8 @@ class CReleaseManager(object):
         self.tmpdirname = tempfile.TemporaryDirectory(prefix="mbl_")
         logger.info("Temporary folder: %s" % self.tmpdirname.name)
 
+        logger.debug("Created new {} : {}".format(type(self).__name__, pformat(locals())))
+
     def __enter__(self):
         """"""
         return self
@@ -436,23 +452,28 @@ class CReleaseManager(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         """deletes all already-pushed references in case of a failure"""
         if not self.completed and len(self.already_pushed_repository_list) > 0:
+            logger.error("Removing all pushed references : %s" % self.already_pushed_repository_list)
             for repo, ref in self.already_pushed_repository_list:
                 repo.handle.remotes.origin.push(":" + ref.path)
 
-    def repo_push(self, repo, new_rev):
+    def _repo_push(self, repo, new_rev):
         """push a revision to remote repository"""
+        _str = "Pushing {} to repository {} url {}".format(
+                new_rev, repo.full_name, repo.url)
         if self.args.simulate:
-            logger.info("Virtually Pushing {} to {}".format(
-                new_rev, repo.full_name))
+            logger.info("Virtually " + _str)
         else:
-            logger.info("Pushing {} to {}".format(
-                new_rev, repo.full_name))
+            logger.info(str)
             repo.handle.git.push(GIT_REMOTE_NAME, new_rev)
             self.already_pushed_repository_list.append((repo, new_rev))
 
     def process_manifest_files(self):
-        """parse, validate and modify XMLmanifest files"""
+        """parse, validate and modify XML manifest files"""
+
+        logger.info("Parse, validate and modify XML manifest files...")
+
         # clone mbl-manifest repository first and checkout mbl_manifest_clone_ref
+        logger.info("Cloning repository %s checkout branch %s" % (MBL_MANIFEST_REPO_NAME, self.mbl_manifest_clone_ref))
         self.additional_repo_name_to_git_cloned_repository_dict[MBL_MANIFEST_REPO_NAME] = \
             self.create_and_update_new_revisions_worker(
                 ARM_MRR_REMOTE,
@@ -471,6 +492,9 @@ class CReleaseManager(object):
         for file_name in glob.glob(path):
             xml_file_list.append(os.path.abspath(file_name))
 
+        if xml_file_list:
+            logger.info("Found xml to parse : %s" % pformat(xml_file_list))
+        
         '''
         We are interested in 3 sub-elements types : 
         1. 'default' : defult fetch attributes. Types:
@@ -484,7 +508,10 @@ class CReleaseManager(object):
             c. 'revision' - this one is optional tag or branch (head) name. If not exist, assign revision from 1.a
         '''
         # parse all xml files, create a CRepoManifestFile object for each and store in manifest_file_name_to_obj_dict
+
         for file_path in xml_file_list:
+            logger.debug("Start parsing file %s" % file_path)
+
             # get root
             tree = ElementTree.parse(file_path)
 
@@ -506,6 +533,7 @@ class CReleaseManager(object):
             # get projects - store in a short project name to
             base_name = ""
             name_to_proj_dict = {}
+            is_change = False
             for atype in root.findall('project'):
                 # get name and split to prefix and short name
                 full_name = atype.get('name')
@@ -516,8 +544,7 @@ class CReleaseManager(object):
 
                 # get remote key and build url
                 remote_key = atype.get('remote')
-                url = remote_key_to_remote_dict[remote_key] + \
-                    ":/" + full_name + ".git"
+                url = remote_key_to_remote_dict[remote_key] + ":/" + full_name + ".git"
 
                 # get and set new revision
                 revision = atype.get('revision')
@@ -537,10 +564,11 @@ class CReleaseManager(object):
                     base_name, full_name)
                 if new_ref == REF_BRANCH_PREFIX + default_rev:
                     del atype.attrib["revision"]
+                    is_change = True
                 else:
                     if new_ref:
-                        atype.set(
-                            'revision', SGlobalFuncs.get_base_rev_name(new_ref))
+                        atype.set('revision', SGlobalFuncs.get_base_rev_name(new_ref))
+                        is_change = True
             assert base_name
 
             rmf = CRepoManifestFile(file_path, base_name, tree, root, default_rev,
@@ -548,10 +576,13 @@ class CReleaseManager(object):
             self.manifest_file_name_to_obj_dict[base_name] = rmf
 
             # backup file
+            logger.info("Created backup file %s from %s" % (file_path + FILE_BACKUP_SUFFIX, file_path))
             copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
 
             # write to file
             rmf.tree.write(file_path)
+            if is_change:
+                logger.info("File %s has been modified!" % file_path)
 
     @staticmethod
     def validate_remote_repositories_state_helper(url, new_rev):
@@ -565,6 +596,8 @@ class CReleaseManager(object):
 
     def validate_remote_repositories_state(self):
         """check that all branches/tags to be created, are not on remote"""
+
+        logger.info("Validating remote repositories state...")
 
         '''
         list of  tuples. Each tuple is of length of 2:
@@ -600,6 +633,7 @@ class CReleaseManager(object):
 
         # check concurrently that none of the repositories in mrr_url_set
         # has a branch called 'create_branch_name'
+        logger.info("Starting %d concurrent threads to validate remote repositories state..." % len(check_remote_list))
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(check_remote_list)) as executor:
             future_to_git_url = {
                 executor.submit(self.validate_remote_repositories_state_helper, tup[idx_url], tup[idx_rev]):
@@ -611,6 +645,7 @@ class CReleaseManager(object):
                 if result:
                     raise argparse.ArgumentTypeError(
                         "revision {} exist on remote url {}".format(tup[idx_rev], tup[idx_url]))
+        logger.info("Worker threads done...")
 
     @staticmethod
     def dict_raise_on_duplicates(ordered_pairs):
@@ -631,6 +666,9 @@ class CReleaseManager(object):
             sd name INPUT_FILE_COMMON_SD_KEY_NAME (case B), or if the sd is file specific it must point to a project
             which can be found in that file (case A)
         """
+
+        logger.info("Validating cross dependencies (input file vs manifest files)...")
+
         for file_name, sd in self.new_revisions_dict.items():
             if file_name == INPUT_FILE_ADDITIONAL_SD_KEY_NAME:
                 continue
@@ -764,19 +802,21 @@ class CReleaseManager(object):
             new_rev = new_tag
 
         if repo.full_name not in [MBL_MANIFEST_REPO_NAME, MBL_LINKED_REPOSITORIES_REPO_NAME]:
-            self.repo_push(repo, new_rev)
+            self._repo_push(repo, new_rev)
 
         return repo
 
     def update_mbl_linked_repositories_conf_helper(self, git_repo):
         """"""
+
+        logger.info("Start updating file %s in repository %s (if needed)" %
+                    (MBL_LINKED_REPOSITORIES_REPO_PATH, MBL_LINKED_REPOSITORIES_REPO_NAME))
+
         # check if file exist
         file_path = os.path.join(
             git_repo.clone_dest_path, MBL_LINKED_REPOSITORIES_REPO_PATH)
         if not os.path.exists(file_path):
             raise FileNotFoundError("File %s not found!" % file_path)
-
-        is_commit = False
 
         """
         Open the file, traverse all over the INPUT_FILE_ADDITIONAL_SD_KEY_NAME SD repositories, and replace
@@ -786,9 +826,12 @@ class CReleaseManager(object):
         3) SRCREV in that order
             We are going to locate the repo name and change the SRCREV
         """
+        is_changed = False
         for repo_name in self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME].keys():
             if repo_name not in [MBL_MANIFEST_REPO_NAME, MBL_LINKED_REPOSITORIES_REPO_NAME]:
+
                 # Create backup
+                logger.info("Created backup file %s from %s" % (file_path + FILE_BACKUP_SUFFIX, file_path))
                 copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
 
                 with in_place.InPlace(file_path) as file:
@@ -804,8 +847,8 @@ class CReleaseManager(object):
                                 # match text between two quotes
                                 matches = re.findall(r';branch=(.+?);', line)
                                 for m in matches:
-                                    line = line.replace(
-                                        ';%s;' % m, ';branch=%s;' % branch_name)
+                                    line = line.replace(';%s;' % m, ';branch=%s;' % branch_name)
+                                    is_changed = True
 
                             # TODO : replace former line or reformat file..
                             next_line_replace = True
@@ -819,16 +862,17 @@ class CReleaseManager(object):
                             for m in matches:
                                 line = line.replace(
                                     '\"%s\"' % m, '\"%s\"' % commit_hash)
+                                is_changed = True
                             next_line_replace = False
                         file.write(line)
-                        is_commit = True
 
-        if is_commit:
+        if is_changed:
             ret_list = git_repo.handle.index.add([file_path], write=True)
             assert len(ret_list) == 1
             git_repo.handle.index.commit("release manager automatic commit")
+            logger.info("File %s has been modified and committed" % file_path)
 
-        self.repo_push(git_repo, git_repo.handle.active_branch)
+        self._repo_push(git_repo, git_repo.handle.active_branch)
 
     def update_mbl_linked_repositories_conf(self):
         """"""
@@ -845,10 +889,12 @@ class CReleaseManager(object):
         repo = self.additional_repo_name_to_git_cloned_repository_dict[MBL_MANIFEST_REPO_NAME]
         repo.handle.git.add(update=True)
         repo.handle.index.commit("release manager automatic commit")
-        self.repo_push(repo, repo.handle.active_branch)
+        self._repo_push(repo, repo.handle.active_branch)
 
     def clone_and_create_new_revisions(self):
         """Clone all additional and Arm MRR repositories, concurrently, checkout current revision"""
+
+        logger.info("Cloning and creating new revisions...")
 
         # list of tuples
         clone_tup_list = []
@@ -877,6 +923,7 @@ class CReleaseManager(object):
         logger.debug("=== clone_tup_list:")
         logger.debug(pformat(clone_tup_list))
 
+        logger.info("Starting %d concurrent threads to clone repositories..." % len(clone_tup_list))
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(clone_tup_list)) as executor:
             future_to_git_url = {
                 executor.submit(
@@ -896,6 +943,16 @@ class CReleaseManager(object):
                     else:
                         self.manifest_file_name_to_obj_dict[
                             tup[7]].repo_name_to_proj_dict[tup[0]].git_cloned_repository = result
+        logger.info("Worker threads done...")
+
+    def print_summary(self, start_time):
+        print("\n\n\n")
+        print("===============================================")
+        print("=== === === === === SUCCESS === === === === ===")
+        print("===============================================\n")
+        print("Temporary folder: %s" % self.tmpdirname.name)
+        print("Time running: %s" % int(time.time() - start_time))
+        print("Summary of operations: %s" % self.op_summary_list)
 
     class StoreValidFile(argparse.Action):
         """argparse gelper class - Costume action - check that the given file path exist on local host"""
@@ -958,6 +1015,8 @@ def _main():
 
     with CReleaseManager() as rm:
 
+        start_time = time.time()
+
         # Parse JSON references input file
         rm.parse_and_validate_input_file()
 
@@ -977,9 +1036,14 @@ def _main():
         # Commit MBL_LINKED_REPOSITORIES_REPO_NAME and MBL_MANIFEST_REPO_NAME and push to remote
         rm.mbl_manifest_repo_push()
 
+        # print summary
+        rm.print_summary(start_time)
+
         # mark success
         rm.completed = True
 
 
 if __name__ == "__main__":
     sys.exit(_main())
+
+
