@@ -17,7 +17,7 @@ a revision is a commit hash or rev
 """Part of mbl-tools. 
 Tag new development and release branches on all manifest files and internally linkes repositories."""
 import xml.etree.ElementTree as ET
-import os, glob, git, sys, json, logging, argparse, tempfile, concurrent.futures, ntpath, string, re
+import os, glob, git, sys, json, logging, argparse, tempfile, concurrent.futures, ntpath, string, re, in_place
 from pprint import pprint, pformat
 from shutil import copyfile
 from git import Repo
@@ -30,7 +30,7 @@ __version__ = "1.0.0"
 # constants
 INPUT_FILE_COMMON_SD_KEY_NAME = "_common_"
 INPUT_FILE_ADDITIONAL_SD_KEY_NAME = "_additional_"
-MAX_TMO_SEC = 20
+MAX_TMO_SEC = 120
 MRR_MANIFEST_REMOTE_KEY = "github"
 REF_PREFIX = "refs/"
 REF_BRANCH_PREFIX = "refs/heads/"
@@ -280,15 +280,15 @@ class CGitRepository(object):
             self.checkout_rev.startswith(REF_TAG_PREFIX) or 
             len(self.checkout_rev) == HASH_FIXED_LEN):
 
-            self.obj_repo = SGlobalFuncs.clone_repo(self.clone_dest_path, self.url, self.checkout_rev)
+            self.handle = SGlobalFuncs.clone_repo(self.clone_dest_path, self.url, self.checkout_rev)
         else:
 
             #try to clone as branch
             try:
-                self.obj_repo = SGlobalFuncs.clone_repo(self.clone_dest_path, self.url, REF_BRANCH_PREFIX + self.checkout_rev)
+                self.handle = SGlobalFuncs.clone_repo(self.clone_dest_path, self.url, REF_BRANCH_PREFIX + self.checkout_rev)
             except ValueError:
             #try to clone as tag
-                self.obj_repo = SGlobalFuncs.clone_repo(self.clone_dest_path, self.url, self.checkout_rev)
+                self.handle = SGlobalFuncs.clone_repo(self.clone_dest_path, self.url, self.checkout_rev)
         
         logger = logging.getLogger(module_name)
         logger.info("{} created!".format(self.full_name))
@@ -304,7 +304,7 @@ class CReleaseManager(object):
         #initialize logger  - set logging level to INFO at this initial stage
         logging.basicConfig(
             level=logging.INFO,
-            format="%(asctime)s - %(name)s - {%(funcName)s:%(lineno)d} - %(levelname)s \n%(message)s",
+            format="\n%(asctime)s - %(name)s - {%(funcName)s:%(lineno)d} - %(levelname)s \n%(message)s",
         )        
         self.logger = logging.getLogger(module_name)
         self.logger.debug("Creating {} version {}".format(module_name, __version__))
@@ -355,6 +355,14 @@ class CReleaseManager(object):
         #create a temporary folder to clone repositories in
         self.tmpdirname = tempfile.TemporaryDirectory(prefix="mbl_")
         self.logger.debug("Temporary folder: %s" % self.tmpdirname.name)                              
+
+    def repo_push(self, repo, new_rev):
+
+        if self.args.simulate:
+            self.logger.info("Virtually Pushing {} to {}".format(repo.full_name, new_rev))
+        else:
+            self.logger.info("Pushing {} to {}".format(repo.full_name, new_rev))
+            repo.handle.git.push('--set-upstream', 'origin', new_rev)
 
     def process_manifest_files(self):
         
@@ -613,21 +621,19 @@ class CReleaseManager(object):
 
             # Create the new branch/tag
             if new_rev.startswith(REF_BRANCH_PREFIX):
-                new_branch = repo.obj_repo.create_head(new_rev_short)
-                assert new_branch.commit == repo.obj_repo.active_branch.commit
+                new_branch = repo.handle.create_head(new_rev_short)
+                assert new_branch.commit == repo.handle.active_branch.commit
                 new_branch.checkout()
                 new_rev = new_branch
             else:
                 cur_rev_short = cur_rev.rsplit("/", 1)[1]
-                new_tag = repo.obj_repo.create_tag(new_rev_short, ref=repo.obj_repo.active_branch.commit)
-                assert new_tag.commit == repo.obj_repo.active_branch.commit
+                new_tag = repo.handle.create_tag(new_rev_short, ref=repo.handle.active_branch.commit)
+                assert new_tag.commit == repo.handle.active_branch.commit
                 assert new_tag.tag is None
                 new_rev = new_tag
 
             if not repo.full_name in [MBL_MANIFEST_REPO_NAME, MBL_LINKED_REPOSITORIES_REPO_NAME]:
-                print("pushing {} to {}".format(repo.full_name, new_rev))
-                #repo.obj_repo.git.push('--set-upstream', 'origin', new_rev)
-
+                self.repo_push(repo, new_rev)
 
             return repo
         except:
@@ -642,40 +648,55 @@ class CReleaseManager(object):
         if not os.path.exists(file_path):
             raise FileNotFoundError("File %s not found!" % file_path)
 
+        is_commit = False
+
         # Open the file, traverse all over the INPUT_FILE_ADDITIONAL_SD_KEY_NAME SD repositories, and replace
         # We expect file structure, where each element represents a linked repository has 3 settings : 1) options 2) repo URL 3) SRCREV in that order
         # We are going to locate the repo name and change the SRCREV
-
-        # backup file
-        copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
-
         for repo_name in self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME].keys():
             if not repo_name in [MBL_MANIFEST_REPO_NAME, MBL_LINKED_REPOSITORIES_REPO_NAME]:
-                s = open(file_path, "r+")
+                # Create backup
+                copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
 
-                next_line_replace = False
-                for idx, line in enumerate(s.readlines()):
-                    if line.lower().find("git@github.com/" + repo_name) != -1:
-                        next_line_replace = True
-                        continue
-                    if next_line_replace:
-                        if (line.find("\"") == line.rfind("\"") or line.count("\"") != 2):
-                            raise SyntaxError("Bad format for file [{}] in line [{}]".format(file_path, line))
-                        hash = self.additional_repo_name_to_git_repository_dict[repo_name].obj_repo.active_branch.commit
+                with in_place.InPlace(file_path) as file:
+                    next_line_replace = False
+                    for line in file:
+                        if line.lower().find("git@github.com/" + repo_name) != -1:
+                            active_branch = self.additional_repo_name_to_git_repository_dict[repo_name].handle.active_branch
+                            hash = active_branch.commit
+                            branch_name = active_branch.name
 
-                        matches = re.findall(r'\"(.+?)\"', line)  # match text between two quotes
-                        for m in matches:
-                            line = line.replace('\"%s\"' % m, '\"%s\"' % (hash))
+                            if line.find(";branch=") != -1:
+                                matches = re.findall(r';branch=(.+?);', line)  # match text between two quotes
+                                for m in matches:
+                                    line = line.replace(';%s;' % m, ';branch=%s;' % (branch_name))
 
-                        next_line_replace = False
+                            # TODO : replace former line or reformat file..
+                            next_line_replace = True
+                        elif next_line_replace:
+                            if (line.find("\"") == line.rfind("\"") or line.count("\"") != 2):
+                                raise SyntaxError("Bad format for file [{}] in line [{}]".format(file_path, line))
 
-                s.close()
+                            matches = re.findall(r'\"(.+?)\"', line)  # match text between two quotes
+                            for m in matches:
+                                line = line.replace('\"%s\"' % m, '\"%s\"' % (hash))
+                            next_line_replace = False
+                        file.write(line)
+                        is_commit = True
+
+        if is_commit:
+            l = git_repo.handle.index.add([file_path], write=True)
+            assert len(l) == 1
+            git_repo.handle.index.commit("release manager automatic commit")
+
+        self.repo_push(git_repo, branch_name)
+
 
     def update_mbl_linked_repositories_conf(self):
 
         # update all MBL_LINKED_REPOSITORIES_REPO_NAME repositories
         if MBL_LINKED_REPOSITORIES_REPO_NAME in  self.additional_repo_name_to_git_repository_dict:
-            update_mbl_linked_repositories_conf_helper(self.additional_repo_name_to_git_repository_dict[MBL_LINKED_REPOSITORIES_REPO_NAME])
+            self.update_mbl_linked_repositories_conf_helper(self.additional_repo_name_to_git_repository_dict[MBL_LINKED_REPOSITORIES_REPO_NAME])
         for fo in self.manifest_file_name_to_obj_dict.values():
             if MBL_LINKED_REPOSITORIES_REPO_NAME in fo.repo_name_to_proj_dict:
                 self.update_mbl_linked_repositories_conf_helper(fo.repo_name_to_proj_dict[MBL_LINKED_REPOSITORIES_REPO_NAME].git_repository)
@@ -729,7 +750,7 @@ class CReleaseManager(object):
     ###############################################################    
     class StoreValidFile(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
-            file_path = values
+            file_path = os.path.abspath(values)
             if not os.path.isfile(file_path):
                 raise argparse.ArgumentTypeError(
                   "The path %s does not exist!" % file_path
@@ -740,7 +761,13 @@ class CReleaseManager(object):
                     "File %s does not end with '.json' prefix!" % file_path
                 )
             setattr(namespace, self.dest, file_path)
-     
+
+    def finalize(self):
+        repo = self.additional_repo_name_to_git_repository_dict[MBL_MANIFEST_REPO_NAME]
+        repo.handle.git.add(update=True)
+        repo.handle.index.commit("release manager automatic commit")
+        self.repo_push(repo, repo.handle.active_branch)
+
     # Define and parse script input arguments
     ###############################################################
     def get_argument_parser(self):
@@ -760,6 +787,13 @@ class CReleaseManager(object):
             "-v",
             "--verbose",
             help="increase output verbosity",
+            action="store_true",
+        )
+
+        parser.add_argument(
+            "-s",
+            "--simulate",
+            help="Simulation - do not push to remote, everything else will be executed exactly the same but nothing is actually pushed into remote.",
             action="store_true",
         )
         
@@ -785,6 +819,9 @@ def _main():
 
     # update all files MBL_LINKED_REPOSITORIES_REPO_PATH in repositories MBL_LINKED_REPOSITORIES_REPO_NAME
     rm.update_mbl_linked_repositories_conf()
+
+    # Commit MBL_LINKED_REPOSITORIES_REPO_NAME and MBL_MANIFEST_REPO_NAME and push to remote
+    rm.finalize()
 
 # TODO-change this later on
 if __name__ == "__main__":
