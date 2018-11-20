@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 
+#
+# imports
+#
+
 import in_place
 import re
-import string
 import ntpath
 import concurrent.futures
 import tempfile
@@ -18,6 +21,7 @@ from git import Repo
 from shutil import copyfile
 from pprint import pprint, pformat
 import xml.etree.ElementTree as ElementTree
+
 """
 This script can be called from command line, or used from the mbl-tools.
 In short:
@@ -30,16 +34,12 @@ In short:
 * Update armmbed/meta-mbl/conf/dist/mbl-linked-repositories.conf accordingly, commit and push to remote
 
 Prerequisite:
-Install gitpython and in_place:
+Install python packages 'gitpython' and 'in_place':
 $ pip3 install gitpython in_place
 """
 
 module_name = "release_manager"
 __version__ = "1.0.0"
-
-#
-# imports
-#
 
 
 #
@@ -121,7 +121,7 @@ class SGlobalFuncs:
         """Returns True if 'branch_name' exist in remote repository in URL 'repo_url'"""
         refs = SGlobalFuncs.lsremote(repo_url)
         if is_base_name:
-            if 'refs/tags/' + branch_name in refs:
+            if 'refs/tags/' + tag_name in refs:
                 return True
         if tag_name in refs:
             return True
@@ -428,7 +428,7 @@ class CReleaseManager(object):
 
         # create a temporary folder to clone repositories in
         self.tmpdirname = tempfile.TemporaryDirectory(prefix="mbl_")
-        self.logger.debug("Temporary folder: %s" % self.tmpdirname.name)
+        self.logger.info("Temporary folder: %s" % self.tmpdirname.name)
 
     def __enter__(self):
         """"""
@@ -640,7 +640,7 @@ class CReleaseManager(object):
             if file_name != INPUT_FILE_COMMON_SD_KEY_NAME:
                 found = file_name in self.manifest_file_name_to_obj_dict
                 if not found:
-                    mbl_manifest_path = self.repo_name_to_git_repo_dict[
+                    mbl_manifest_path = self.additional_repo_name_to_git_cloned_repository_dict[
                         MBL_MANIFEST_REPO_NAME].clone_dest_path
                     raise ValueError("main entry key {} in user input file is not found in {}".format(
                         file_name, os.path.join(mbl_manifest_path, file_name + ".xml")))
@@ -742,33 +742,29 @@ class CReleaseManager(object):
     def create_and_update_new_revisions_worker(
             self, remote, name_prefix, short_name, clone_base_path, cur_rev, new_rev):
         """"""
-        try:
-            repo = CGitClonedRepository(
-                remote, name_prefix, short_name, clone_base_path, cur_rev)
 
-            new_rev_short = new_rev.rsplit("/", 1)[1]
+        repo = CGitClonedRepository(
+            remote, name_prefix, short_name, clone_base_path, cur_rev)
 
-            # Create the new branch/tag
-            if new_rev.startswith(REF_BRANCH_PREFIX):
-                new_branch = repo.handle.create_head(new_rev_short)
-                assert new_branch.commit == repo.handle.active_branch.commit
-                new_branch.checkout()
-                new_rev = new_branch
-            else:
-                new_tag = repo.handle.create_tag(
-                    new_rev_short, ref=repo.handle.active_branch.commit)
-                assert new_tag.commit == repo.handle.active_branch.commit
-                assert new_tag.tag is None
-                new_rev = new_tag
+        new_rev_short = new_rev.rsplit("/", 1)[1]
 
-            if repo.full_name not in [MBL_MANIFEST_REPO_NAME, MBL_LINKED_REPOSITORIES_REPO_NAME]:
-                self.repo_push(repo, new_rev)
+        # Create the new branch/tag
+        if new_rev.startswith(REF_BRANCH_PREFIX):
+            new_branch = repo.handle.create_head(new_rev_short)
+            assert new_branch.commit == repo.handle.active_branch.commit
+            new_branch.checkout()
+            new_rev = new_branch
+        else:
+            new_tag = repo.handle.create_tag(
+                new_rev_short, ref=repo.handle.active_branch.commit)
+            assert new_tag.commit == repo.handle.active_branch.commit
+            assert new_tag.tag is None
+            new_rev = new_tag
 
-            return repo
-        except:
-            logger = logging.getLogger(module_name)
-            logger.error("Unexpected error! {}".format(sys.exc_info()[0]))
-            raise
+        if repo.full_name not in [MBL_MANIFEST_REPO_NAME, MBL_LINKED_REPOSITORIES_REPO_NAME]:
+            self.repo_push(repo, new_rev)
+
+        return repo
 
     def update_mbl_linked_repositories_conf_helper(self, git_repo):
         """"""
