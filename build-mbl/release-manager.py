@@ -40,7 +40,7 @@ $ pip3 install gitpython in_place
 
 module_name = "release_manager"
 __version__ = "1.0.0"
-
+logger = logging.getLogger(module_name)
 
 #
 # constants
@@ -361,7 +361,6 @@ class CGitClonedRepository(object):
                 self.handle = SGlobalFuncs.clone_repo(
                     self.clone_dest_path, self.url, self.checkout_rev)
 
-        logger = logging.getLogger(module_name)
         logger.info("{} created!".format(self.full_name))
 
 #
@@ -379,8 +378,8 @@ class CReleaseManager(object):
             level=logging.INFO,
             format="\n%(asctime)s - %(name)s - {%(funcName)s:%(lineno)d} - %(levelname)s \n%(message)s",
         )
-        self.logger = logging.getLogger(module_name)
-        self.logger.debug("Creating {} version {}".format(
+
+        logger.debug("Creating {} version {}".format(
             module_name, __version__))
 
         # list of CRepoManifestFile objects
@@ -423,12 +422,12 @@ class CReleaseManager(object):
 
         # Set verbose log level if enabled by user and log command line arguments
         if self.args.verbose:
-            self.logger.setLevel(logging.DEBUG)
-            self.logger.debug("Command line arguments:{}".format(self.args))
+            logger.setLevel(logging.DEBUG)
+            logger.debug("Command line arguments:{}".format(self.args))
 
         # create a temporary folder to clone repositories in
         self.tmpdirname = tempfile.TemporaryDirectory(prefix="mbl_")
-        self.logger.info("Temporary folder: %s" % self.tmpdirname.name)
+        logger.info("Temporary folder: %s" % self.tmpdirname.name)
 
     def __enter__(self):
         """"""
@@ -443,10 +442,10 @@ class CReleaseManager(object):
     def repo_push(self, repo, new_rev):
         """push a revision to remote repository"""
         if self.args.simulate:
-            self.logger.info("Virtually Pushing {} to {}".format(
+            logger.info("Virtually Pushing {} to {}".format(
                 new_rev, repo.full_name))
         else:
-            self.logger.info("Pushing {} to {}".format(
+            logger.info("Pushing {} to {}".format(
                 new_rev, repo.full_name))
             repo.handle.git.push(GIT_REMOTE_NAME, new_rev)
             self.already_pushed_repository_list.append((repo, new_rev))
@@ -596,8 +595,8 @@ class CReleaseManager(object):
                     # (since we need to clone and change branch from)
                     check_remote_list.append((url, new_ref))
 
-        self.logger.debug("===check_remote_list:")
-        self.logger.debug(pformat(check_remote_list))
+        logger.debug("===check_remote_list:")
+        logger.debug(pformat(check_remote_list))
 
         # check concurrently that none of the repositories in mrr_url_set
         # has a branch called 'create_branch_name'
@@ -664,13 +663,16 @@ class CReleaseManager(object):
 
     def parse_and_validate_input_file(self):
         """"""
+
+        logger.info("Parsing and validating input file %s..." % self.args.refs_input_file_path)
+
         # Open the given input and parse into new_revision_dict dictionary, detect duplicate main key
         with open(self.args.refs_input_file_path, encoding='utf-8') as data_file:
             try:
                 self.new_revisions_dict = json.loads(
                     data_file.read(), object_pairs_hook=self.dict_raise_on_duplicates)
             except json.decoder.JSONDecodeError as err:
-                self.logger.info("Illegal json file!!", err)
+                logger.info("Illegal json file!!", err)
                 sys.exit(-1)
 
         # check that exist at least INPUT_FILE_ADDITIONAL_SD_KEY_NAME key with a sub-dictionary that comply with :
@@ -872,8 +874,8 @@ class CReleaseManager(object):
                                            prefix, name, os.path.join(self.tmpdirname.name, file_obj.filename),
                                            proj.revision, new_ref, file_obj.filename))
 
-        self.logger.debug("=== clone_tup_list:")
-        self.logger.debug(pformat(clone_tup_list))
+        logger.debug("=== clone_tup_list:")
+        logger.debug(pformat(clone_tup_list))
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(clone_tup_list)) as executor:
             future_to_git_url = {
