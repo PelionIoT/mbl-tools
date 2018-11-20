@@ -531,7 +531,9 @@ class CReleaseManager(object):
         
         # Check that :
         # 1. All file-specific SDs point to actual files
-        # 2. All repository names in SDs points to at lease one actual project  in manifest files
+        # 2. All repository names in SDs points to at least one actual project in manifest files if they are in
+        #    sd name INPUT_FILE_COMMON_SD_KEY_NAME (case B), or if the sd is file specific it must point to a project
+        #    which can be found in that file (case A)
         for file_name, sd in self.new_revisions_dict.items():
             if file_name == INPUT_FILE_ADDITIONAL_SD_KEY_NAME:
                 continue
@@ -539,24 +541,23 @@ class CReleaseManager(object):
             # checking 1
             if file_name != INPUT_FILE_COMMON_SD_KEY_NAME:
                 found = file_name in self.manifest_file_name_to_obj_dict
-                if found:
-                    break
-
                 if not found:
                     mbl_manifest_path = self.repo_name_to_git_repo_dict[MBL_MANIFEST_REPO_NAME].clone_dest_path
                     raise ValueError("main entry key {} in user input file is not found in {}".format(
-                            file_name, os.path.join(mbl_manifest_path, file_name + ".xml")))
+                        file_name, os.path.join(mbl_manifest_path, file_name + ".xml")))
 
             # checking 2
             for repo_name in sd:
                 found = False
-                for f in self.manifest_file_name_to_obj_dict.values():
-                    if repo_name in f.repo_name_to_proj_dict:
-                        found = True
-                        break
+                if file_name != INPUT_FILE_COMMON_SD_KEY_NAME:
+                    found = repo_name in self.manifest_file_name_to_obj_dict[file_name].repo_name_to_proj_dict
+                else:
+                    for f in self.manifest_file_name_to_obj_dict.values():
+                        if repo_name in f.repo_name_to_proj_dict:
+                            found = True
+                            break
                 if not found:
-                    raise ValueError("invalid input file : entry {}/{} not found in manifest files!",
-                                     file_name, repo_name)
+                    raise ValueError("invalid input file : entry ({}, {}) not found!".format(file_name, repo_name))
 
         self.validate_remote_repositories_state()  
         
