@@ -1,6 +1,8 @@
 ## JSON Config File Overview - (TODO-traverse one last time and fix)
 # TODO - need to update that all pairs in _additional_ must be (key, list) type
 
+
+COMMENT
 Add revision definition :
 Attribute `revision`: Name of the Git branch the manifest wants
 to track for this project.  Names can be relative to refs/heads
@@ -10,8 +12,11 @@ been extensively tested.  If not supplied the revision given by
 the remote element is used if applicable, else the default
 element is used.
 
+COMMENT
 add section for lined repos. we expect exact file stcurture with no multi lines.
 
+COMMENT
+under file specic SDs, cannot be a case where 2 same repos have the same file name or tag name
 
 The Mbed Linux OS  Release Manager, used by mbl-tools, receives as an input a JSON format configuration file. The file holds a main dictionary of (***main key***, value) pairs. A main key must belong to one of 3 types:
 1. A manifest file name matching a Git repo manifest file that must exist in armmbed/mbl-manifest repository (without the '.XML' suffix). For example : the key 'default' will match the default.xml file, and the sub-dictionary value matched by 'default' will hold pairs of (repository name, new revision).

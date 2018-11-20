@@ -330,9 +330,10 @@ class CReleaseManager(object):
         self.new_revisions_dict = {}
 
         
-        # list of tuples (url, rev) which have already been updated. In case of an error all remotes revisions 
+        # list of tuples CGitRepository  which have already been updated and pushed to remote. In case of an error all remotes revisions
         # must be deleted
-        self.already_updated_remotes_list = []
+        self.already_pushed_repository_list = []
+
         
         # parse arguments
         parser = self.get_argument_parser()
@@ -526,7 +527,7 @@ class CReleaseManager(object):
                 d[k] = v
         return d    
     
-    def revalidate_input_file(self):
+    def validate_cross_dependencies(self):
         
         # Check that :
         # 1. All file-specific SDs point to actual files
@@ -559,11 +560,16 @@ class CReleaseManager(object):
 
         self.validate_remote_repositories_state()  
         
-    def parse_and_validate_input_file(self):        
+    def parse_and_validate_input_file(self):
+
         # Open the given input and parse into new_revision_dict dictionary, detect duplicate main key
-        with open(self.args.refs_input_file_path, encoding='utf-8') as data_file:            
-            self.new_revisions_dict = json.loads(data_file.read(), object_pairs_hook=self.dict_raise_on_duplicates)
-                      
+        with open(self.args.refs_input_file_path, encoding='utf-8') as data_file:
+            try:
+                self.new_revisions_dict = json.loads(data_file.read(), object_pairs_hook=self.dict_raise_on_duplicates)
+            except json.decoder.JSONDecodeError as err:
+                self.logger.info("Illegal json file!!", err)
+                sys.exit(-1)
+
         # check that exist at least INPUT_FILE_ADDITIONAL_SD_KEY_NAME key with a sub-dictionary that comply with :
         # 1. All pairs are (key, lists of length 2), and the value list must have distinct values
         # 2. armmbed/mbl-manifest repository exist in sub-dictionary
@@ -578,7 +584,9 @@ class CReleaseManager(object):
                                      % (l,INPUT_FILE_ADDITIONAL_SD_KEY_NAME)) 
             if l[0] == l[1]:
                 raise ValueError("Bad list %s - non-distinct values under key %s in user input file!" 
-                                     % (l,INPUT_FILE_ADDITIONAL_SD_KEY_NAME))             
+                                     % (l,INPUT_FILE_ADDITIONAL_SD_KEY_NAME))
+
+
         #set the clone ref for mbl-manifest 
         self.mbl_manifest_clone_ref = self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME][MBL_MANIFEST_REPO_NAME][0]
                                                
@@ -603,7 +611,20 @@ class CReleaseManager(object):
                                          "key {} found in {} but also in other file specific file SDs!".format(
                                          self.args.refs_input_file_path, key, INPUT_FILE_ADDITIONAL_SD_KEY_NAME))            
          
-          
+
+        # Do not allow for the same repo name in file specific SD to have the same branch name, or the same tag name
+        # (equal tag and branch name in seperate repos is allowed, but not recommended!)
+        tup_list = []
+        for (sd_name, sd) in self.new_revisions_dict.items():
+            if sd_name in [INPUT_FILE_ADDITIONAL_SD_KEY_NAME, INPUT_FILE_COMMON_SD_KEY_NAME]:
+                continue
+            tup_list += [(v, k) for k, v in sd.items()]
+        for t in tup_list:
+            if tup_list.count(t) > 1:
+                raise ValueError("Invalid input file %s : The pair %s appears in more than one file specific SD!" %
+                                 (self.args.refs_input_file_path, t))
+
+
     def get_new_ref_from_new_revision_dict(self, sd_key_name, repo_name):
         if (sd_key_name in self.new_revisions_dict) and (repo_name in self.new_revisions_dict[sd_key_name]):
             if sd_key_name == INPUT_FILE_ADDITIONAL_SD_KEY_NAME:
@@ -762,7 +783,7 @@ class CReleaseManager(object):
                 )
             setattr(namespace, self.dest, file_path)
 
-    def finalize(self):
+    def mbl_maniifest_repo_push(self):
         repo = self.additional_repo_name_to_git_repository_dict[MBL_MANIFEST_REPO_NAME]
         repo.handle.git.add(update=True)
         repo.handle.index.commit("release manager automatic commit")
@@ -779,20 +800,20 @@ class CReleaseManager(object):
         parser.add_argument(
             "refs_input_file_path",
             action=self.StoreValidFile,
-            help="Path to update.json file which holds a dictionary of pairs (repository name, ref / hash). For more"
+            help="Path to update.json file which holds a dictionary of pairs (repository name, branch / tag / hash). For more"
             " information and exact format see mbl-tools/build-mbl/README.md."
         )
         
         parser.add_argument(
             "-v",
             "--verbose",
-            help="increase output verbosity",
+            help="Verbose mode - print debug level logs",
             action="store_true"
         )
 
         parser.add_argument(
             "-c",
-            "--controlled_mode",
+            "--controlled-mode",
             help="Prompt before each significant step",
             action="store_true"
         )
@@ -818,8 +839,8 @@ def _main():
     # Clone the manifest repository and parse its xml files into database
     rm.process_manifest_files()
       
-    # Some more things to validate in input file after parsing both files
-    rm.revalidate_input_file()  
+    # Some more things to validate between input and manifest files file after parsing both files
+    rm.validate_cross_dependencies()  
     
     # Update new_revision for all manifest files projects and create reference (where needed on remot Git repositories)
     rm.clone_and_create_new_revisions()
@@ -828,8 +849,8 @@ def _main():
     rm.update_mbl_linked_repositories_conf()
 
     # Commit MBL_LINKED_REPOSITORIES_REPO_NAME and MBL_MANIFEST_REPO_NAME and push to remote
-    rm.finalize()
+    rm.mbl_maniifest_repo_push()
 
-# TODO-change this later on
+
 if __name__ == "__main__":
     sys.exit(_main())
