@@ -82,13 +82,18 @@ MBL_LINKED_REPOSITORIES_REPO_NAME = "armmbed/meta-mbl"
 MBL_LINKED_REPOSITORIES_REPO_PATH = "conf/distro/mbl-linked-repositories.conf"
 
 #
-# logging constants
+# logging
 #
 
 LOGGING_REGULAR_FORMAT = "\n%(asctime)s - %(name)s - {%(funcName)s:%(lineno)d} - %(levelname)s \n%(message)s"
 LOGGING_SUMMARY_FORMAT = "%(message)s"
 logger = logging.getLogger(module_name)
-
+summary_log_list = [] # list of strings to be printed at the script end, as a summary
+SUMMARY_H_PUSH = "PUSH: "
+SUMMARY_H_MODIFY_FILE = "MODIFY FILE: "
+SUMMARY_H_BKP = "CREATE BACKUP FILE: "
+SUMMARY_H_BRANCH = "CREATE BRANCH: "
+SUMMARY_H_TAG = "CREATE TAG: "
 #
 #   Class SGlobalFuncs
 #
@@ -434,9 +439,6 @@ class CReleaseManager(object):
         """
         self.already_pushed_repository_list = []
 
-        # list of string of summary records to be printed at the end of the script running
-        self.op_summary_list = []
-
         # parse arguments
         parser = self.get_argument_parser()
         self.args = parser.parse_args()
@@ -481,7 +483,7 @@ class CReleaseManager(object):
         if self.args.simulate:
             logger.info("Virtually " + _str)
         else:
-            logger.info(str)
+            logger.info(_str)
             repo.handle.git.push(GIT_REMOTE_NAME, new_rev)
             self.already_pushed_repository_list.append((repo, new_rev))
 
@@ -593,13 +595,18 @@ class CReleaseManager(object):
                                     remote_key_to_remote_dict, name_to_proj_dict)
             self.manifest_file_name_to_obj_dict[base_name] = rmf
 
-            # backup file
-            logger.info("Created backup file %s from %s" % (file_path + FILE_BACKUP_SUFFIX, file_path))
-            copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
-
-            # write to file
-            rmf.tree.write(file_path)
             if is_change:
+                # backup file
+                summary_log_list.append(SUMMARY_H_BKP +
+                                        "Created back file %s from %s" % (file_path + FILE_BACKUP_SUFFIX, file_path))
+                logger.info("Created backup file %s from %s" % (file_path + FILE_BACKUP_SUFFIX, file_path))
+                copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
+
+                # write to file
+                rmf.tree.write(file_path)
+                summary_log_list.append(SUMMARY_H_MODIFY_FILE + "File %s has been modified on repository %s" %
+                                        (file_path, MBL_MANIFEST_REPO_NAME))
+
                 logger.info("File %s has been modified!" % file_path)
 
     @staticmethod
@@ -808,10 +815,15 @@ class CReleaseManager(object):
 
         # Create the new branch/tag
         if new_rev.startswith(REF_BRANCH_PREFIX):
+            prev = repo.handle.active_branch
             new_branch = repo.handle.create_head(new_rev_short)
             assert new_branch.commit == repo.handle.active_branch.commit
             new_branch.checkout()
             new_rev = new_branch
+
+            summary_log_list.append(SUMMARY_H_BRANCH +
+                                    "Created and checkout new branch %s from branch HEAD %s on repository % s" %
+                                    (new_rev_short, prev.name, repo.full_name))
         else:
             new_tag = repo.handle.create_tag(
                 new_rev_short, ref=repo.handle.active_branch.commit)
@@ -819,8 +831,17 @@ class CReleaseManager(object):
             assert new_tag.tag is None
             new_rev = new_tag
 
+            summary_log_list.append(SUMMARY_H_TAG + "Created and checkout new tag %s on commit %s on repository % s" %
+                                    (new_rev_short, repo.handle.active_branch.commit.hexsha, repo.full_name))
+
         if repo.full_name not in [MBL_MANIFEST_REPO_NAME, MBL_LINKED_REPOSITORIES_REPO_NAME]:
-            self._repo_push(repo, new_rev)
+            if self.diag_repo_push(repo):
+                self._repo_push(repo, new_rev)
+                summary_log_list.append(SUMMARY_H_PUSH +
+                                        "Pushed from repository clone path={} a new branch={} to remote url={}".format(
+                    repo.clone_dest_path, repo.handle.active_branch.name, repo.url))
+            else:
+                logger.info("Skip pushing...")
 
         return repo
 
@@ -836,6 +857,12 @@ class CReleaseManager(object):
         if not os.path.exists(file_path):
             raise FileNotFoundError("File %s not found!" % file_path)
 
+        # Create backup
+        logger.info("Created backup file %s from %s" % (file_path + FILE_BACKUP_SUFFIX, file_path))
+        summary_log_list.append(SUMMARY_H_BKP +
+                                "Created back file %s from %s" % (file_path + FILE_BACKUP_SUFFIX, file_path))
+        copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
+
         """
         Open the file, traverse all over the INPUT_FILE_ADDITIONAL_SD_KEY_NAME SD repositories, and replace
         We expect file structure, where each element represents a linked repository has 3 settings : 
@@ -847,10 +874,6 @@ class CReleaseManager(object):
         is_changed = False
         for repo_name in self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME].keys():
             if repo_name not in [MBL_MANIFEST_REPO_NAME, MBL_LINKED_REPOSITORIES_REPO_NAME]:
-
-                # Create backup
-                logger.info("Created backup file %s from %s" % (file_path + FILE_BACKUP_SUFFIX, file_path))
-                copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
 
                 with in_place.InPlace(file_path) as file:
                     next_line_replace = False
@@ -887,10 +910,21 @@ class CReleaseManager(object):
         if is_changed:
             ret_list = git_repo.handle.index.add([file_path], write=True)
             assert len(ret_list) == 1
-            git_repo.handle.index.commit("release manager automatic commit")
+            git_repo.handle.index.commit("%s Automatic Commit Message" % module_name)
             logger.info("File %s has been modified and committed" % file_path)
+            summary_log_list.append(SUMMARY_H_MODIFY_FILE +
+                                    "File %s has been modified and committed on repository %s" %
+                                    (file_path, git_repo.full_name))
 
-        self._repo_push(git_repo, git_repo.handle.active_branch)
+        if self.diag_repo_push(git_repo):
+            self._repo_push(git_repo, git_repo.handle.active_branch)
+            summary_log_list.append(SUMMARY_H_PUSH +
+                                    "Pushed from repository clone path={} a new branch={} to remote url={},"
+                                    "\nNew commit hash={}".format(
+                git_repo.clone_dest_path, git_repo.handle.active_branch.name, git_repo.url,
+                git_repo.handle.active_branch.commit.hexsha))
+        else:
+            logger.info("Skip pushing...")
 
     def update_mbl_linked_repositories_conf(self):
         """"""
@@ -903,11 +937,40 @@ class CReleaseManager(object):
                 self.update_mbl_linked_repositories_conf_helper(
                     fo.repo_name_to_proj_dict[MBL_LINKED_REPOSITORIES_REPO_NAME].git_cloned_repository)
 
+    def diag_repo_push(self, repo):
+        """diagnostic mode - before pushing. returns True if program should push"""
+
+        if self.args.diagnostic_mode:
+            print("\n=============================")
+            print("Diagnostic Mode - BEFORE PUSH TO REMOTE")
+            print("New branch : %s" % repo.handle.active_branch.name)
+            if repo.full_name in [MBL_MANIFEST_REPO_NAME, MBL_LINKED_REPOSITORIES_REPO_NAME]:
+                print("New Commit SHA : %s" % repo.handle.active_branch.commit.hexsha)
+            print("Remote URL : %s" % repo.url)
+            print("Repository clone path : %s" % repo.clone_dest_path)
+            answer = input("Press n/N to continue without pushing, q/Q to quit, or any other key to continue : ")
+
+            if answer.lower() == 'q':
+                sys.exit(0)
+            if answer.lower() == 'n':
+                return False
+        return True
+
     def mbl_manifest_repo_push(self):
         repo = self.additional_repo_name_to_git_cloned_repository_dict[MBL_MANIFEST_REPO_NAME]
         repo.handle.git.add(update=True)
         repo.handle.index.commit("release manager automatic commit")
-        self._repo_push(repo, repo.handle.active_branch)
+
+
+        if self.diag_repo_push(repo):
+            self._repo_push(repo, repo.handle.active_branch)
+            summary_log_list.append(SUMMARY_H_PUSH +
+                                    "Pushed from repository clone path={} a new branch={} to remote url={},"
+                                    "\nNew commit hash={}".format(
+                repo.clone_dest_path, repo.handle.active_branch.name,
+                repo.url, repo.handle.active_branch.commit.hexsha))
+        else:
+            logger.info("Skip pushing...")
 
     def clone_and_create_new_revisions(self):
         """Clone all additional and Arm MRR repositories, concurrently, checkout current revision"""
@@ -969,16 +1032,19 @@ class CReleaseManager(object):
         hdlr = logger.root.handlers[0]
         hdlr.setFormatter(logging.Formatter(LOGGING_SUMMARY_FORMAT))
 
-        logger.info("\n\n\n")
+        logger.info("\n\n")
         logger.info("===============================================")
         logger.info("=== === === === === SUCCESS === === === === ===")
         logger.info("===============================================\n")
 
         if not self.args.remove_temporary_folder:
             logger.info("Temporary folder: %s" % self.tmp_dir_path)
-
         logger.info("Time running: %s" % int(time.time() - start_time))
-        logger.info("Summary of operations: %s" % self.op_summary_list)
+
+        logger.info("\n== Event log ==\n")
+        for idx, ev in enumerate(summary_log_list):
+            logger.info("{}. {}".format(idx+1, ev))
+            logger.info("-----")
 
         hdlr = logger.root.handlers[0]
         hdlr.setFormatter(logging.Formatter(LOGGING_REGULAR_FORMAT))
