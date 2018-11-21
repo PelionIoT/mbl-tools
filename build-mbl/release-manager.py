@@ -26,20 +26,29 @@ from shutil import copyfile
 from pprint import pformat
 import xml.etree.ElementTree as ElementTree
 
+
 """
 This script can be called from command line, or used from the mbl-tools.
 In short:
-* It received a json formatted file with :
-1) New branch/tag to be created and pushed to remote on Arm MRRs or Arm additional repositories
-2) New branch/tag/commit hash to replace in manifest files
+* It receives a json formatted file with entries of 2 types :
+1) New branch/tag to be created and pushed to remote for Arm MRRs or Arm additional repositories
+2) New branch/tag/commit hash to replace in manifest files for non-Arm MRRs.
 
 * Clones all repositories of type 1), create branch/tag and push to remote
 * Update armmbed/mbl-manifest repository manifest XML files accordingly, commit and push to remote
 * Update armmbed/meta-mbl/conf/dist/mbl-linked-repositories.conf accordingly, commit and push to remote
 
+The script supports :
+* diagnostic mode requires user confirmation for each step
+* Simulation mode - no real pushes are done to remote.
+* temporary folder can be kept for analyzing
+* At the end, a summary is printed to screen.
+* Execution is accelerated at some parts by using thread pools.
+
 Prerequisite:
 Install python packages 'gitpython' and 'in_place':
 $ pip3 install gitpython in_place
+
 """
 
 module_name = "release_manager"
@@ -88,7 +97,7 @@ MBL_LINKED_REPOSITORIES_REPO_PATH = "conf/distro/mbl-linked-repositories.conf"
 LOGGING_REGULAR_FORMAT = "\n%(asctime)s - %(name)s - {%(funcName)s:%(lineno)d} - %(levelname)s \n%(message)s"
 LOGGING_SUMMARY_FORMAT = "%(message)s"
 logger = logging.getLogger(module_name)
-summary_log_list = [] # list of strings to be printed at the script end, as a summary
+summary_log_list = []  # list of strings to be printed at the script end, as a summary
 SUMMARY_H_PUSH = "PUSH: "
 SUMMARY_H_MODIFY_FILE = "MODIFY FILE: "
 SUMMARY_H_BKP = "CREATE BACKUP FILE: "
@@ -839,7 +848,7 @@ class CReleaseManager(object):
                 self._repo_push(repo, new_rev)
                 summary_log_list.append(SUMMARY_H_PUSH +
                                         "Pushed from repository clone path={} a new branch={} to remote url={}".format(
-                    repo.clone_dest_path, repo.handle.active_branch.name, repo.url))
+                                            repo.clone_dest_path, repo.handle.active_branch.name, repo.url))
             else:
                 logger.info("Skip pushing...")
 
@@ -921,8 +930,8 @@ class CReleaseManager(object):
             summary_log_list.append(SUMMARY_H_PUSH +
                                     "Pushed from repository clone path={} a new branch={} to remote url={},"
                                     "\nNew commit hash={}".format(
-                git_repo.clone_dest_path, git_repo.handle.active_branch.name, git_repo.url,
-                git_repo.handle.active_branch.commit.hexsha))
+                                        git_repo.clone_dest_path, git_repo.handle.active_branch.name, git_repo.url,
+                                        git_repo.handle.active_branch.commit.hexsha))
         else:
             logger.info("Skip pushing...")
 
@@ -961,14 +970,13 @@ class CReleaseManager(object):
         repo.handle.git.add(update=True)
         repo.handle.index.commit("release manager automatic commit")
 
-
         if self.diag_repo_push(repo):
             self._repo_push(repo, repo.handle.active_branch)
             summary_log_list.append(SUMMARY_H_PUSH +
                                     "Pushed from repository clone path={} a new branch={} to remote url={},"
                                     "\nNew commit hash={}".format(
-                repo.clone_dest_path, repo.handle.active_branch.name,
-                repo.url, repo.handle.active_branch.commit.hexsha))
+                                        repo.clone_dest_path, repo.handle.active_branch.name,
+                                        repo.url, repo.handle.active_branch.commit.hexsha))
         else:
             logger.info("Skip pushing...")
 
