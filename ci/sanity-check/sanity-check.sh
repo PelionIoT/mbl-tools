@@ -9,6 +9,11 @@ set -u
 set -o pipefail
 
 execdir="$(readlink -e "$(dirname "$0")")"
+
+# Include shared functions
+# shellcheck source=shared.sh
+source "$execdir/shared.sh"
+
 rc=0
 
 find_files_with_mime()
@@ -97,7 +102,7 @@ if [ -z "${workdir:-}" ]; then
   workdir="$(pwd)"
 fi
 
-workdir=$(eval readlink -f "$workdir")
+workdir=$(expand_path "$workdir")
 
 # Collect all shell files
 SHELL_FILES=$(find_files_with_mime "text/x-shellscript")
@@ -108,7 +113,7 @@ printf "%s" "$SHELL_FILES" | xargs --no-run-if-empty "$execdir/tab_finder.py" ||
 
 # Run shellcheck on shell files
 printf "Running shellcheck on shell files...\n"
-printf "%s" "$SHELL_FILES" | xargs --no-run-if-empty shellcheck --format=gcc  || rc=1
+printf "%s" "$SHELL_FILES" | xargs --no-run-if-empty shellcheck -x --format=gcc  || rc=1
 
 # Collect all Python files
 PYTHON_FILES=$(find_files_with_mime "text/x-python")

@@ -9,6 +9,10 @@ set -u
 
 execdir="$(readlink -e "$(dirname "$0")")"
 
+# Include shared functions
+# shellcheck source=shared.sh
+source "$execdir/shared.sh"
+
 default_imagename="mbl-sanity-check-env"
 default_containername="mbl-sanity-check-container.$$"
 
@@ -93,7 +97,7 @@ done
 if [ -z "${workdir:-}" ]; then
   workdir="$(pwd)"
 fi
-workdir=$(eval readlink -f "$workdir")
+workdir=$(expand_path "$workdir")
 
 docker build -t "$imagename" "$execdir"
 

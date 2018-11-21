@@ -19,6 +19,10 @@ set -o pipefail
 
 execdir="$(readlink -e "$(dirname "$0")")"
 
+# Include shared functions
+# shellcheck source=shared.sh
+source "$execdir/shared.sh"
+
 write_info()
 {
   printf "info:"
@@ -448,7 +452,7 @@ if [ -z "${builddir:-}" ]; then
   builddir="$(pwd)"
 else
   mkdir -p "$builddir"
-  builddir="$(eval readlink -f "$builddir")"
+  builddir="$(expand_path "$builddir")"
 fi
 
 if [ -z "${images:-}" ]; then
@@ -467,7 +471,7 @@ for machine in $machines; do
 done
 
 if [ -n "${outputdir:-}" ]; then
-  outputdir="$(eval readlink -f "$outputdir")"
+  outputdir="$(expand_path "$outputdir")"
 fi
 
 if empty_stages_p; then
@@ -623,7 +627,7 @@ while true; do
        fi
 
        if [ -n "${downloaddir:-}" ]; then
-         downloaddir=$(eval readlink -f "$downloaddir")
+         downloaddir=$(expand_path "$downloaddir")
          export DL_DIR="$downloaddir"
          export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
        fi

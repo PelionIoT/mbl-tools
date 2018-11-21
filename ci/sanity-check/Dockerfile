@@ -24,4 +24,4 @@ RUN rm -rf /var/lib/apt/lists/*
 # delivery the build products.
 RUN mkdir -m 777 /work
 
-COPY sanity-check.sh tab_finder.py ./
+COPY shared.sh sanity-check.sh tab_finder.py ./

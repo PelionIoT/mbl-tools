@@ -9,6 +9,10 @@ set -u
 
 execdir="$(readlink -e "$(dirname "$0")")"
 
+# Include shared functions
+# shellcheck source=shared.sh
+source "$execdir/shared.sh"
+
 default_builddir="build-mbl-manifest"
 default_imagename="mbl-manifest-env"
 default_containername="mbl-tools-container.$$"
@@ -121,7 +125,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -n "${downloaddir:-}" ]; then
-  downloaddir=$(eval readlink -f "$downloaddir")
+  downloaddir=$(expand_path "$downloaddir")
   if [ ! -e "$downloaddir" ]; then
     printf "error: missing downloaddir %s\n" "$downloaddir" >&2
     exit 3
@@ -129,7 +133,7 @@ if [ -n "${downloaddir:-}" ]; then
 fi
 
 if [ -n "${outputdir:-}" ]; then
-  outputdir=$(eval readlink -f "$outputdir")
+  outputdir=$(expand_path "$outputdir")
   if [ ! -e "$outputdir" ]; then
     printf "error: missing outputdir %s\n" "$outputdir" >&2
     exit 3
@@ -147,7 +151,7 @@ if [ -z "${builddir:-}" ]; then
   builddir="$default_builddir"
 fi
 
-builddir=$(eval readlink -f "$builddir")
+builddir=$(expand_path "$builddir")
 mkdir -p "$builddir"
 
 if [ -n "${inject_mcc_files:-}" ]; then
