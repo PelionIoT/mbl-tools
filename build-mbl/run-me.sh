@@ -121,7 +121,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -n "${downloaddir:-}" ]; then
-  downloaddir=$(readlink -f "$downloaddir")
+  downloaddir=$(eval readlink -f "$downloaddir")
   if [ ! -e "$downloaddir" ]; then
     printf "error: missing downloaddir %s\n" "$downloaddir" >&2
     exit 3
@@ -129,7 +129,7 @@ if [ -n "${downloaddir:-}" ]; then
 fi
 
 if [ -n "${outputdir:-}" ]; then
-  outputdir=$(readlink -f "$outputdir")
+  outputdir=$(eval readlink -f "$outputdir")
   if [ ! -e "$outputdir" ]; then
     printf "error: missing outputdir %s\n" "$outputdir" >&2
     exit 3
@@ -147,7 +147,7 @@ if [ -z "${builddir:-}" ]; then
   builddir="$default_builddir"
 fi
 
-builddir=$(readlink -f "$builddir")
+builddir=$(eval readlink -f "$builddir")
 mkdir -p "$builddir"
 
 if [ -n "${inject_mcc_files:-}" ]; then

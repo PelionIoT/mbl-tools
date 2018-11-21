@@ -97,7 +97,7 @@ if [ -z "${workdir:-}" ]; then
   workdir="$(pwd)"
 fi
 
-workdir=$(readlink -f "$workdir")
+workdir=$(eval readlink -f "$workdir")
 
 # Collect all shell files
 SHELL_FILES=$(find_files_with_mime "text/x-shellscript")

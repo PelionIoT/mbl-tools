@@ -93,7 +93,7 @@ done
 if [ -z "${workdir:-}" ]; then
   workdir="$(pwd)"
 fi
-workdir=$(readlink -f "$workdir")
+workdir=$(eval readlink -f "$workdir")
 
 docker build -t "$imagename" "$execdir"
 
