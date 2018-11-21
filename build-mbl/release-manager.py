@@ -7,6 +7,9 @@
 
 import in_place
 import time
+import string
+import random
+import shutil
 import re
 import ntpath
 import concurrent.futures
@@ -41,7 +44,7 @@ $ pip3 install gitpython in_place
 
 module_name = "release_manager"
 __version__ = "1.0.0"
-logger = logging.getLogger(module_name)
+
 
 #
 # constants
@@ -77,6 +80,14 @@ GIT_REMOTE_NAME = "origin"
 
 MBL_LINKED_REPOSITORIES_REPO_NAME = "armmbed/meta-mbl"
 MBL_LINKED_REPOSITORIES_REPO_PATH = "conf/distro/mbl-linked-repositories.conf"
+
+#
+# logging constants
+#
+
+LOGGING_REGULAR_FORMAT = "\n%(asctime)s - %(name)s - {%(funcName)s:%(lineno)d} - %(levelname)s \n%(message)s"
+LOGGING_SUMMARY_FORMAT = "%(message)s"
+logger = logging.getLogger(module_name)
 
 #
 #   Class SGlobalFuncs
@@ -385,18 +396,14 @@ class CReleaseManager(object):
     def __init__(self):
 
         # initialize logger  - set logging level to INFO at this initial stage. Each log entry will be at least 2 lines.
-        logging.basicConfig(
-            level=logging.INFO,
-            format="\n%(asctime)s - %(name)s - {%(funcName)s:%(lineno)d} - %(levelname)s \n%(message)s",
-        )
+        logging.basicConfig(level=logging.INFO, format=LOGGING_REGULAR_FORMAT)
 
-        logger.debug("Creating {} version {}".format(
-            module_name, __version__))
+        logger.info("Creating {} version {}".format(module_name, __version__))
 
         # list of CRepoManifestFile objects
         self.manifest_file_name_to_obj_dict = {}
 
-        # mark success for distructor
+        # mark success for destructor
         self.completed = False
 
         """
@@ -437,11 +444,18 @@ class CReleaseManager(object):
         # Set verbose log level if enabled by user and log command line arguments
         if self.args.verbose:
             logger.setLevel(logging.DEBUG)
-            logger.debug("Command line arguments:{}".format(self.args))
+        logger.debug("Command line arguments:{}".format(self.args))
 
         # create a temporary folder to clone repositories in
-        self.tmpdirname = tempfile.TemporaryDirectory(prefix="mbl_")
-        logger.info("Temporary folder: %s" % self.tmpdirname.name)
+        while True:
+            random_str = ''.join(random.choice(string.ascii_lowercase) for m in range(8))
+            path = os.path.join(tempfile.gettempdir(), "mbl_" + random_str)
+            if not os.path.exists(path):
+                os.makedirs(path)
+                self.tmp_dir_path = path
+                break
+
+        logger.info("Temporary folder: %s" % self.tmp_dir_path)
 
         logger.debug("Created new {} : {}".format(type(self).__name__, pformat(locals())))
 
@@ -455,6 +469,10 @@ class CReleaseManager(object):
             logger.error("Removing all pushed references : %s" % self.already_pushed_repository_list)
             for repo, ref in self.already_pushed_repository_list:
                 repo.handle.remotes.origin.push(":" + ref.path)
+
+        if self.args.remove_temporary_folder:
+            logger.info("Removing temporary folder %s" % self.tmp_dir_path)
+            shutil.rmtree(self.tmp_dir_path)
 
     def _repo_push(self, repo, new_rev):
         """push a revision to remote repository"""
@@ -479,7 +497,7 @@ class CReleaseManager(object):
                 ARM_MRR_REMOTE,
                 ARM_MRR_REPO_NAME_PREFIX,
                 MBL_MANIFEST_REPO_SHORT_NAME,
-                self.tmpdirname.name,
+                self.tmp_dir_path,
                 self.mbl_manifest_clone_ref,
                 self.new_revisions_dict[INPUT_FILE_ADDITIONAL_SD_KEY_NAME][MBL_MANIFEST_REPO_NAME][1])
 
@@ -898,17 +916,17 @@ class CReleaseManager(object):
 
         # list of tuples
         clone_tup_list = []
-        # clone all additional repositories under self.tmpdirname.name
+        # clone all additional repositories under self.tmp_dir_path
         for (main_key, sd) in self.new_revisions_dict.items():
             for (key, rev) in sd.items():
                 if main_key == INPUT_FILE_ADDITIONAL_SD_KEY_NAME:
                     if key != MBL_MANIFEST_REPO_NAME:
                         prefix, name = key.rsplit("/", 1)
                         clone_tup_list.append(
-                            (key, ARM_MRR_REMOTE, prefix, name, self.tmpdirname.name, rev[0], rev[1], main_key))
+                            (key, ARM_MRR_REMOTE, prefix, name, self.tmp_dir_path, rev[0], rev[1], main_key))
 
         # Clone all Arm MRRs, each one on a sub-folder belong to the file.
-        # For example, for default.xml, all matching repos will be cloned under <self.tmpdirname.name>/default/
+        # For example, for default.xml, all matching repos will be cloned under <self.tmp_dir_path>/default/
         for file_obj in self.manifest_file_name_to_obj_dict.values():
             for (name, proj) in (file_obj.repo_name_to_proj_dict.items()):
                 new_ref = self.get_new_ref_from_new_revision_dict(
@@ -917,7 +935,7 @@ class CReleaseManager(object):
                     prefix, name = proj.full_name.rsplit("/", 1)
 
                     clone_tup_list.append((proj.full_name, file_obj.remote_key_to_remote_dict[proj.remote_key],
-                                           prefix, name, os.path.join(self.tmpdirname.name, file_obj.filename),
+                                           prefix, name, os.path.join(self.tmp_dir_path, file_obj.filename),
                                            proj.revision, new_ref, file_obj.filename))
 
         logger.debug("=== clone_tup_list:")
@@ -946,13 +964,24 @@ class CReleaseManager(object):
         logger.info("Worker threads done...")
 
     def print_summary(self, start_time):
-        print("\n\n\n")
-        print("===============================================")
-        print("=== === === === === SUCCESS === === === === ===")
-        print("===============================================\n")
-        print("Temporary folder: %s" % self.tmpdirname.name)
-        print("Time running: %s" % int(time.time() - start_time))
-        print("Summary of operations: %s" % self.op_summary_list)
+        """print summary in different formatting"""
+
+        hdlr = logger.root.handlers[0]
+        hdlr.setFormatter(logging.Formatter(LOGGING_SUMMARY_FORMAT))
+
+        logger.info("\n\n\n")
+        logger.info("===============================================")
+        logger.info("=== === === === === SUCCESS === === === === ===")
+        logger.info("===============================================\n")
+
+        if not self.args.remove_temporary_folder:
+            logger.info("Temporary folder: %s" % self.tmp_dir_path)
+
+        logger.info("Time running: %s" % int(time.time() - start_time))
+        logger.info("Summary of operations: %s" % self.op_summary_list)
+
+        hdlr = logger.root.handlers[0]
+        hdlr.setFormatter(logging.Formatter(LOGGING_REGULAR_FORMAT))
 
     class StoreValidFile(argparse.Action):
         """argparse gelper class - Costume action - check that the given file path exist on local host"""
@@ -994,7 +1023,7 @@ class CReleaseManager(object):
 
         parser.add_argument(
             "-d",
-            "--diagnostic-mode",
+            "--diagnostic_mode",
             help="diagnostic mode - prompts before each significant step, allowing user to check changes in files \
                  and repositories",
             action="store_true"
@@ -1005,6 +1034,13 @@ class CReleaseManager(object):
             "--simulate",
             help="do not push to remote, everything else will be executed exactly the same but nothing is \
              actually pushed into remote.",
+            action="store_true"
+        )
+
+        parser.add_argument(
+            "-r",
+            "--remove_temporary_folder",
+            help="On competition, remove the temporary folder and all of its content",
             action="store_true"
         )
 
