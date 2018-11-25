@@ -54,12 +54,7 @@ class CGitClonedRepository(object):
         )
 
         # clone and get git.Repo object
-        if (
-            self.checkout_rev.startswith(REF_BRANCH_PREFIX)
-            or self.checkout_rev.startswith(REF_TAG_PREFIX)
-            or len(self.checkout_rev) == HASH_FIXED_LEN
-        ):
-
+        if SCommonFuncs.is_valid_revision(self.checkout_rev):
             self.handle = self.clone_repo(
                 self.clone_dest_path, self.url, self.checkout_rev
             )

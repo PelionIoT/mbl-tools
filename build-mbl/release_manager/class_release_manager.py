@@ -217,6 +217,7 @@ class CReleaseManager(object):
         """parse, validate and modify XML manifest files."""
         self.logger.info("Parse, validate and modify XML manifest files...")
         adict = self.additional_repo_name_to_cloned_repo_dict
+        nrd = self.new_revisions_dict
 
         # clone mbl-manifest repository first and checkout mbl_
         # manifest_clone_ref
@@ -233,9 +234,7 @@ class CReleaseManager(object):
             MBL_MANIFEST_REPO_SHORT_NAME,
             self.tmp_dir_path,
             self.mbl_manifest_clone_ref,
-            self.new_revisions_dict[ADDITIONAL_SD_KEY_NAME][
-                MBL_MANIFEST_REPO_NAME
-            ][1],
+            nrd[ADDITIONAL_SD_KEY_NAME][MBL_MANIFEST_REPO_NAME][1],
         )
 
         # get all files ending with .xml inside this directory.
@@ -296,7 +295,7 @@ class CReleaseManager(object):
             # get projects - store in a short project name to
             base_name = ""
             name_to_proj_dict = {}
-            is_change = False
+            is_changed = False
             for atype in root.findall("project"):
                 # get name and split to prefix and short name
                 full_name = atype.get("name")
@@ -339,13 +338,18 @@ class CReleaseManager(object):
                 )
                 if new_ref == REF_BRANCH_PREFIX + default_rev:
                     del atype.attrib["revision"]
-                    is_change = True
+                    is_changed = True
                 else:
                     if new_ref:
                         atype.set(
                             "revision", SCommonFuncs.get_base_rev_name(new_ref)
                         )
-                        is_change = True
+                        is_changed = True
+
+                if is_changed and "upstream" in atype.attrib:
+                    # remove attribute 'upstream' is exist
+                    del atype.attrib["upstream"]
+
             assert base_name
 
             rmf = CRepoManifestFile(
@@ -359,7 +363,7 @@ class CReleaseManager(object):
             )
             self.manifest_file_name_to_obj_dict[base_name] = rmf
 
-            if is_change:
+            if is_changed:
                 # backup file
                 summary_log_list.append(
                     SUMMARY_H_BKP
@@ -394,35 +398,39 @@ class CReleaseManager(object):
                 url, new_rev, False
             )
 
-        return True  # fail
+        return True
 
     def validate_remote_repositories_state(self):
-        """check that all branches/tags to be created, are not on remote."""
+        """
+        check status of remote repositories.
+
+        1) For Arm managed repositories - All branches/tags to be created are
+        no on remote (type A)
+        2) For Arm non MRRs - revision can be found on remote (type B)
+        """
         self.logger.info("Validating remote repositories state...")
 
         """
         list of  tuples. Each tuple is of length of 2:
         index 0 : URL to check
         index 1 : revision to check
+        index 2 : success indication, True for type b repository, False for
+            type A.
         """
         idx_url = 0
         idx_rev = 1
+        idx_success_indication = 2
         check_remote_list = []
 
         # add all entries from ADDITIONAL_SD_KEY_NAME SD:
         for (k, v) in self.new_revisions_dict[ADDITIONAL_SD_KEY_NAME].items():
             url = SCommonFuncs.build_url_from_repo_name(ARM_MRR_REMOTE, k)
-            check_remote_list.append((url, v[1]))
+            check_remote_list.append((url, v[1], False))
 
         for file_obj in self.manifest_file_name_to_obj_dict.values():
             # file_obj is CRepoManifestFile
             for (k, v) in file_obj.repo_name_to_proj_dict.items():
                 # k is a repository name and v is a matching project
-
-                url = SCommonFuncs.build_url_from_repo_name(
-                    file_obj.remote_key_to_remote_dict[v.remote_key],
-                    v.full_name,
-                )
 
                 new_ref = self.get_new_ref_from_new_revision_dict(
                     file_obj.filename, k
@@ -430,10 +438,12 @@ class CReleaseManager(object):
 
                 if not new_ref:
                     continue
-                if v.isArmMRR:
-                    # for Arm MRRs check both current revision and new revision
-                    # (since we need to clone and change branch from)
-                    check_remote_list.append((url, new_ref))
+
+                url = SCommonFuncs.build_url_from_repo_name(
+                    file_obj.remote_key_to_remote_dict[v.remote_key],
+                    v.full_name,
+                )
+                check_remote_list.append((url, new_ref, not v.isArmMRR))
 
         self.logger.debug("===check_remote_list:")
         self.logger.debug(pformat(check_remote_list))
@@ -462,10 +472,12 @@ class CReleaseManager(object):
             ):
                 tup = future_to_git_url[future]
                 result = future.result()
-                if result:
+                if result != tup[idx_success_indication]:
                     raise argparse.ArgumentTypeError(
-                        "revision {} exist on remote url {}".format(
-                            tup[idx_rev], tup[idx_url]
+                        "revision {} {} exist on remote url {}".format(
+                            tup[idx_rev],
+                            "does not" if tup[idx_success_indication] else "",
+                            tup[idx_url],
                         )
                     )
 
@@ -580,7 +592,7 @@ class CReleaseManager(object):
         if MBL_MANIFEST_REPO_NAME not in nrd[ADDITIONAL_SD_KEY_NAME]:
 
             raise ValueError(
-                "%s key is not found could not be found in user input "
+                "%s key could not be found in user input "
                 "file under %s"
                 % (MBL_MANIFEST_REPO_NAME, ADDITIONAL_SD_KEY_NAME)
             )
@@ -692,25 +704,27 @@ class CReleaseManager(object):
 
         new_rev_short = new_rev.rsplit("/", 1)[1]
 
+        if not repo.handle.head.is_detached:
+            src_cmt_ref = repo.handle.active_branch.commit
+        else:
+            src_cmt_ref = repo.handle.head.commit
+
         # Create the new branch/tag
         if new_rev.startswith(REF_BRANCH_PREFIX):
-            prev = repo.handle.active_branch
             new_branch = repo.handle.create_head(new_rev_short)
-            assert new_branch.commit == repo.handle.active_branch.commit
+            assert new_branch.commit == src_cmt_ref
             new_branch.checkout()
             new_rev = new_branch
 
             summary_log_list.append(
                 SUMMARY_H_BRANCH
-                + "Created and checkout new branch %s from branch HEAD %s "
+                + "Created and checkout new branch %s from  %s "
                 "on repository % s"
-                % (new_rev_short, prev.name, repo.full_name)
+                % (new_rev_short, src_cmt_ref.hexsha, repo.full_name)
             )
         else:
-            new_tag = repo.handle.create_tag(
-                new_rev_short, ref=repo.handle.active_branch.commit
-            )
-            assert new_tag.commit == repo.handle.active_branch.commit
+            new_tag = repo.handle.create_tag(new_rev_short, ref=src_cmt_ref)
+            assert new_tag.commit == src_cmt_ref
             assert new_tag.tag is None
             new_rev = new_tag
 
@@ -718,11 +732,7 @@ class CReleaseManager(object):
                 SUMMARY_H_TAG
                 + "Created and checkout new tag %s on commit %s on "
                 "repository % s"
-                % (
-                    new_rev_short,
-                    repo.handle.active_branch.commit.hexsha,
-                    repo.full_name,
-                )
+                % (new_rev_short, src_cmt_ref.hexsha, repo.full_name)
             )
 
         if repo.full_name not in [
@@ -808,10 +818,12 @@ class CReleaseManager(object):
                                 # match text between two quotes
                                 matches = re.findall(r";branch=(.+?);", line)
                                 for m in matches:
-                                    line = line.replace(
-                                        ";%s;" % m, ";branch=%s;" % branch_name
-                                    )
-                                    is_changed = True
+                                    if m != branch_name:
+                                        line = line.replace(
+                                            ";%s;" % m,
+                                            ";branch=%s;" % branch_name,
+                                        )
+                                        is_changed = True
 
                             # TODO : replace former line or reformat file..
                             next_line_replace = True
@@ -828,10 +840,11 @@ class CReleaseManager(object):
                             # match text between two quotes
                             matches = re.findall(r"\"(.+?)\"", line)
                             for m in matches:
-                                line = line.replace(
-                                    '"%s"' % m, '"%s"' % commit_hash
-                                )
-                                is_changed = True
+                                if m != commit_hash.hexsha:
+                                    line = line.replace(
+                                        '"%s"' % m, '"%s"' % commit_hash
+                                    )
+                                    is_changed = True
                             next_line_replace = False
                         file.write(line)
 
