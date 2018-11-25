@@ -339,12 +339,14 @@ class CReleaseManager(object):
                 if new_ref == REF_BRANCH_PREFIX + default_rev:
                     del atype.attrib["revision"]
                     is_changed = True
-                else:
-                    if new_ref:
+                elif new_ref:
+                    if SCommonFuncs.is_valid_git_commit_hash(new_ref):
+                        atype.set("revision", new_ref)
+                    else:
                         atype.set(
                             "revision", SCommonFuncs.get_base_rev_name(new_ref)
                         )
-                        is_changed = True
+                    is_changed = True
 
                 if is_changed and "upstream" in atype.attrib:
                     # remove attribute 'upstream' is exist
