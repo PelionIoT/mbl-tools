@@ -23,6 +23,7 @@ import re
 import time
 from pprint import pformat
 from shutil import copyfile
+import sys
 
 from class_git_clone_repo import CGitClonedRepository
 from common import __version__
@@ -210,8 +211,15 @@ class CReleaseManager(object):
             self.logger.info("Virtually " + _str)
         else:
             self.logger.info(_str)
-            repo.handle.git.push(GIT_REMOTE_NAME, new_rev)
-            self.already_pushed_repository_list.append((repo, new_rev))
+            try:
+                repo.handle.git.push(GIT_REMOTE_NAME, new_rev)
+                self.already_pushed_repository_list.append((repo, new_rev))
+            except git.GitCommandError as err:
+                # We've already checked that the branch does not exist.
+                # That means it has been created by another concurrent thread
+                if "reference already exists" not in err.stderr:
+                    # re-raise the exception
+                    raise
 
     def process_manifest_files(self):
         """parse, validate and modify XML manifest files."""
@@ -576,7 +584,7 @@ class CReleaseManager(object):
                     object_pairs_hook=self.dict_raise_on_duplicates,
                 )
             except json.decoder.JSONDecodeError as err:
-                self.logger.info("Illegal json file!!", err)
+                self.logger.info("Illegal json file!", err)
                 sys.exit(-1)
 
         """
@@ -654,21 +662,21 @@ class CReleaseManager(object):
                             )
                         )
 
-        # do not allow for the same repo name in file specific SD to have the
-        # same branch name, or the same tag name (equal tag and branch name
-        # in separate repos is allowed, but not recommended!)
-        tup_list = []
-        for (sd_name, sd) in nrd.items():
-            if sd_name in [ADDITIONAL_SD_KEY_NAME, COMMON_SD_KEY_NAME]:
-                continue
-            tup_list += [(v, k) for k, v in sd.items()]
-        for t in tup_list:
-            if tup_list.count(t) > 1:
-                raise ValueError(
-                    "Invalid input file %s : The pair %s appears in more "
-                    "than one file specific SD!"
-                    % (self.args.refs_input_file_path, t)
-                )
+        # # do not allow for the same repo name in file specific SD to have the
+        # # same branch name, or the same tag name (equal tag and branch name
+        # # in separate repos is allowed, but not recommended!)
+        # tup_list = []
+        # for (sd_name, sd) in nrd.items():
+        #     if sd_name in [ADDITIONAL_SD_KEY_NAME, COMMON_SD_KEY_NAME]:
+        #         continue
+        #     tup_list += [(v, k) for k, v in sd.items()]
+        # for t in tup_list:
+        #     if tup_list.count(t) > 1:
+        #         raise ValueError(
+        #             "Invalid input file %s : The pair %s appears in more "
+        #             "than one file specific SD! (put in %s?)"
+        #             % (self.args.refs_input_file_path, t, COMMON_SD_KEY_NAME)
+        #         )
 
         self.new_revisions_dict = nrd
 
@@ -759,6 +767,9 @@ class CReleaseManager(object):
 
     def update_mbl_linked_repositories_conf_helper(self, git_repo):
         """update_mbl_linked_repositories_conf_helper."""
+        if not git_repo:
+            return
+
         self.logger.info(
             "Start updating file %s in repository %s (if needed)"
             % (
