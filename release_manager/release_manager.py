@@ -25,11 +25,10 @@ from pprint import pformat
 from shutil import copyfile
 import sys
 
-from class_git_clone_repo import CGitClonedRepository
+from git_clone import CGitClonedRepository
 from common import __version__
 from common import *
-from class_repo_manifest_project import CRepoManifestProject
-from class_repo_manifest_file import CRepoManifestFile
+from repo_manifest import CRepoManifestProject, CRepoManifestFile
 
 
 #

@@ -35,13 +35,12 @@ $ pip3 install gitpython in_place
 # imports
 #
 
-import sys
-import class_release_manager
+from release_manager import *
 
 
 def _main():
 
-    with class_release_manager.CReleaseManager() as rm:
+    with CReleaseManager() as rm:
 
         # Parse JSON references input file
         rm.parse_and_validate_input_file()
