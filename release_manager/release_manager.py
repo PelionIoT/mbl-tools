@@ -73,10 +73,10 @@ GIT_REMOTE_NAME = "origin"
 # mbl-linked-repositories.conf update constants
 #
 MBL_LINKED_REPOSITORIES_REPO_SHORT_NAME = "meta-mbl"
-MBL_LINKED_REPOSITORIES_REPO_NAME = \
-    "%s/%s" % \
-    (ARM_MRR_REPO_NAME_PREFIX,
-    MBL_LINKED_REPOSITORIES_REPO_SHORT_NAME)
+MBL_LINKED_REPOSITORIES_REPO_NAME = "%s/%s" % (
+    ARM_MRR_REPO_NAME_PREFIX,
+    MBL_LINKED_REPOSITORIES_REPO_SHORT_NAME,
+)
 MBL_LINKED_REPOSITORIES_REPO_PATH = "conf/distro/mbl-linked-repositories.conf"
 
 
