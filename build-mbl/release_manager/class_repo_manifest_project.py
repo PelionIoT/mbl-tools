@@ -65,7 +65,7 @@ class CRepoManifestProject(object):
 
         # An ARM MRR must have project with :
         # remote -> MRR_MANIFEST_REMOTE_KEY = "github"
-        # prefix -> MRR_URL_PREFIX = "armmbed"
+        # prefix -> ARM_MRR_REPO_NAME_PREFIX = "armmbed"
         if (self.name_prefix == ARM_MRR_REPO_NAME_PREFIX) and (
             self.remote_key == MRR_MANIFEST_REMOTE_KEY
         ):
