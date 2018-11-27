@@ -31,7 +31,7 @@ class CGitClonedRepository(object):
     This class represents a cloned repository.
     All cloned repositories are
     kept under CRepoManifestProject cloned_repo or
-    CReleaseManager::additional_repo_name_to_cloned_repo_dict.
+    CReleaseManager::external_repo_name_to_cloned_repo_dict.
     """
 
     def __init__(

@@ -11,7 +11,7 @@ This script can be called from command line, or used from the mbl-tools.
 In short:
 * It receives a json formatted file with entries of 2 types :
 1) New branch/tag to be created and pushed to remote for Arm MRRs or Arm
-    additional repositories
+    external repositories
 2) New branch/tag/commit hash to replace in manifest files for non-Arm MRRs.
 
 * Clones all repositories of type 1), create branch/tag and push to remote

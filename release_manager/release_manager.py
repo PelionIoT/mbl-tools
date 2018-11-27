@@ -26,7 +26,7 @@ import in_place
 import re
 import time
 from pprint import pformat
-from shutil import copyfile
+from shutil import copyfile, rmtree
 import sys
 
 from git_clone import CGitClonedRepository
@@ -51,7 +51,7 @@ LOGGING_SUMMARY_FORMAT = "%(message)s"
 #
 
 COMMON_SD_KEY_NAME = "_common_"
-ADDITIONAL_SD_KEY_NAME = "_additional_"
+EXTERNAL_SD_KEY_NAME = "_external_"
 MAX_TMO_SEC = 120
 
 
@@ -128,13 +128,13 @@ class CReleaseManager(object):
 
         """
         Dictionary of CGitClonedRepository objects. Carry only cloned
-        repositories under  ADDITIONAL_SD_KEY_NAME section other manifest git
+        repositories under  EXTERNAL_SD_KEY_NAME section other manifest git
         repositories are kept per project
         (CRepoManifestProject:cloned_repo object).
         Key - repo name
         value - cloned CGitClonedRepository
         """
-        self.additional_repo_name_to_cloned_repo_dict = {}
+        self.external_repo_name_to_cloned_repo_dict = {}
 
         # starting revision for mbl-manifest
         self.mbl_manifest_clone_ref = ""
@@ -142,7 +142,7 @@ class CReleaseManager(object):
         """
         Dictionary of dictionaries created from user input JSON file
         Key - file name or the special keys
-            COMMON_SD_KEY_NAME, ADDITIONAL_SD_KEY_NAME
+            COMMON_SD_KEY_NAME, EXTERNAL_SD_KEY_NAME
         value - a sub dictionary for this category. The common category will
             set the revision for all projects in all xml files while other
             categories are file specific.
@@ -206,7 +206,7 @@ class CReleaseManager(object):
             self.logger.info(
                 "Removing temporary folder %s" % self.tmp_dir_path
             )
-            shutil.rmtree(self.tmp_dir_path)
+            rmtree(self.tmp_dir_path)
 
     def repo_push(self, repo, new_rev):
         """push a revision to remote repository."""
@@ -230,7 +230,7 @@ class CReleaseManager(object):
     def process_manifest_files(self):
         """parse, validate and modify XML manifest files."""
         self.logger.info("Parse, validate and modify XML manifest files...")
-        adict = self.additional_repo_name_to_cloned_repo_dict
+        adict = self.external_repo_name_to_cloned_repo_dict
         nrd = self.new_revisions_dict
 
         # clone mbl-manifest repository first and checkout mbl_
@@ -248,7 +248,7 @@ class CReleaseManager(object):
             MBL_MANIFEST_REPO_SHORT_NAME,
             self.tmp_dir_path,
             self.mbl_manifest_clone_ref,
-            nrd[ADDITIONAL_SD_KEY_NAME][MBL_MANIFEST_REPO_NAME][1],
+            nrd[EXTERNAL_SD_KEY_NAME][MBL_MANIFEST_REPO_NAME][1],
         )
 
         # get all files ending with .xml inside this directory.
@@ -438,8 +438,8 @@ class CReleaseManager(object):
         idx_success_indication = 2
         check_remote_list = []
 
-        # add all entries from ADDITIONAL_SD_KEY_NAME SD:
-        for (k, v) in self.new_revisions_dict[ADDITIONAL_SD_KEY_NAME].items():
+        # add all entries from EXTERNAL_SD_KEY_NAME SD:
+        for (k, v) in self.new_revisions_dict[EXTERNAL_SD_KEY_NAME].items():
             url = SCommonFuncs.build_url_from_repo_name(ARM_MRR_REMOTE, k)
             check_remote_list.append((url, v[1], False))
 
@@ -526,11 +526,11 @@ class CReleaseManager(object):
         )
 
         for file_name, sd in self.new_revisions_dict.items():
-            if file_name == ADDITIONAL_SD_KEY_NAME:
+            if file_name == EXTERNAL_SD_KEY_NAME:
                 continue
 
             # checking 1
-            _dict = self.additional_repo_name_to_cloned_repo_dict[
+            _dict = self.external_repo_name_to_cloned_repo_dict[
                 MBL_MANIFEST_REPO_NAME
             ]
             if file_name != COMMON_SD_KEY_NAME:
@@ -594,53 +594,53 @@ class CReleaseManager(object):
                 sys.exit(-1)
 
         """
-        Check that exist at least ADDITIONAL_SD_KEY_NAME key with a
+        Check that exist at least EXTERNAL_SD_KEY_NAME key with a
         sub-dictionary that comply with :
         1. All pairs are (key, lists of length 2), and the value list must
         have distinct values.
         2. armmbed/mbl-manifest repository exist in sub-dictionary
         """
-        if ADDITIONAL_SD_KEY_NAME not in nrd:
+        if EXTERNAL_SD_KEY_NAME not in nrd:
             raise ValueError(
                 "main entry key %s could not be found in user input file"
-                % ADDITIONAL_SD_KEY_NAME
+                % EXTERNAL_SD_KEY_NAME
             )
-        if MBL_MANIFEST_REPO_NAME not in nrd[ADDITIONAL_SD_KEY_NAME]:
+        if MBL_MANIFEST_REPO_NAME not in nrd[EXTERNAL_SD_KEY_NAME]:
 
             raise ValueError(
                 "%s key could not be found in user input "
                 "file under %s"
-                % (MBL_MANIFEST_REPO_NAME, ADDITIONAL_SD_KEY_NAME)
+                % (MBL_MANIFEST_REPO_NAME, EXTERNAL_SD_KEY_NAME)
             )
 
-        for l in nrd[ADDITIONAL_SD_KEY_NAME].values():
+        for l in nrd[EXTERNAL_SD_KEY_NAME].values():
             if len(l) != 2:
                 raise ValueError(
                     "Bad length for list %s - All lists under key %s in user "
                     "input file must be of length 2!"
-                    % (l, ADDITIONAL_SD_KEY_NAME)
+                    % (l, EXTERNAL_SD_KEY_NAME)
                 )
 
             if l[0] == l[1]:
                 raise ValueError(
                     "Bad list %s - non-distinct values under "
-                    "key %s in user input file!" % (l, ADDITIONAL_SD_KEY_NAME)
+                    "key %s in user input file!" % (l, EXTERNAL_SD_KEY_NAME)
                 )
 
         # set the clone ref for mbl-manifest
-        self.mbl_manifest_clone_ref = nrd[ADDITIONAL_SD_KEY_NAME][
+        self.mbl_manifest_clone_ref = nrd[EXTERNAL_SD_KEY_NAME][
             MBL_MANIFEST_REPO_NAME
         ][0]
 
         """
         do not allow any repo name under common SD to appear in any other SD
-        pair as key do not allow any repo name under additional SD to appear in
+        pair as key do not allow any repo name under external SD to appear in
         any other SD pair as key l carry a merged list of all pairs which are
-        not in common/additional SDs
+        not in common/external SDs
         """
         validation_list = []
         for (key, val) in nrd.items():
-            if (key != COMMON_SD_KEY_NAME) and (key != ADDITIONAL_SD_KEY_NAME):
+            if (key != COMMON_SD_KEY_NAME) and (key != EXTERNAL_SD_KEY_NAME):
                 validation_list += val
         if validation_list:
             if COMMON_SD_KEY_NAME in nrd:
@@ -656,15 +656,15 @@ class CReleaseManager(object):
                             )
                         )
 
-            if ADDITIONAL_SD_KEY_NAME in nrd:
-                for key in nrd[ADDITIONAL_SD_KEY_NAME].keys():
+            if EXTERNAL_SD_KEY_NAME in nrd:
+                for key in nrd[EXTERNAL_SD_KEY_NAME].keys():
                     if key in validation_list:
                         raise ValueError(
                             "Invalid input in file {} : key {} found in {}, "
                             "but also in other file specific file SDs!".format(
                                 self.args.refs_input_file_path,
                                 key,
-                                ADDITIONAL_SD_KEY_NAME,
+                                EXTERNAL_SD_KEY_NAME,
                             )
                         )
 
@@ -673,7 +673,7 @@ class CReleaseManager(object):
         # # in separate repos is allowed, but not recommended!)
         # tup_list = []
         # for (sd_name, sd) in nrd.items():
-        #     if sd_name in [ADDITIONAL_SD_KEY_NAME, COMMON_SD_KEY_NAME]:
+        #     if sd_name in [EXTERNAL_SD_KEY_NAME, COMMON_SD_KEY_NAME]:
         #         continue
         #     tup_list += [(v, k) for k, v in sd.items()]
         # for t in tup_list:
@@ -692,7 +692,7 @@ class CReleaseManager(object):
             repo_name in self.new_revisions_dict[sd_key_name]
         ):
 
-            if sd_key_name == ADDITIONAL_SD_KEY_NAME:
+            if sd_key_name == EXTERNAL_SD_KEY_NAME:
                 return self.new_revisions_dict[sd_key_name][repo_name][1]
             return self.new_revisions_dict[sd_key_name][repo_name]
 
@@ -804,7 +804,7 @@ class CReleaseManager(object):
         copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
 
         """
-        Open the file, traverse all over the ADDITIONAL_SD_KEY_NAME SD
+        Open the file, traverse all over the EXTERNAL_SD_KEY_NAME SD
         repositories, and replace We expect file structure, where each element
         represents a linked repository has 3 settings :
         1) options
@@ -813,10 +813,8 @@ class CReleaseManager(object):
             We are going to locate the repo name and change the SRCREV
         """
         is_changed = False
-        d = self.additional_repo_name_to_cloned_repo_dict
-        for repo_name in self.new_revisions_dict[
-            ADDITIONAL_SD_KEY_NAME
-        ].keys():
+        d = self.external_repo_name_to_cloned_repo_dict
+        for repo_name in self.new_revisions_dict[EXTERNAL_SD_KEY_NAME].keys():
             if repo_name not in [
                 MBL_MANIFEST_REPO_NAME,
                 MBL_LINKED_REPOSITORIES_REPO_NAME,
@@ -901,7 +899,7 @@ class CReleaseManager(object):
     def update_mbl_linked_repositories_conf(self):
         """update_mbl_linked_repositories_conf."""
         # update all MBL_LINKED_REPOSITORIES_REPO_NAME repositories
-        d = self.additional_repo_name_to_cloned_repo_dict
+        d = self.external_repo_name_to_cloned_repo_dict
         if MBL_LINKED_REPOSITORIES_REPO_NAME in d:
             self.update_mbl_linked_repositories_conf_helper(
                 d[MBL_LINKED_REPOSITORIES_REPO_NAME]
@@ -949,7 +947,7 @@ class CReleaseManager(object):
 
     def mbl_manifest_repo_push(self):
         """push MBL_MANIFEST_REPO_NAME repo to remote."""
-        repo = self.additional_repo_name_to_cloned_repo_dict[
+        repo = self.external_repo_name_to_cloned_repo_dict[
             MBL_MANIFEST_REPO_NAME
         ]
         repo.handle.git.add(update=True)
@@ -972,7 +970,7 @@ class CReleaseManager(object):
 
     def clone_and_create_new_revisions(self):
         """
-        Clone all additional and Arm MRR repositories.
+        Clone all external and Arm MRR repositories.
 
         Concurrently, checkout current revision.
         """
@@ -980,10 +978,10 @@ class CReleaseManager(object):
 
         # list of tuples
         clone_tup_list = []
-        # clone all additional repositories under self.tmp_dir_path
+        # clone all external repositories under self.tmp_dir_path
         for (main_key, sd) in self.new_revisions_dict.items():
             for (key, rev) in sd.items():
-                if main_key == ADDITIONAL_SD_KEY_NAME:
+                if main_key == EXTERNAL_SD_KEY_NAME:
                     if key != MBL_MANIFEST_REPO_NAME:
                         prefix, name = key.rsplit("/", 1)
                         clone_tup_list.append(
@@ -1065,8 +1063,8 @@ class CReleaseManager(object):
                         )
                     )
                 else:
-                    if tup[7] == ADDITIONAL_SD_KEY_NAME:
-                        self.additional_repo_name_to_cloned_repo_dict[
+                    if tup[7] == EXTERNAL_SD_KEY_NAME:
+                        self.external_repo_name_to_cloned_repo_dict[
                             tup[0]
                         ] = result
                     else:
