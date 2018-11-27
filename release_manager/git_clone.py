@@ -119,12 +119,12 @@ class CGitClonedRepository(object):
 
         # create folder if not exist
         if not os.path.exists(dest_full_path):
-            SCommonFuncs.logger.info("Creating new folder %s" % dest_full_path)
+            self.logger.info("Creating new folder %s" % dest_full_path)
             os.makedirs(dest_full_path)
 
         # now clone
         if is_commit_hash:
-            SCommonFuncs.logger.info(
+            self.logger.info(
                 "Cloning repository {} to {} and checking out "
                 "commit hash {}".format(url, dest_full_path, co_branch)
             )
@@ -134,7 +134,7 @@ class CGitClonedRepository(object):
             cloned_repo = Repo.clone_from(
                 url, dest_full_path, branch=co_branch
             )
-            SCommonFuncs.logger.info(
+            self.logger.info(
                 "Cloning repository {} to {} and checking out "
                 "branch {}".format(url, dest_full_path, co_branch)
             )
