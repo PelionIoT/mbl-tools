@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Copyright (c) 2017, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Summary.
 

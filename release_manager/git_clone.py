@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Copyright (c) 2017, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Summary.
 
@@ -39,6 +43,9 @@ class CGitClonedRepository(object):
         self.name_prefix = name_prefix
         self.full_name = name_prefix + "/" + short_name
 
+        # get logger
+        self.logger = logging.getLogger(module_name)
+
         # remote
         self.remote = remote
 
@@ -73,13 +80,12 @@ class CGitClonedRepository(object):
                 self.handle = self.clone_repo(
                     self.clone_dest_path, self.url, self.checkout_rev
                 )
-        logger = logging.getLogger(module_name)
-        logger.debug(
+        self.logger.debug(
             "Created new {} : {}".format(
                 type(self).__name__, pformat(locals())
             )
         )
-        logger.info(
+        self.logger.info(
             "{} Cloned from remote {} to folder {}".format(
                 self.full_name, self.url, self.clone_dest_path
             )

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Copyright (c) 2017, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 """
 Summary.
 
@@ -51,6 +55,9 @@ class CRepoManifestFile(object):
         # file name, without the suffix
         self.filename = filename
 
+        # get logger
+        self.logger = logging.getLogger(module_name)
+
         # entire element hierarchy
         self.tree = tree
 
@@ -70,8 +77,7 @@ class CRepoManifestFile(object):
         # repository names as key
         self.repo_name_to_proj_dict = repo_name_to_proj_dict
 
-        logger = logging.getLogger(module_name)
-        logger.debug(
+        self.logger.debug(
             "Created new {} : {}".format(
                 type(self).__name__, pformat(locals())
             )
@@ -130,8 +136,8 @@ class CRepoManifestProject(object):
         else:
             self.isArmMRR = False
 
-        logger = logging.getLogger(module_name)
-        logger.debug(
+        self.logger = logging.getLogger(module_name)
+        self.logger.debug(
             "Created new {} : {}".format(
                 type(self).__name__, pformat(locals())
             )
