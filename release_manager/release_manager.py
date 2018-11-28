@@ -5,9 +5,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """
-Summary.
+main module.
 
-This file contains the main script class CReleaseManager definition.
+This module defines the script's main class CReleaseManager. It provides an API
+ to entry point to preform the needed operations.It preforms
+much of the script :
+1) User input parsing, data validation.
+2) Logging and diagnostics data storage and printing.
+3) Creation of all other objects (manifest files and projects,
+git repositories).
+4) Cloning, committing branching and pushing data.
+5) All functions called from the main entry point belong to CReleaseManager.
 """
 #
 # imports
@@ -105,20 +113,20 @@ class CReleaseManager(object):
     """
 
     def __init__(self):
-        """init."""
+        """Object initialization."""
         # log the start time
         self.start_time = time.time()
 
         # initialize self.logger  - set logging level to INFO at this
         # initial stage. Each log entry will be at least 2 lines.
         logging.basicConfig(level=logging.INFO, format=LOGGING_REGULAR_FORMAT)
-        self.logger = logging.getLogger(module_name)
+        self.logger = logging.getLogger(program_name)
         self.logger.info(
-            "Creating {} version {}".format(module_name, __version__)
+            "Creating {} version {}".format(program_name, __version__)
         )
 
         # initialize static logger
-        SCommonFuncs.logger = logging.getLogger(module_name)
+        SCommonFuncs.logger = logging.getLogger(program_name)
 
         # list of CRepoManifestFile objects
         self.manifest_file_name_to_obj_dict = {}
@@ -459,7 +467,7 @@ class CReleaseManager(object):
                     file_obj.remote_key_to_remote_dict[v.remote_key],
                     v.full_name,
                 )
-                check_remote_list.append((url, new_ref, not v.isArmMRR))
+                check_remote_list.append((url, new_ref, not v.is_arm_mrr))
 
         self.logger.debug("===check_remote_list:")
         self.logger.debug(pformat(check_remote_list))
@@ -477,23 +485,25 @@ class CReleaseManager(object):
             future_to_git_url = {
                 executor.submit(
                     self.validate_remote_repositories_state_helper,
-                    tup[idx_url],
-                    tup[idx_rev],
-                ): tup
-                for tup in check_remote_list
+                    worker_input[idx_url],
+                    worker_input[idx_rev],
+                ): worker_input
+                for worker_input in check_remote_list
             }
 
             for future in concurrent.futures.as_completed(
                 future_to_git_url, MAX_TMO_SEC
             ):
-                tup = future_to_git_url[future]
+                worker_input = future_to_git_url[future]
                 result = future.result()
-                if result != tup[idx_success_indication]:
+                if result != worker_input[idx_success_indication]:
                     raise argparse.ArgumentTypeError(
                         "revision {} {} exist on remote url {}".format(
-                            tup[idx_rev],
-                            "does not" if tup[idx_success_indication] else "",
-                            tup[idx_url],
+                            worker_input[idx_rev],
+                            "does not"
+                            if worker_input[idx_success_indication]
+                            else "",
+                            worker_input[idx_url],
                         )
                     )
 
@@ -512,7 +522,7 @@ class CReleaseManager(object):
 
     def validate_cross_dependencies(self):
         """
-        summary.
+        Summary.
 
         Check that :
         1. All file-specific SDs point to actual files
@@ -869,7 +879,7 @@ class CReleaseManager(object):
             ret_list = git_repo.handle.index.add([file_path], write=True)
             assert len(ret_list) == 1
             git_repo.handle.index.commit(
-                "%s Automatic Commit Message" % module_name
+                "%s Automatic Commit Message" % program_name
             )
             self.logger.info(
                 "File %s has been modified and committed" % file_path
@@ -904,10 +914,13 @@ class CReleaseManager(object):
             self.update_mbl_linked_repositories_conf_helper(
                 d[MBL_LINKED_REPOSITORIES_REPO_NAME]
             )
-        for fo in self.manifest_file_name_to_obj_dict.values():
-            if MBL_LINKED_REPOSITORIES_REPO_NAME in fo.repo_name_to_proj_dict:
+        for file_obj in self.manifest_file_name_to_obj_dict.values():
+            if (
+                MBL_LINKED_REPOSITORIES_REPO_NAME
+                in file_obj.repo_name_to_proj_dict
+            ):
                 self.update_mbl_linked_repositories_conf_helper(
-                    fo.repo_name_to_proj_dict[
+                    file_obj.repo_name_to_proj_dict[
                         MBL_LINKED_REPOSITORIES_REPO_NAME
                     ].cloned_repo
                 )
@@ -946,7 +959,7 @@ class CReleaseManager(object):
         return True
 
     def mbl_manifest_repo_push(self):
-        """push MBL_MANIFEST_REPO_NAME repo to remote."""
+        """Push MBL_MANIFEST_REPO_NAME repo to remote."""
         repo = self.external_repo_name_to_cloned_repo_dict[
             MBL_MANIFEST_REPO_NAME
         ]
@@ -1004,25 +1017,27 @@ class CReleaseManager(object):
         For example, for default.xml, all matching repos will be cloned
         under <self.tmp_dir_path>/default
         """
-        for f in self.manifest_file_name_to_obj_dict.values():
-            for (name, proj) in f.repo_name_to_proj_dict.items():
+        for file_obj in self.manifest_file_name_to_obj_dict.values():
+            for (name, proj) in file_obj.repo_name_to_proj_dict.items():
                 new_ref = self.get_new_ref_from_new_revision_dict(
-                    f.filename, proj.full_name
+                    file_obj.filename, proj.full_name
                 )
-                if proj.isArmMRR and new_ref:
+                if proj.is_arm_mrr and new_ref:
                     prefix, name = proj.full_name.rsplit("/", 1)
 
                     clone_tup_list.append(
                         # tuple
                         (
                             proj.full_name,
-                            f.remote_key_to_remote_dict[proj.remote_key],
+                            file_obj.remote_key_to_remote_dict[
+                                proj.remote_key
+                            ],
                             prefix,
                             name,
-                            os.path.join(self.tmp_dir_path, f.filename),
+                            os.path.join(self.tmp_dir_path, file_obj.filename),
                             proj.revision,
                             new_ref,
-                            f.filename,
+                            file_obj.filename,
                         )
                     )
 
@@ -1122,7 +1137,7 @@ class CReleaseManager(object):
         """define and parse script input arguments."""
         parser = argparse.ArgumentParser(
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            description=module_name + " script",
+            description=program_name + " script",
         )
 
         parser.add_argument(

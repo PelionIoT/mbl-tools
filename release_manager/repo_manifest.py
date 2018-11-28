@@ -5,9 +5,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """
-Summary.
+Git repo manifet data storage classes.
 
-This file contains Git manifest releated classes CRepoManifestFile class.
+This module defines CRepoManifestFile and CRepoManifestProject.
+CRepoManifestFile is a storage class which holds data on a specific
+manifest file found in the root of armmbed/mbl-manifest repository.
+CRepoManifestProject is a storage class which holds data on a remote repository
+to be fetched.
 """
 
 #
@@ -15,8 +19,9 @@ This file contains Git manifest releated classes CRepoManifestFile class.
 #
 
 import logging
-from common import *
 from pprint import pformat
+
+from common import *
 
 
 #
@@ -25,14 +30,10 @@ from pprint import pformat
 
 MRR_MANIFEST_REMOTE_KEY = "github"
 
-#
-#   Class CRepoManifestFile
-#
-
 
 class CRepoManifestFile(object):
     """
-    class CRepoManifestFile.
+    Manifest file related data storage class.
 
     This class stores information about manifest XML file in armmbed/mbl-
     manifest repository.
@@ -48,7 +49,7 @@ class CRepoManifestFile(object):
         remote_key_to_remote_dict,
         repo_name_to_proj_dict,
     ):
-        """..."""
+        """Object initialization."""
         # destination path
         self.path = path
 
@@ -56,7 +57,7 @@ class CRepoManifestFile(object):
         self.filename = filename
 
         # get logger
-        self.logger = logging.getLogger(module_name)
+        self.logger = logging.getLogger(program_name)
 
         # entire element hierarchy
         self.tree = tree
@@ -84,14 +85,9 @@ class CRepoManifestFile(object):
         )
 
 
-#
-#   Class CRepoManifestProject
-#
-
-
 class CRepoManifestProject(object):
     """
-    class CRepoManifestProject.
+    Manifest file project related data storage class.
 
     This class represents a google repo manifest file 'project' entry that
     needs to be cloned.
@@ -103,7 +99,7 @@ class CRepoManifestProject(object):
     def __init__(
         self, full_name, prefix, short_name, remote_key, url, revision
     ):
-        """..."""
+        """Object initialization."""
         # full name such as 'armmbed/meta-mbl'
         self.full_name = full_name
 
@@ -132,11 +128,11 @@ class CRepoManifestProject(object):
         if (self.name_prefix == ARM_MRR_REPO_NAME_PREFIX) and (
             self.remote_key == MRR_MANIFEST_REMOTE_KEY
         ):
-            self.isArmMRR = True
+            self.is_arm_mrr = True
         else:
-            self.isArmMRR = False
+            self.is_arm_mrr = False
 
-        self.logger = logging.getLogger(module_name)
+        self.logger = logging.getLogger(program_name)
         self.logger.debug(
             "Created new {} : {}".format(
                 type(self).__name__, pformat(locals())

@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """
-Summary.
+Common definitions and global functions.
 
 This file holds common definitions to import, and helper common functions
 gathered under static class SCommonFuncs.
@@ -23,7 +23,7 @@ import os
 # common constants
 #
 
-module_name = "release_manager"
+program_name = "release_manager"
 __version__ = "1.0.0"
 
 REF_BRANCH_PREFIX = "refs/heads/"
@@ -31,10 +31,6 @@ REF_TAG_PREFIX = "refs/tags/"
 REF_PREFIX = "refs/"
 ARM_MRR_REPO_NAME_PREFIX = "armmbed"
 HASH_FIXED_LEN = 40
-
-#
-#   Class SCommonFuncs
-#
 
 
 class SCommonFuncs:
@@ -45,12 +41,14 @@ class SCommonFuncs:
     be used) by multiple objects.
     """
 
-    # static vars
-    logger = None
-
     @staticmethod
     def build_url_from_repo_name(remote_prefix, repo_name):
-        """..."""
+        """
+        Summary.
+
+        Return a git remote URL from a remote prefix and a repository
+        short name.
+        """
         return "{}:/{}.git".format(remote_prefix, repo_name)
 
     @staticmethod
@@ -73,7 +71,7 @@ class SCommonFuncs:
     @staticmethod
     def is_branch_exist_in_remote_repo(repo_url, branch_name, is_base_name):
         """
-        summary.
+        Summary.
 
         Returns True if 'branch_name' exist in remote repository in URL
         'repo_url.
@@ -89,7 +87,7 @@ class SCommonFuncs:
     @staticmethod
     def is_tag_exist_in_remote_repo(repo_url, tag_name, is_base_name):
         """
-        summary.
+        Summary.
 
         Returns True if 'branch_name' exist in remote repository in URL
         'repo_url'.

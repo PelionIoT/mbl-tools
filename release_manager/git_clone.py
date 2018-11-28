@@ -5,19 +5,22 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """
-Summary.
+This module deals with the Git local and remote repositories.
 
-This file holds CGitClonedRepository class
+Defines CGitClonedRepository class which holds cloned repository information,
+and also operations on that repository.
 """
 
 #
 # imports
 #
 
-from common import *
 from git import Repo
 import logging
 from pprint import pformat
+
+from common import *
+
 
 #
 #   Class CGitClonedRepository
@@ -37,14 +40,14 @@ class CGitClonedRepository(object):
     def __init__(
         self, remote, name_prefix, short_name, clone_base_path, checkout_rev
     ):
-        """init."""
+        """Object initialization."""
         # name, name prefix , full name
         self.short_name = short_name
         self.name_prefix = name_prefix
         self.full_name = name_prefix + "/" + short_name
 
         # get logger
-        self.logger = logging.getLogger(module_name)
+        self.logger = logging.getLogger(program_name)
 
         # remote
         self.remote = remote

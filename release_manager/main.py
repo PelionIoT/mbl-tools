@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """
-Summary.
+Entry point.
 
 This script can be called from command line, or used from the mbl-tools.
 In short:
