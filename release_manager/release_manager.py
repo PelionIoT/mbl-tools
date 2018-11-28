@@ -476,11 +476,11 @@ class CReleaseManager(object):
                 for worker_input in check_remote_list
             }
 
-            for future in concurrent.futures.as_completed(
+            for completed_task in concurrent.futures.as_completed(
                 future_to_git_url, MAX_TMO_SEC
             ):
-                worker_input = future_to_git_url[future]
-                result = future.result()
+                worker_input = future_to_git_url[completed_task]
+                result = completed_task.result()
                 if result != worker_input[idx_success_indication]:
                     raise argparse.ArgumentTypeError(
                         "revision {} {} exist on remote url {}".format(
@@ -1050,12 +1050,12 @@ class CReleaseManager(object):
                 for worker_input in clone_tup_list
             }
 
-            for future in concurrent.futures.as_completed(
+            for completed_task in concurrent.futures.as_completed(
                 future_to_git_url, MAX_TMO_SEC
             ):
 
-                worker_input = future_to_git_url[future]
-                result = future.result()
+                worker_input = future_to_git_url[completed_task]
+                result = completed_task.result()
                 if not result:
                     raise argparse.ArgumentTypeError(
                         "revision {} exist on remote url {}".format(
