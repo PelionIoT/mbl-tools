@@ -20,18 +20,12 @@ In short:
 * Update armmbed/meta-mbl/conf/dist/mbl-linked-repositories.conf accordingly,
     commit and push to remote.
 
-The script supports :
+The script supports:
 * diagnostic mode requires user confirmation for each step
 * Simulation mode - no real pushes are done to remote.
 * temporary folder can be kept for analyzing
 * At the end, a summary is printed to screen.
 * Execution is accelerated at some parts by using thread pools.
-
-Prerequisite:
-Install python packages 'gitpython' and 'in_place':
-$ pip3 install gitpython in_place
-
-# SPDX-License-Identifier: Apache-2.0
 """
 
 import sys
