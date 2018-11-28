@@ -57,7 +57,7 @@ class CGitClonedRepository(object):
 
         """
         Clone and get git.Repo object.
-        Trys to clone first in the form refs/heads/branch_name or 
+        Tries to clone first in the form refs/heads/branch_name or
         refs/tags/tag_name. If the user gave just tag_name or branch_name,
         try to clone them in the else block.
         """

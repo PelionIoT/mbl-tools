@@ -401,7 +401,7 @@ class CReleaseManager(object):
 
     @staticmethod
     def validate_remote_repositories_state_helper(url, new_rev):
-        """check that new rev does not exist on remote."""
+        """Check that new rev does not exist on remote."""
         if new_rev.startswith(REF_BRANCH_PREFIX):
             return does_branch_exist_in_remote_repo(url, new_rev, False)
         if new_rev.startswith(REF_TAG_PREFIX):
@@ -411,7 +411,7 @@ class CReleaseManager(object):
 
     def validate_remote_repositories_state(self):
         """
-        check status of remote repositories.
+        Check status of remote repositories.
 
         1) For Arm managed repositories - All branches/tags to be created are
         no on remote (type A)
@@ -767,7 +767,7 @@ class CReleaseManager(object):
         return repo
 
     def update_mbl_linked_repositories_conf_helper(self, git_repo):
-        """update_mbl_linked_repositories_conf_helper."""
+        """Worker function. Update mbl-linked-repositories.conf file.."""
         if not git_repo:
             return
 
@@ -1122,7 +1122,7 @@ class CReleaseManager(object):
             setattr(namespace, self.dest, file_path)
 
     def get_argument_parser(self):
-        """define and parse script input arguments."""
+        """Define and parse script input arguments."""
         parser = argparse.ArgumentParser(
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
             description=program_name + " script",

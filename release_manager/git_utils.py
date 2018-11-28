@@ -23,7 +23,7 @@ HASH_FIXED_LEN = 40
 
 def build_url_from_repo_name(remote_prefix, repo_name):
     """
-    build a remote URL from remote prefix and remote name.
+    Build a remote URL from remote prefix and remote name.
 
     Return a git remote URL from a remote prefix and a repository
     short name.
@@ -79,11 +79,11 @@ def does_tag_exist_in_remote_repo(repo_url, tag_name, is_base_name):
 
 def get_file_name_from_path(path, add_suffix_flag):
     """Get a short file name from path, or a full filename with suffix."""
-    ret = os.path.basename(path)
+    filename = os.path.basename(path)
     if not add_suffix_flag:
-        tup = os.path.splitext(ret)
-        ret = tup[0]
-    return ret
+        path_tokens = os.path.splitext(filename)
+        filename = path_tokens[0]
+    return filename
 
 
 def get_base_rev_name(full_rev_name):
@@ -106,9 +106,9 @@ def is_valid_git_ref_name(ref):
     """Return true is a Git reference (branch/tag) is valid."""
     if not ref.startswith(REF_PREFIX):
         return False
-    g = git.cmd.Git()
+    git_cmd = git.cmd.Git()
     try:
-        if g.check_ref_format("--normalize", ref) != ref:
+        if git_cmd.check_ref_format("--normalize", ref) != ref:
             raise ValueError
     except git.GitCommandError:
         return False
@@ -135,9 +135,9 @@ def is_valid_git_commit_hash(commit_hash):
 
 def is_valid_git_branch_short_name(branch_name):
     """Return True if a short name branch is valid."""
-    g = git.cmd.Git()
+    git_cmd = git.cmd.Git()
     try:
-        if g.check_ref_format("--branch", branch_name) != branch_name:
+        if git_cmd.check_ref_format("--branch", branch_name) != branch_name:
             raise ValueError
     except git.GitCommandError:
         return False
