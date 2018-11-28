@@ -34,17 +34,16 @@ $ pip3 install gitpython in_place
 # SPDX-License-Identifier: Apache-2.0
 """
 
+import sys
 
-#
-# imports
-#
+import release_manager
 
-from release_manager import *
+program_name = "release_manager"
 
 
 def _main():
 
-    with CReleaseManager() as rm:
+    with release_manager.CReleaseManager() as rm:
 
         # Parse JSON references input file
         rm.parse_and_validate_input_file()

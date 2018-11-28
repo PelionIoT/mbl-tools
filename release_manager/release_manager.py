@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright (c) 2017, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -38,9 +36,9 @@ from shutil import copyfile, rmtree
 import sys
 
 from git_clone import CGitClonedRepository
-from common import __version__
-from common import *
+from git_utils import *
 from repo_manifest import CRepoManifestProject, CRepoManifestFile
+from main import program_name
 
 
 #
@@ -121,12 +119,7 @@ class CReleaseManager(object):
         # initial stage. Each log entry will be at least 2 lines.
         logging.basicConfig(level=logging.INFO, format=LOGGING_REGULAR_FORMAT)
         self.logger = logging.getLogger(program_name)
-        self.logger.info(
-            "Creating {} version {}".format(program_name, __version__)
-        )
-
-        # initialize static logger
-        SCommonFuncs.logger = logging.getLogger(program_name)
+        self.logger.info("Starting {}".format(program_name))
 
         # list of CRepoManifestFile objects
         self.manifest_file_name_to_obj_dict = {}
@@ -343,9 +336,7 @@ class CReleaseManager(object):
                 if not revision:
                     revision = default_rev
 
-                base_name = SCommonFuncs.get_file_name_from_path(
-                    file_path, True
-                )
+                base_name = get_file_name_from_path(file_path, False)
 
                 # create project and insert to dictionary
                 proj = CRepoManifestProject(
@@ -362,12 +353,10 @@ class CReleaseManager(object):
                     del atype.attrib["revision"]
                     is_changed = True
                 elif new_ref:
-                    if SCommonFuncs.is_valid_git_commit_hash(new_ref):
+                    if is_valid_git_commit_hash(new_ref):
                         atype.set("revision", new_ref)
                     else:
-                        atype.set(
-                            "revision", SCommonFuncs.get_base_rev_name(new_ref)
-                        )
+                        atype.set("revision", get_base_rev_name(new_ref))
                     is_changed = True
 
                 if is_changed and "upstream" in atype.attrib:
@@ -414,13 +403,9 @@ class CReleaseManager(object):
     def validate_remote_repositories_state_helper(url, new_rev):
         """check that new rev does not exist on remote."""
         if new_rev.startswith(REF_BRANCH_PREFIX):
-            return SCommonFuncs.is_branch_exist_in_remote_repo(
-                url, new_rev, False
-            )
+            return does_branch_exist_in_remote_repo(url, new_rev, False)
         if new_rev.startswith(REF_TAG_PREFIX):
-            return SCommonFuncs.is_tag_exist_in_remote_repo(
-                url, new_rev, False
-            )
+            return does_tag_exist_in_remote_repo(url, new_rev, False)
 
         return True
 
@@ -448,7 +433,7 @@ class CReleaseManager(object):
 
         # add all entries from EXTERNAL_SD_KEY_NAME SD:
         for (k, v) in self.new_revisions_dict[EXTERNAL_SD_KEY_NAME].items():
-            url = SCommonFuncs.build_url_from_repo_name(ARM_MRR_REMOTE, k)
+            url = build_url_from_repo_name(ARM_MRR_REMOTE, k)
             check_remote_list.append((url, v[1], False))
 
         for file_obj in self.manifest_file_name_to_obj_dict.values():
@@ -463,7 +448,7 @@ class CReleaseManager(object):
                 if not new_ref:
                     continue
 
-                url = SCommonFuncs.build_url_from_repo_name(
+                url = build_url_from_repo_name(
                     file_obj.remote_key_to_remote_dict[v.remote_key],
                     v.full_name,
                 )
@@ -522,7 +507,7 @@ class CReleaseManager(object):
 
     def validate_cross_dependencies(self):
         """
-        Summary.
+        Validate correct logical dependencies between manifest and input files.
 
         Check that :
         1. All file-specific SDs point to actual files
@@ -1055,41 +1040,43 @@ class CReleaseManager(object):
             future_to_git_url = {
                 executor.submit(
                     self.create_and_update_new_revisions_worker,
-                    tup[1],
-                    tup[2],
-                    tup[3],
-                    tup[4],
-                    tup[5],
-                    tup[6],
-                ): tup
-                for tup in clone_tup_list
+                    worker_input[1],
+                    worker_input[2],
+                    worker_input[3],
+                    worker_input[4],
+                    worker_input[5],
+                    worker_input[6],
+                ): worker_input
+                for worker_input in clone_tup_list
             }
 
             for future in concurrent.futures.as_completed(
                 future_to_git_url, MAX_TMO_SEC
             ):
 
-                tup = future_to_git_url[future]
+                worker_input = future_to_git_url[future]
                 result = future.result()
                 if not result:
                     raise argparse.ArgumentTypeError(
                         "revision {} exist on remote url {}".format(
-                            tup[1], tup[0]
+                            worker_input[1], worker_input[0]
                         )
                     )
                 else:
-                    if tup[7] == EXTERNAL_SD_KEY_NAME:
+                    if worker_input[7] == EXTERNAL_SD_KEY_NAME:
                         self.external_repo_name_to_cloned_repo_dict[
-                            tup[0]
+                            worker_input[0]
                         ] = result
                     else:
-                        odict = self.manifest_file_name_to_obj_dict[tup[7]]
-                        pdict = odict.repo_name_to_proj_dict[tup[0]]
+                        odict = self.manifest_file_name_to_obj_dict[
+                            worker_input[7]
+                        ]
+                        pdict = odict.repo_name_to_proj_dict[worker_input[0]]
                         pdict.cloned_repo = result
         self.logger.info("Worker threads done...")
 
     def print_summary(self):
-        """print summary in different formatting."""
+        """Print summary in different formatting."""
         handler = self.logger.root.handlers[0]
         handler.setFormatter(logging.Formatter(LOGGING_SUMMARY_FORMAT))
 
@@ -1105,20 +1092,21 @@ class CReleaseManager(object):
         )
 
         self.logger.info("\n== Event log ==\n")
-        for idx, ev in enumerate(summary_log_list):
-            self.logger.info("{}. {}".format(idx + 1, ev))
+        for (idx, record) in enumerate(summary_log_list):
+            self.logger.info("{}. {}".format(idx + 1, record))
             self.logger.info("-----")
 
         handler.setFormatter(logging.Formatter(LOGGING_REGULAR_FORMAT))
 
     class StoreValidFile(argparse.Action):
         """
-        argparse helper class.
+        parser helper class.
 
         Costume action - check that the given file path exist on local host.
         """
 
         def __call__(self, parser, namespace, values, option_string=None):
+            """Function call operator."""
             file_path = os.path.abspath(values)
             if not os.path.isfile(file_path):
                 raise argparse.ArgumentTypeError(

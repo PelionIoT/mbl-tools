@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright (c) 2017, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -14,19 +12,14 @@ CRepoManifestProject is a storage class which holds data on a remote repository
 to be fetched.
 """
 
-#
-# imports
-#
-
 import logging
 from pprint import pformat
 
-from common import *
+from git_utils import *
+from main import program_name
 
 
-#
-# constants
-#
+logger = logging.getLogger(program_name)
 
 MRR_MANIFEST_REMOTE_KEY = "github"
 
@@ -56,9 +49,6 @@ class CRepoManifestFile(object):
         # file name, without the suffix
         self.filename = filename
 
-        # get logger
-        self.logger = logging.getLogger(program_name)
-
         # entire element hierarchy
         self.tree = tree
 
@@ -78,7 +68,7 @@ class CRepoManifestFile(object):
         # repository names as key
         self.repo_name_to_proj_dict = repo_name_to_proj_dict
 
-        self.logger.debug(
+        logger.debug(
             "Created new {} : {}".format(
                 type(self).__name__, pformat(locals())
             )
@@ -132,8 +122,7 @@ class CRepoManifestProject(object):
         else:
             self.is_arm_mrr = False
 
-        self.logger = logging.getLogger(program_name)
-        self.logger.debug(
+        logger.debug(
             "Created new {} : {}".format(
                 type(self).__name__, pformat(locals())
             )
