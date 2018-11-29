@@ -19,6 +19,7 @@ git repositories).
 # imports
 #
 
+import os
 import argparse
 import logging
 import random
@@ -35,9 +36,12 @@ from pprint import pformat
 from shutil import copyfile, rmtree
 import sys
 
-from git_clone import CGitClonedRepository
-from git_utils import *
-from repo_manifest import CRepoManifestProject, CRepoManifestFile
+
+from git import GitCommandError
+from git_handler import CGitClonedRepository
+import git_handler
+import repo_manifest as manifest
+from repo_manifest import CRepoManifestFile, CRepoManifestProject
 from main import program_name
 
 
@@ -71,21 +75,12 @@ FILE_BACKUP_SUFFIX = "~"
 ARM_MRR_REMOTE = "ssh://git@github.com"
 ARM_MRR_URL_PATTERN = "ssh://git@github.com:/{}/{}.git"
 
-MBL_MANIFEST_REPO_SHORT_NAME = "mbl-manifest"
-# armmbed/mbl-manifest
-MBL_MANIFEST_REPO_NAME = "{}/{}".format(
-    ARM_MRR_REPO_NAME_PREFIX, MBL_MANIFEST_REPO_SHORT_NAME
-)
-GIT_REMOTE_NAME = "origin"
-
-
 #
 # mbl-linked-repositories.conf update constants
 #
 MBL_LINKED_REPOSITORIES_REPO_SHORT_NAME = "meta-mbl"
-MBL_LINKED_REPOSITORIES_REPO_NAME = "%s/%s" % (
-    ARM_MRR_REPO_NAME_PREFIX,
-    MBL_LINKED_REPOSITORIES_REPO_SHORT_NAME,
+MBL_LINKED_REPOSITORIES_REPO_NAME = "{}/{}".format(
+    manifest.ARM_MRR_REPO_NAME_PREFIX, MBL_LINKED_REPOSITORIES_REPO_SHORT_NAME
 )
 MBL_LINKED_REPOSITORIES_REPO_PATH = "conf/distro/mbl-linked-repositories.conf"
 
@@ -121,7 +116,7 @@ class CReleaseManager(object):
         self.logger = logging.getLogger(program_name)
         self.logger.info("Starting {}".format(program_name))
 
-        # list of CRepoManifestFile objects
+        # dictionary of CRepoManifestFile objects
         self.manifest_file_name_to_obj_dict = {}
 
         # mark success for destructor
@@ -160,7 +155,6 @@ class CReleaseManager(object):
         """
         self.already_pushed_repository_list = []
 
-        # parse arguments
         parser = self.get_argument_parser()
         self.args = parser.parse_args()
 
@@ -181,7 +175,7 @@ class CReleaseManager(object):
                 self.tmp_dir_path = path
                 break
 
-        self.logger.info("Temporary folder: %s" % self.tmp_dir_path)
+        self.logger.info("Temporary folder: {}".format(self.tmp_dir_path))
 
         self.logger.debug(
             "Created new {} : {}".format(
@@ -197,15 +191,16 @@ class CReleaseManager(object):
         """Delete all already-pushed references in case of a failure."""
         if not self.completed and len(self.already_pushed_repository_list) > 0:
             self.logger.error(
-                "Removing all pushed references : %s"
-                % self.already_pushed_repository_list
+                "Removing all pushed references : {}".format(
+                    self.already_pushed_repository_list
+                )
             )
             for repo, ref in self.already_pushed_repository_list:
                 repo.handle.remotes.origin.push(":" + ref.path)
 
         if self.args.remove_temporary_folder:
             self.logger.info(
-                "Removing temporary folder %s" % self.tmp_dir_path
+                "Removing temporary folder {}".format(self.tmp_dir_path)
             )
             rmtree(self.tmp_dir_path)
 
@@ -219,9 +214,9 @@ class CReleaseManager(object):
         else:
             self.logger.info(_str)
             try:
-                repo.handle.git.push(GIT_REMOTE_NAME, new_rev)
+                repo.handle.git.push(manifest.GIT_REMOTE_NAME, new_rev)
                 self.already_pushed_repository_list.append((repo, new_rev))
-            except git.GitCommandError as err:
+            except GitCommandError as err:
                 # We've already checked that the branch does not exist.
                 # That means it has been created by another concurrent thread
                 if "reference already exists" not in err.stderr:
@@ -237,33 +232,34 @@ class CReleaseManager(object):
         # clone mbl-manifest repository first and checkout mbl_
         # manifest_clone_ref
         self.logger.info(
-            "Cloning repository %s checkout branch %s"
-            % (MBL_MANIFEST_REPO_NAME, self.mbl_manifest_clone_ref)
+            "Cloning repository {} checkout branch {}".format(
+                manifest.MBL_MANIFEST_REPO_NAME, self.mbl_manifest_clone_ref
+            )
         )
 
         adict[
-            MBL_MANIFEST_REPO_NAME
+            manifest.MBL_MANIFEST_REPO_NAME
         ] = self.create_and_update_new_revisions_worker(
             ARM_MRR_REMOTE,
-            ARM_MRR_REPO_NAME_PREFIX,
-            MBL_MANIFEST_REPO_SHORT_NAME,
+            manifest.ARM_MRR_REPO_NAME_PREFIX,
+            manifest.MBL_MANIFEST_REPO_SHORT_NAME,
             self.tmp_dir_path,
             self.mbl_manifest_clone_ref,
-            nrd[EXTERNAL_SD_KEY_NAME][MBL_MANIFEST_REPO_NAME][1],
+            nrd[EXTERNAL_SD_KEY_NAME][manifest.MBL_MANIFEST_REPO_NAME][1],
         )
 
         # get all files ending with .xml inside this directory.
         # We assume they are all manifest files
         xml_file_list = []
         path = os.path.join(
-            adict[MBL_MANIFEST_REPO_NAME].clone_dest_path, "*.xml"
+            adict[manifest.MBL_MANIFEST_REPO_NAME].clone_dest_path, "*.xml"
         )
         for file_name in glob.glob(path):
             xml_file_list.append(os.path.abspath(file_name))
 
         if xml_file_list:
             self.logger.info(
-                "Found xml to parse : %s" % pformat(xml_file_list)
+                "Found xml to parse : {}".format(pformat(xml_file_list))
             )
 
         """
@@ -285,7 +281,7 @@ class CReleaseManager(object):
         # parse all xml files, create a CRepoManifestFile object for each and
         # store in manifest_file_name_to_obj_dict
         for file_path in xml_file_list:
-            self.logger.debug("Start parsing file %s" % file_path)
+            self.logger.debug("Start parsing file {}".format(file_path))
 
             # get root
             tree = ElementTree.parse(file_path)
@@ -317,7 +313,7 @@ class CReleaseManager(object):
                 prefix, short_name = full_name.rsplit("/", 1)
                 if short_name in name_to_proj_dict:
                     raise ValueError(
-                        "File %s : project %s repeats multiple times!".format(
+                        "File {} : project {} repeats multiple times!".format(
                             file_path, short_name
                         )
                     )
@@ -336,7 +332,9 @@ class CReleaseManager(object):
                 if not revision:
                     revision = default_rev
 
-                base_name = get_file_name_from_path(file_path, False)
+                base_name = git_handler.get_file_name_from_path(
+                    file_path, False
+                )
 
                 # create project and insert to dictionary
                 proj = CRepoManifestProject(
@@ -349,14 +347,16 @@ class CReleaseManager(object):
                 new_ref = self.get_new_ref_from_new_revision_dict(
                     base_name, full_name
                 )
-                if new_ref == REF_BRANCH_PREFIX + default_rev:
+                if new_ref == git_handler.REF_BRANCH_PREFIX + default_rev:
                     del atype.attrib["revision"]
                     is_changed = True
                 elif new_ref:
-                    if is_valid_git_commit_hash(new_ref):
+                    if git_handler.is_valid_git_commit_hash(new_ref):
                         atype.set("revision", new_ref)
                     else:
-                        atype.set("revision", get_base_rev_name(new_ref))
+                        atype.set(
+                            "revision", git_handler.get_base_rev_name(new_ref)
+                        )
                     is_changed = True
 
                 if is_changed and "upstream" in atype.attrib:
@@ -380,12 +380,14 @@ class CReleaseManager(object):
                 # backup file
                 summary_log_list.append(
                     SUMMARY_H_BKP
-                    + "Created back file %s from %s"
-                    % (file_path + FILE_BACKUP_SUFFIX, file_path)
+                    + "Created back file {} from {}".format(
+                        file_path + FILE_BACKUP_SUFFIX, file_path
+                    )
                 )
                 self.logger.info(
-                    "Created backup file %s from %s"
-                    % (file_path + FILE_BACKUP_SUFFIX, file_path)
+                    "Created backup file {} from {}".format(
+                        file_path + FILE_BACKUP_SUFFIX, file_path
+                    )
                 )
                 copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
 
@@ -393,19 +395,26 @@ class CReleaseManager(object):
                 rmf.tree.write(file_path)
                 summary_log_list.append(
                     SUMMARY_H_MODIFY_FILE
-                    + "File %s has been modified on repository %s"
-                    % (file_path, MBL_MANIFEST_REPO_NAME)
+                    + "File {} has been modified on repository {}".format(
+                        file_path, manifest.MBL_MANIFEST_REPO_NAME
+                    )
                 )
 
-                self.logger.info("File %s has been modified!" % file_path)
+                self.logger.info(
+                    "File {} has been modified!".format(file_path)
+                )
 
     @staticmethod
     def validate_remote_repositories_state_helper(url, new_rev):
         """Check that new rev does not exist on remote."""
-        if new_rev.startswith(REF_BRANCH_PREFIX):
-            return does_branch_exist_in_remote_repo(url, new_rev, False)
-        if new_rev.startswith(REF_TAG_PREFIX):
-            return does_tag_exist_in_remote_repo(url, new_rev, False)
+        if new_rev.startswith(git_handler.REF_BRANCH_PREFIX):
+            return git_handler.does_branch_exist_in_remote_repo(
+                url, new_rev, False
+            )
+        if new_rev.startswith(git_handler.REF_TAG_PREFIX):
+            return git_handler.does_tag_exist_in_remote_repo(
+                url, new_rev, False
+            )
 
         return True
 
@@ -433,7 +442,7 @@ class CReleaseManager(object):
 
         # add all entries from EXTERNAL_SD_KEY_NAME SD:
         for (k, v) in self.new_revisions_dict[EXTERNAL_SD_KEY_NAME].items():
-            url = build_url_from_repo_name(ARM_MRR_REMOTE, k)
+            url = git_handler.build_url_from_repo_name(ARM_MRR_REMOTE, k)
             check_remote_list.append((url, v[1], False))
 
         for file_obj in self.manifest_file_name_to_obj_dict.values():
@@ -448,7 +457,7 @@ class CReleaseManager(object):
                 if not new_ref:
                     continue
 
-                url = build_url_from_repo_name(
+                url = git_handler.build_url_from_repo_name(
                     file_obj.remote_key_to_remote_dict[v.remote_key],
                     v.full_name,
                 )
@@ -460,8 +469,8 @@ class CReleaseManager(object):
         # check concurrently that none of the repositories in mrr_url_set
         # has a branch called 'create_branch_name'
         self.logger.info(
-            "Starting %d concurrent threads to validate "
-            "remote repositories state..." % len(check_remote_list)
+            "Starting {} concurrent threads to validate "
+            "remote repositories state...".format(len(check_remote_list))
         )
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=len(check_remote_list)
@@ -500,7 +509,7 @@ class CReleaseManager(object):
         d = {}
         for k, v in ordered_pairs:
             if k in d:
-                raise ValueError("duplicate key: %r" % (k,))
+                raise ValueError("duplicate key: {}".format((k,)))
             else:
                 d[k] = v
         return d
@@ -526,7 +535,7 @@ class CReleaseManager(object):
 
             # checking 1
             _dict = self.external_repo_name_to_cloned_repo_dict[
-                MBL_MANIFEST_REPO_NAME
+                manifest.MBL_MANIFEST_REPO_NAME
             ]
             if file_name != COMMON_SD_KEY_NAME:
                 found = file_name in self.manifest_file_name_to_obj_dict
@@ -570,8 +579,9 @@ class CReleaseManager(object):
     def parse_and_validate_input_file(self):
         """..."""
         self.logger.info(
-            "Parsing and validating input file %s..."
-            % self.args.refs_input_file_path
+            "Parsing and validating input file {}...".format(
+                self.args.refs_input_file_path
+            )
         )
 
         # Open the given input and parse into new_revision_dict dictionary,
@@ -597,34 +607,38 @@ class CReleaseManager(object):
         """
         if EXTERNAL_SD_KEY_NAME not in nrd:
             raise ValueError(
-                "main entry key %s could not be found in user input file"
-                % EXTERNAL_SD_KEY_NAME
+                "main entry key {} could not be found "
+                "in user input file".format(EXTERNAL_SD_KEY_NAME)
             )
-        if MBL_MANIFEST_REPO_NAME not in nrd[EXTERNAL_SD_KEY_NAME]:
+        if manifest.MBL_MANIFEST_REPO_NAME not in nrd[EXTERNAL_SD_KEY_NAME]:
 
             raise ValueError(
-                "%s key could not be found in user input "
-                "file under %s"
-                % (MBL_MANIFEST_REPO_NAME, EXTERNAL_SD_KEY_NAME)
+                "{} key could not be found in user input "
+                "file under {}".format(
+                    manifest.MBL_MANIFEST_REPO_NAME, EXTERNAL_SD_KEY_NAME
+                )
             )
 
         for l in nrd[EXTERNAL_SD_KEY_NAME].values():
             if len(l) != 2:
                 raise ValueError(
-                    "Bad length for list %s - All lists under key %s in user "
-                    "input file must be of length 2!"
-                    % (l, EXTERNAL_SD_KEY_NAME)
+                    "Bad length for list {} - All lists under key {} in user "
+                    "input file must be of length 2!".format(
+                        l, EXTERNAL_SD_KEY_NAME
+                    )
                 )
 
             if l[0] == l[1]:
                 raise ValueError(
-                    "Bad list %s - non-distinct values under "
-                    "key %s in user input file!" % (l, EXTERNAL_SD_KEY_NAME)
+                    "Bad list {} - non-distinct values under "
+                    "key {} in user input file!".format(
+                        l, EXTERNAL_SD_KEY_NAME
+                    )
                 )
 
         # set the clone ref for mbl-manifest
         self.mbl_manifest_clone_ref = nrd[EXTERNAL_SD_KEY_NAME][
-            MBL_MANIFEST_REPO_NAME
+            manifest.MBL_MANIFEST_REPO_NAME
         ][0]
 
         """
@@ -662,22 +676,6 @@ class CReleaseManager(object):
                                 EXTERNAL_SD_KEY_NAME,
                             )
                         )
-
-        # # do not allow for the same repo name in file specific SD to have the
-        # # same branch name, or the same tag name (equal tag and branch name
-        # # in separate repos is allowed, but not recommended!)
-        # tup_list = []
-        # for (sd_name, sd) in nrd.items():
-        #     if sd_name in [EXTERNAL_SD_KEY_NAME, COMMON_SD_KEY_NAME]:
-        #         continue
-        #     tup_list += [(v, k) for k, v in sd.items()]
-        # for t in tup_list:
-        #     if tup_list.count(t) > 1:
-        #         raise ValueError(
-        #             "Invalid input file %s : The pair %s appears in more "
-        #             "than one file specific SD! (put in %s?)"
-        #             % (self.args.refs_input_file_path, t, COMMON_SD_KEY_NAME)
-        #         )
 
         self.new_revisions_dict = nrd
 
@@ -721,7 +719,7 @@ class CReleaseManager(object):
             src_cmt_ref = repo.handle.head.commit
 
         # Create the new branch/tag
-        if new_rev.startswith(REF_BRANCH_PREFIX):
+        if new_rev.startswith(git_handler.REF_BRANCH_PREFIX):
             new_branch = repo.handle.create_head(new_rev_short)
             assert new_branch.commit == src_cmt_ref
             new_branch.checkout()
@@ -729,9 +727,10 @@ class CReleaseManager(object):
 
             summary_log_list.append(
                 SUMMARY_H_BRANCH
-                + "Created and checkout new branch %s from  %s "
-                "on repository % s"
-                % (new_rev_short, src_cmt_ref.hexsha, repo.full_name)
+                + "Created and checkout new branch {} from  {} "
+                "on repository {}".format(
+                    new_rev_short, src_cmt_ref.hexsha, repo.full_name
+                )
             )
         else:
             new_tag = repo.handle.create_tag(new_rev_short, ref=src_cmt_ref)
@@ -741,13 +740,14 @@ class CReleaseManager(object):
 
             summary_log_list.append(
                 SUMMARY_H_TAG
-                + "Created and checkout new tag %s on commit %s on "
-                "repository % s"
-                % (new_rev_short, src_cmt_ref.hexsha, repo.full_name)
+                + "Created and checkout new tag {} on commit {} on "
+                "repository {}".format(
+                    new_rev_short, src_cmt_ref.hexsha, repo.full_name
+                )
             )
 
         if repo.full_name not in [
-            MBL_MANIFEST_REPO_NAME,
+            manifest.MBL_MANIFEST_REPO_NAME,
             MBL_LINKED_REPOSITORIES_REPO_NAME,
         ]:
             if self.diag_repo_push(repo):
@@ -772,8 +772,7 @@ class CReleaseManager(object):
             return
 
         self.logger.info(
-            "Start updating file %s in repository %s (if needed)"
-            % (
+            "Start updating file {} in repository {} (if needed)".format(
                 MBL_LINKED_REPOSITORIES_REPO_PATH,
                 MBL_LINKED_REPOSITORIES_REPO_NAME,
             )
@@ -784,17 +783,19 @@ class CReleaseManager(object):
             git_repo.clone_dest_path, MBL_LINKED_REPOSITORIES_REPO_PATH
         )
         if not os.path.exists(file_path):
-            raise FileNotFoundError("File %s not found!" % file_path)
+            raise FileNotFoundError("File {} not found!".format(file_path))
 
         # Create backup
         self.logger.info(
-            "Created backup file %s from %s"
-            % (file_path + FILE_BACKUP_SUFFIX, file_path)
+            "Created backup file {} from {}".format(
+                file_path + FILE_BACKUP_SUFFIX, file_path
+            )
         )
         summary_log_list.append(
             SUMMARY_H_BKP
-            + "Created back file %s from %s"
-            % (file_path + FILE_BACKUP_SUFFIX, file_path)
+            + "Created back file {} from {}".format(
+                file_path + FILE_BACKUP_SUFFIX, file_path
+            )
         )
         copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
 
@@ -811,7 +812,7 @@ class CReleaseManager(object):
         d = self.external_repo_name_to_cloned_repo_dict
         for repo_name in self.new_revisions_dict[EXTERNAL_SD_KEY_NAME].keys():
             if repo_name not in [
-                MBL_MANIFEST_REPO_NAME,
+                manifest.MBL_MANIFEST_REPO_NAME,
                 MBL_LINKED_REPOSITORIES_REPO_NAME,
             ]:
 
@@ -832,8 +833,8 @@ class CReleaseManager(object):
                                 for m in matches:
                                     if m != branch_name:
                                         line = line.replace(
-                                            ";%s;" % m,
-                                            ";branch=%s;" % branch_name,
+                                            ";{};".format(m),
+                                            ";branch={};".format(branch_name),
                                         )
                                         is_changed = True
 
@@ -854,7 +855,8 @@ class CReleaseManager(object):
                             for m in matches:
                                 if m != commit_hash.hexsha:
                                     line = line.replace(
-                                        '"%s"' % m, '"%s"' % commit_hash
+                                        '"{}"'.format(m),
+                                        '"{}"'.format(commit_hash),
                                     )
                                     is_changed = True
                             next_line_replace = False
@@ -864,15 +866,15 @@ class CReleaseManager(object):
             ret_list = git_repo.handle.index.add([file_path], write=True)
             assert len(ret_list) == 1
             git_repo.handle.index.commit(
-                "%s Automatic Commit Message" % program_name
+                "{} Automatic Commit Message".format(program_name)
             )
             self.logger.info(
-                "File %s has been modified and committed" % file_path
+                "File {} has been modified and committed".format(file_path)
             )
             summary_log_list.append(
                 SUMMARY_H_MODIFY_FILE
-                + "File %s has been modified and committed on repository %s"
-                % (file_path, git_repo.full_name)
+                + "File {} has been modified and committed on "
+                "repository {}".format(file_path, git_repo.full_name)
             )
 
         if self.diag_repo_push(git_repo):
@@ -919,18 +921,19 @@ class CReleaseManager(object):
         if self.args.diagnostic_mode:
             print("\n=============================")
             print("Diagnostic Mode - BEFORE PUSH TO REMOTE")
-            print("New branch : %s" % repo.handle.active_branch.name)
+            print("New branch : {}".format(repo.handle.active_branch.name))
             if repo.full_name in [
-                MBL_MANIFEST_REPO_NAME,
+                manifest.MBL_MANIFEST_REPO_NAME,
                 MBL_LINKED_REPOSITORIES_REPO_NAME,
             ]:
                 print(
-                    "New Commit SHA : %s"
-                    % repo.handle.active_branch.commit.hexsha
+                    "New Commit SHA : {}".format(
+                        repo.handle.active_branch.commit.hexsha
+                    )
                 )
 
-            print("Remote URL : %s" % repo.url)
-            print("Repository clone path : %s" % repo.clone_dest_path)
+            print("Remote URL : {}".format(repo.url))
+            print("Repository clone path : {}".format(repo.clone_dest_path))
             answer = input(
                 "Press n/N to continue without pushing, "
                 "q/Q to quit, "
@@ -946,7 +949,7 @@ class CReleaseManager(object):
     def mbl_manifest_repo_push(self):
         """Push MBL_MANIFEST_REPO_NAME repo to remote."""
         repo = self.external_repo_name_to_cloned_repo_dict[
-            MBL_MANIFEST_REPO_NAME
+            manifest.MBL_MANIFEST_REPO_NAME
         ]
         repo.handle.git.add(update=True)
         repo.handle.index.commit("release manager automatic commit")
@@ -980,7 +983,7 @@ class CReleaseManager(object):
         for (main_key, sd) in self.new_revisions_dict.items():
             for (key, rev) in sd.items():
                 if main_key == EXTERNAL_SD_KEY_NAME:
-                    if key != MBL_MANIFEST_REPO_NAME:
+                    if key != manifest.MBL_MANIFEST_REPO_NAME:
                         prefix, name = key.rsplit("/", 1)
                         clone_tup_list.append(
                             # tuple
@@ -1030,8 +1033,9 @@ class CReleaseManager(object):
         self.logger.debug(pformat(clone_tup_list))
 
         self.logger.info(
-            "Starting %d concurrent threads to clone repositories..."
-            % len(clone_tup_list)
+            "Starting {} concurrent threads to clone repositories...".format(
+                len(clone_tup_list)
+            )
         )
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=len(clone_tup_list)
@@ -1086,9 +1090,9 @@ class CReleaseManager(object):
         self.logger.info("===============================================\n")
 
         if not self.args.remove_temporary_folder:
-            self.logger.info("Temporary folder: %s" % self.tmp_dir_path)
+            self.logger.info("Temporary folder: {}".format(self.tmp_dir_path))
         self.logger.info(
-            "Time running: %s" % int(time.time() - self.start_time)
+            "Time running: {}".format(int(time.time() - self.start_time))
         )
 
         self.logger.info("\n== Event log ==\n")
@@ -1110,14 +1114,16 @@ class CReleaseManager(object):
             file_path = os.path.abspath(values)
             if not os.path.isfile(file_path):
                 raise argparse.ArgumentTypeError(
-                    "The path %s does not exist!" % file_path
+                    "The path {} does not exist!".format(file_path)
                 )
             filename, file_extension = os.path.splitext(
                 os.path.basename(file_path)
             )
             if not file_extension == ".json":
                 raise argparse.ArgumentTypeError(
-                    "File %s does not end with '.json' prefix!" % file_path
+                    "File {} does not end with '.json' prefix!".format(
+                        file_path
+                    )
                 )
             setattr(namespace, self.dest, file_path)
 

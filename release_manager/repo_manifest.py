@@ -15,13 +15,16 @@ to be fetched.
 import logging
 from pprint import pformat
 
-from git_utils import *
 from main import program_name
 
-
 logger = logging.getLogger(program_name)
-
 MRR_MANIFEST_REMOTE_KEY = "github"
+ARM_MRR_REPO_NAME_PREFIX = "armmbed"
+MBL_MANIFEST_REPO_SHORT_NAME = "mbl-manifest"
+MBL_MANIFEST_REPO_NAME = "{}/{}".format(
+    ARM_MRR_REPO_NAME_PREFIX, MBL_MANIFEST_REPO_SHORT_NAME
+)
+GIT_REMOTE_NAME = "origin"
 
 
 class CRepoManifestFile(object):
