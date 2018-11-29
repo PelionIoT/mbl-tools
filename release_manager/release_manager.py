@@ -40,7 +40,7 @@ import sys
 from git import GitCommandError
 from git_handler import CGitClonedRepository
 import git_handler
-import repo_manifest as manifest
+import repo_manifest as mnf
 from repo_manifest import CRepoManifestFile, CRepoManifestProject
 from main import program_name
 
@@ -80,7 +80,7 @@ ARM_MRR_URL_PATTERN = "ssh://git@github.com:/{}/{}.git"
 #
 MBL_LINKED_REPOSITORIES_REPO_SHORT_NAME = "meta-mbl"
 MBL_LINKED_REPOSITORIES_REPO_NAME = "{}/{}".format(
-    manifest.ARM_MRR_REPO_NAME_PREFIX, MBL_LINKED_REPOSITORIES_REPO_SHORT_NAME
+    mnf.ARM_MRR_REPO_NAME_PREFIX, MBL_LINKED_REPOSITORIES_REPO_SHORT_NAME
 )
 MBL_LINKED_REPOSITORIES_REPO_PATH = "conf/distro/mbl-linked-repositories.conf"
 
@@ -214,7 +214,7 @@ class CReleaseManager(object):
         else:
             self.logger.info(_str)
             try:
-                repo.handle.git.push(manifest.GIT_REMOTE_NAME, new_rev)
+                repo.handle.git.push(mnf.GIT_REMOTE_NAME, new_rev)
                 self.already_pushed_repository_list.append((repo, new_rev))
             except GitCommandError as err:
                 # We've already checked that the branch does not exist.
@@ -233,26 +233,26 @@ class CReleaseManager(object):
         # manifest_clone_ref
         self.logger.info(
             "Cloning repository {} checkout branch {}".format(
-                manifest.MBL_MANIFEST_REPO_NAME, self.mbl_manifest_clone_ref
+                mnf.MBL_MANIFEST_REPO_NAME, self.mbl_manifest_clone_ref
             )
         )
 
         adict[
-            manifest.MBL_MANIFEST_REPO_NAME
+            mnf.MBL_MANIFEST_REPO_NAME
         ] = self.create_and_update_new_revisions_worker(
             ARM_MRR_REMOTE,
-            manifest.ARM_MRR_REPO_NAME_PREFIX,
-            manifest.MBL_MANIFEST_REPO_SHORT_NAME,
+            mnf.ARM_MRR_REPO_NAME_PREFIX,
+            mnf.MBL_MANIFEST_REPO_SHORT_NAME,
             self.tmp_dir_path,
             self.mbl_manifest_clone_ref,
-            nrd[EXTERNAL_SD_KEY_NAME][manifest.MBL_MANIFEST_REPO_NAME][1],
+            nrd[EXTERNAL_SD_KEY_NAME][mnf.MBL_MANIFEST_REPO_NAME][1],
         )
 
         # get all files ending with .xml inside this directory.
         # We assume they are all manifest files
         xml_file_list = []
         path = os.path.join(
-            adict[manifest.MBL_MANIFEST_REPO_NAME].clone_dest_path, "*.xml"
+            adict[mnf.MBL_MANIFEST_REPO_NAME].clone_dest_path, "*.xml"
         )
         for file_name in glob.glob(path):
             xml_file_list.append(os.path.abspath(file_name))
@@ -396,7 +396,7 @@ class CReleaseManager(object):
                 summary_log_list.append(
                     SUMMARY_H_MODIFY_FILE
                     + "File {} has been modified on repository {}".format(
-                        file_path, manifest.MBL_MANIFEST_REPO_NAME
+                        file_path, mnf.MBL_MANIFEST_REPO_NAME
                     )
                 )
 
@@ -535,7 +535,7 @@ class CReleaseManager(object):
 
             # checking 1
             _dict = self.external_repo_name_to_cloned_repo_dict[
-                manifest.MBL_MANIFEST_REPO_NAME
+                mnf.MBL_MANIFEST_REPO_NAME
             ]
             if file_name != COMMON_SD_KEY_NAME:
                 found = file_name in self.manifest_file_name_to_obj_dict
@@ -610,12 +610,12 @@ class CReleaseManager(object):
                 "main entry key {} could not be found "
                 "in user input file".format(EXTERNAL_SD_KEY_NAME)
             )
-        if manifest.MBL_MANIFEST_REPO_NAME not in nrd[EXTERNAL_SD_KEY_NAME]:
+        if mnf.MBL_MANIFEST_REPO_NAME not in nrd[EXTERNAL_SD_KEY_NAME]:
 
             raise ValueError(
                 "{} key could not be found in user input "
                 "file under {}".format(
-                    manifest.MBL_MANIFEST_REPO_NAME, EXTERNAL_SD_KEY_NAME
+                    mnf.MBL_MANIFEST_REPO_NAME, EXTERNAL_SD_KEY_NAME
                 )
             )
 
@@ -638,7 +638,7 @@ class CReleaseManager(object):
 
         # set the clone ref for mbl-manifest
         self.mbl_manifest_clone_ref = nrd[EXTERNAL_SD_KEY_NAME][
-            manifest.MBL_MANIFEST_REPO_NAME
+            mnf.MBL_MANIFEST_REPO_NAME
         ][0]
 
         """
@@ -747,7 +747,7 @@ class CReleaseManager(object):
             )
 
         if repo.full_name not in [
-            manifest.MBL_MANIFEST_REPO_NAME,
+            mnf.MBL_MANIFEST_REPO_NAME,
             MBL_LINKED_REPOSITORIES_REPO_NAME,
         ]:
             if self.diag_repo_push(repo):
@@ -812,7 +812,7 @@ class CReleaseManager(object):
         d = self.external_repo_name_to_cloned_repo_dict
         for repo_name in self.new_revisions_dict[EXTERNAL_SD_KEY_NAME].keys():
             if repo_name not in [
-                manifest.MBL_MANIFEST_REPO_NAME,
+                mnf.MBL_MANIFEST_REPO_NAME,
                 MBL_LINKED_REPOSITORIES_REPO_NAME,
             ]:
 
@@ -923,7 +923,7 @@ class CReleaseManager(object):
             print("Diagnostic Mode - BEFORE PUSH TO REMOTE")
             print("New branch : {}".format(repo.handle.active_branch.name))
             if repo.full_name in [
-                manifest.MBL_MANIFEST_REPO_NAME,
+                mnf.MBL_MANIFEST_REPO_NAME,
                 MBL_LINKED_REPOSITORIES_REPO_NAME,
             ]:
                 print(
@@ -949,7 +949,7 @@ class CReleaseManager(object):
     def mbl_manifest_repo_push(self):
         """Push MBL_MANIFEST_REPO_NAME repo to remote."""
         repo = self.external_repo_name_to_cloned_repo_dict[
-            manifest.MBL_MANIFEST_REPO_NAME
+            mnf.MBL_MANIFEST_REPO_NAME
         ]
         repo.handle.git.add(update=True)
         repo.handle.index.commit("release manager automatic commit")
@@ -983,7 +983,7 @@ class CReleaseManager(object):
         for (main_key, sd) in self.new_revisions_dict.items():
             for (key, rev) in sd.items():
                 if main_key == EXTERNAL_SD_KEY_NAME:
-                    if key != manifest.MBL_MANIFEST_REPO_NAME:
+                    if key != mnf.MBL_MANIFEST_REPO_NAME:
                         prefix, name = key.rsplit("/", 1)
                         clone_tup_list.append(
                             # tuple
