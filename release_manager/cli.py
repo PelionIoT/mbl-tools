@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2017, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -32,7 +32,7 @@ import sys
 
 import release_manager
 
-program_name = "release_manager"
+program_name = "mbl-app-release-manager"
 
 
 def _main():

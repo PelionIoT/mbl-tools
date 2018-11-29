@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -36,13 +36,11 @@ from pprint import pformat
 from shutil import copyfile, rmtree
 import sys
 
+import git
 
-from git import GitCommandError
-from git_handler import CGitClonedRepository
-import git_handler
+import git_handler as gith
 import repo_manifest as mnf
-from repo_manifest import CRepoManifestFile, CRepoManifestProject
-from main import program_name
+import cli
 
 
 #
@@ -113,8 +111,8 @@ class CReleaseManager(object):
         # initialize self.logger  - set logging level to INFO at this
         # initial stage. Each log entry will be at least 2 lines.
         logging.basicConfig(level=logging.INFO, format=LOGGING_REGULAR_FORMAT)
-        self.logger = logging.getLogger(program_name)
-        self.logger.info("Starting {}".format(program_name))
+        self.logger = logging.getLogger(cli.program_name)
+        self.logger.info("Starting {}".format(cli.program_name))
 
         # dictionary of CRepoManifestFile objects
         self.manifest_file_name_to_obj_dict = {}
@@ -184,7 +182,7 @@ class CReleaseManager(object):
         )
 
     def __enter__(self):
-        """..."""
+        """Empty enter function (must put to define __exit__"""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -216,7 +214,7 @@ class CReleaseManager(object):
             try:
                 repo.handle.git.push(mnf.GIT_REMOTE_NAME, new_rev)
                 self.already_pushed_repository_list.append((repo, new_rev))
-            except GitCommandError as err:
+            except git.GitCommandError as err:
                 # We've already checked that the branch does not exist.
                 # That means it has been created by another concurrent thread
                 if "reference already exists" not in err.stderr:
@@ -332,12 +330,10 @@ class CReleaseManager(object):
                 if not revision:
                     revision = default_rev
 
-                base_name = git_handler.get_file_name_from_path(
-                    file_path, False
-                )
+                base_name = gith.get_file_name_from_path(file_path, False)
 
                 # create project and insert to dictionary
-                proj = CRepoManifestProject(
+                proj = mnf.CRepoManifestProject(
                     full_name, prefix, short_name, remote_key, url, revision
                 )
                 name_to_proj_dict[full_name] = proj
@@ -347,16 +343,14 @@ class CReleaseManager(object):
                 new_ref = self.get_new_ref_from_new_revision_dict(
                     base_name, full_name
                 )
-                if new_ref == git_handler.REF_BRANCH_PREFIX + default_rev:
+                if new_ref == (gith.REF_BRANCH_PREFIX + default_rev):
                     del atype.attrib["revision"]
                     is_changed = True
                 elif new_ref:
-                    if git_handler.is_valid_git_commit_hash(new_ref):
+                    if gith.is_valid_git_commit_hash(new_ref):
                         atype.set("revision", new_ref)
                     else:
-                        atype.set(
-                            "revision", git_handler.get_base_rev_name(new_ref)
-                        )
+                        atype.set("revision", gith.get_base_rev_name(new_ref))
                     is_changed = True
 
                 if is_changed and "upstream" in atype.attrib:
@@ -365,7 +359,7 @@ class CReleaseManager(object):
 
             assert base_name
 
-            rmf = CRepoManifestFile(
+            rmf = mnf.CRepoManifestFile(
                 file_path,
                 base_name,
                 tree,
@@ -407,14 +401,10 @@ class CReleaseManager(object):
     @staticmethod
     def validate_remote_repositories_state_helper(url, new_rev):
         """Check that new rev does not exist on remote."""
-        if new_rev.startswith(git_handler.REF_BRANCH_PREFIX):
-            return git_handler.does_branch_exist_in_remote_repo(
-                url, new_rev, False
-            )
-        if new_rev.startswith(git_handler.REF_TAG_PREFIX):
-            return git_handler.does_tag_exist_in_remote_repo(
-                url, new_rev, False
-            )
+        if new_rev.startswith(gith.REF_BRANCH_PREFIX):
+            return gith.does_branch_exist_in_remote_repo(url, new_rev, False)
+        if new_rev.startswith(gith.REF_TAG_PREFIX):
+            return gith.does_tag_exist_in_remote_repo(url, new_rev, False)
 
         return True
 
@@ -442,7 +432,7 @@ class CReleaseManager(object):
 
         # add all entries from EXTERNAL_SD_KEY_NAME SD:
         for (k, v) in self.new_revisions_dict[EXTERNAL_SD_KEY_NAME].items():
-            url = git_handler.build_url_from_repo_name(ARM_MRR_REMOTE, k)
+            url = gith.build_url_from_repo_name(ARM_MRR_REMOTE, k)
             check_remote_list.append((url, v[1], False))
 
         for file_obj in self.manifest_file_name_to_obj_dict.values():
@@ -451,13 +441,13 @@ class CReleaseManager(object):
                 # k is a repository name and v is a matching project
 
                 new_ref = self.get_new_ref_from_new_revision_dict(
-                    file_obj.filename, k
+                    file_obj.file_name, k
                 )
 
                 if not new_ref:
                     continue
 
-                url = git_handler.build_url_from_repo_name(
+                url = gith.build_url_from_repo_name(
                     file_obj.remote_key_to_remote_dict[v.remote_key],
                     v.full_name,
                 )
@@ -534,13 +524,13 @@ class CReleaseManager(object):
                 continue
 
             # checking 1
-            _dict = self.external_repo_name_to_cloned_repo_dict[
+            manifest_repo_sd = self.external_repo_name_to_cloned_repo_dict[
                 mnf.MBL_MANIFEST_REPO_NAME
             ]
             if file_name != COMMON_SD_KEY_NAME:
                 found = file_name in self.manifest_file_name_to_obj_dict
                 if not found:
-                    mbl_manifest_path = _dict.clone_dest_path
+                    mbl_manifest_path = manifest_repo_sd.clone_dest_path
                     raise ValueError(
                         "main entry key {} in user input file "
                         "is not found in {}".format(
@@ -577,7 +567,7 @@ class CReleaseManager(object):
         self.validate_remote_repositories_state()
 
     def parse_and_validate_input_file(self):
-        """..."""
+        """Parse JSON file"""
         self.logger.info(
             "Parsing and validating input file {}...".format(
                 self.args.refs_input_file_path
@@ -680,7 +670,11 @@ class CReleaseManager(object):
         self.new_revisions_dict = nrd
 
     def get_new_ref_from_new_revision_dict(self, sd_key_name, repo_name):
-        """..."""
+        """
+        Get the new reference from the new_revision_dict.
+
+        User gives a repository name and an SD (sub-dictionary) name.
+        """
         if (sd_key_name in self.new_revisions_dict) and (
             repo_name in self.new_revisions_dict[sd_key_name]
         ):
@@ -707,7 +701,7 @@ class CReleaseManager(object):
         new_rev,
     ):
         """create_and_update_new_revisions_worker."""
-        repo = CGitClonedRepository(
+        repo = gith.CGitClonedRepository(
             remote, name_prefix, short_name, clone_base_path, cur_rev
         )
 
@@ -719,7 +713,7 @@ class CReleaseManager(object):
             src_cmt_ref = repo.handle.head.commit
 
         # Create the new branch/tag
-        if new_rev.startswith(git_handler.REF_BRANCH_PREFIX):
+        if new_rev.startswith(gith.REF_BRANCH_PREFIX):
             new_branch = repo.handle.create_head(new_rev_short)
             assert new_branch.commit == src_cmt_ref
             new_branch.checkout()
@@ -866,7 +860,7 @@ class CReleaseManager(object):
             ret_list = git_repo.handle.index.add([file_path], write=True)
             assert len(ret_list) == 1
             git_repo.handle.index.commit(
-                "{} Automatic Commit Message".format(program_name)
+                "{} Automatic Commit Message".format(cli.program_name)
             )
             self.logger.info(
                 "File {} has been modified and committed".format(file_path)
@@ -1008,7 +1002,7 @@ class CReleaseManager(object):
         for file_obj in self.manifest_file_name_to_obj_dict.values():
             for (name, proj) in file_obj.repo_name_to_proj_dict.items():
                 new_ref = self.get_new_ref_from_new_revision_dict(
-                    file_obj.filename, proj.full_name
+                    file_obj.file_name, proj.full_name
                 )
                 if proj.is_arm_mrr and new_ref:
                     prefix, name = proj.full_name.rsplit("/", 1)
@@ -1022,10 +1016,12 @@ class CReleaseManager(object):
                             ],
                             prefix,
                             name,
-                            os.path.join(self.tmp_dir_path, file_obj.filename),
+                            os.path.join(
+                                self.tmp_dir_path, file_obj.file_name
+                            ),
                             proj.revision,
                             new_ref,
-                            file_obj.filename,
+                            file_obj.file_name,
                         )
                     )
 
@@ -1116,7 +1112,7 @@ class CReleaseManager(object):
                 raise argparse.ArgumentTypeError(
                     "The path {} does not exist!".format(file_path)
                 )
-            filename, file_extension = os.path.splitext(
+            file_name, file_extension = os.path.splitext(
                 os.path.basename(file_path)
             )
             if not file_extension == ".json":
@@ -1131,7 +1127,7 @@ class CReleaseManager(object):
         """Define and parse script input arguments."""
         parser = argparse.ArgumentParser(
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            description=program_name + " script",
+            description=cli.program_name + " script",
         )
 
         parser.add_argument(

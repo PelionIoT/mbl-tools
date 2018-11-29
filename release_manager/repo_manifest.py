@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -15,9 +15,9 @@ to be fetched.
 import logging
 from pprint import pformat
 
-from main import program_name
+import cli
 
-logger = logging.getLogger(program_name)
+logger = logging.getLogger(cli.program_name)
 MRR_MANIFEST_REMOTE_KEY = "github"
 ARM_MRR_REPO_NAME_PREFIX = "armmbed"
 MBL_MANIFEST_REPO_SHORT_NAME = "mbl-manifest"
@@ -38,7 +38,7 @@ class CRepoManifestFile(object):
     def __init__(
         self,
         path,
-        filename,
+        file_name,
         tree,
         root,
         default_rev,
@@ -50,7 +50,7 @@ class CRepoManifestFile(object):
         self.path = path
 
         # file name, without the suffix
-        self.filename = filename
+        self.file_name = file_name
 
         # entire element hierarchy
         self.tree = tree

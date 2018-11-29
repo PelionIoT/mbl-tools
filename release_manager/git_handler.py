@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -14,11 +14,10 @@ Also holds Git Common definitions and helper functions.
 import os
 
 import git
-from git import Repo
 import logging
 from pprint import pformat
 
-from main import program_name
+import cli
 
 
 REF_BRANCH_PREFIX = "refs/heads/"
@@ -60,7 +59,7 @@ def does_branch_exist_in_remote_repo(repo_url, branch_name, is_base_name):
     'repo_url.
     """
     refs = list_remote_references(repo_url)
-    if all([is_base_name, ("refs/heads/" + branch_name) in refs]):
+    if all([is_base_name, (REF_BRANCH_PREFIX + branch_name) in refs]):
         return True
     if branch_name in refs:
         return True
@@ -76,7 +75,7 @@ def does_tag_exist_in_remote_repo(repo_url, tag_name, is_base_name):
     """
     refs = list_remote_references(repo_url)
     if is_base_name:
-        if ("refs/tags/" + tag_name) in refs:
+        if (REF_TAG_PREFIX + tag_name) in refs:
             return True
     if tag_name in refs:
         return True
@@ -84,12 +83,12 @@ def does_tag_exist_in_remote_repo(repo_url, tag_name, is_base_name):
 
 
 def get_file_name_from_path(path, add_suffix_flag):
-    """Get a short file name from path, or a full filename with suffix."""
-    filename = os.path.basename(path)
+    """Get a short file name from path, or a full file_name with suffix."""
+    file_name = os.path.basename(path)
     if not add_suffix_flag:
-        path_tokens = os.path.splitext(filename)
-        filename = path_tokens[0]
-    return filename
+        path_tokens = os.path.splitext(file_name)
+        file_name = path_tokens[0]
+    return file_name
 
 
 def get_base_rev_name(full_rev_name):
@@ -189,7 +188,7 @@ class CGitClonedRepository(object):
         self.full_name = name_prefix + "/" + short_name
 
         # get logger
-        self.logger = logging.getLogger(program_name)
+        self.logger = logging.getLogger(cli.program_name)
 
         # remote URL prefix
         self.remote_url_prefix = remote
@@ -278,10 +277,10 @@ class CGitClonedRepository(object):
                 "Cloning repository {} to {} and checking out "
                 "commit hash {}".format(url, dest_full_path, checkout_revision)
             )
-            cloned_repo = Repo.clone_from(url, dest_full_path)
+            cloned_repo = git.Repo.clone_from(url, dest_full_path)
             cloned_repo.git.checkout(checkout_revision)
         else:
-            cloned_repo = Repo.clone_from(
+            cloned_repo = git.Repo.clone_from(
                 url, dest_full_path, branch=checkout_revision
             )
             self.logger.info(
@@ -289,5 +288,5 @@ class CGitClonedRepository(object):
                 "branch {}".format(url, dest_full_path, checkout_revision)
             )
 
-        assert cloned_repo.__class__ is Repo
+        assert cloned_repo.__class__ is git.Repo
         return cloned_repo
