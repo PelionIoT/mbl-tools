@@ -182,7 +182,7 @@ class CReleaseManager(object):
         )
 
     def __enter__(self):
-        """Empty enter function (must put to define __exit__"""
+        """Empty enter function (must put to define __exit__."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -567,7 +567,7 @@ class CReleaseManager(object):
         self.validate_remote_repositories_state()
 
     def parse_and_validate_input_file(self):
-        """Parse JSON file"""
+        """Parse JSON input file."""
         self.logger.info(
             "Parsing and validating input file {}...".format(
                 self.args.refs_input_file_path

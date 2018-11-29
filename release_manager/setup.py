@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-# setup.py file for Mbed Linux OS Application Release Manager package.
+"""setup.py file for Mbed Linux OS Application Release Manager package."""
 
 import os
 from setuptools import setup
