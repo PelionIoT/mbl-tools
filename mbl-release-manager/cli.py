@@ -32,7 +32,7 @@ import sys
 
 import release_manager
 
-program_name = "mbl-app-release-manager"
+program_name = "mbl-release-manager"
 
 
 def _main():
