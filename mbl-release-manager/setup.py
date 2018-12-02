@@ -22,6 +22,7 @@ setup(
     author="Arm Ltd.",
     author_email="",
     license="BSD-3-Clause",
+    install_requires=['in_place', 'gitpython'],
     py_modules=[
         "release_manager",
         "repo_manifest",
