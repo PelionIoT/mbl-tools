@@ -67,7 +67,3 @@ def _main():
 
         # mark success
         rm.completed = True
-
-
-if __name__ == "__main__":
-    sys.exit(_main())

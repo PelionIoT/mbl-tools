@@ -609,22 +609,44 @@ class CReleaseManager(object):
                 )
             )
 
-        for l in nrd[EXTERNAL_SD_KEY_NAME].values():
-            if len(l) != 2:
+        for value_list in nrd[EXTERNAL_SD_KEY_NAME].values():
+            if len(value_list) != 2:
                 raise ValueError(
                     "Bad length for list {} - All lists under key {} in user "
                     "input file must be of length 2!".format(
-                        l, EXTERNAL_SD_KEY_NAME
+                        value_list, EXTERNAL_SD_KEY_NAME
                     )
                 )
 
-            if l[0] == l[1]:
+            if value_list[0] == value_list[1]:
                 raise ValueError(
                     "Bad list {} - non-distinct values under "
                     "key {} in user input file!".format(
-                        l, EXTERNAL_SD_KEY_NAME
+                        value_list, EXTERNAL_SD_KEY_NAME
                     )
                 )
+
+        # Check that all revisions are valid
+        for sd in nrd:
+            if sd == EXTERNAL_SD_KEY_NAME:
+                for refs in nrd[sd].values():
+                    if not all(
+                        [
+                            gith.is_valid_revision(refs[0]),
+                            gith.is_valid_revision(refs[1]),
+                        ]
+                    ):
+                        raise ValueError(
+                            "Invalid revision {} or {} at input file under SD "
+                            "{}!".format(refs[0], refs[1], sd)
+                        )
+            else:
+                for ref in nrd[sd].values():
+                    if not gith.is_valid_revision(ref):
+                        raise ValueError(
+                            "Invalid revision {} at input file "
+                            "under SD {}".format(ref, sd)
+                        )
 
         # set the clone ref for mbl-manifest
         self.mbl_manifest_clone_ref = nrd[EXTERNAL_SD_KEY_NAME][

@@ -209,23 +209,18 @@ class CGitClonedRepository(object):
         try to clone them in the else block.
         """
         if is_valid_revision(self.checkout_rev):
-            self.handle = self.clone_repo(
-                self.clone_dest_path, self.url, self.checkout_rev
-            )
+            self.handle = self.clone_repo(self.checkout_rev)
         else:
 
             # try to clone as a short name branch
             try:
                 self.handle = self.clone_repo(
-                    self.clone_dest_path,
-                    self.url,
-                    (REF_BRANCH_PREFIX + self.checkout_rev),
+                    (REF_BRANCH_PREFIX + self.checkout_rev)
                 )
-
             except ValueError:
                 # try to clone as a short name tag
                 self.handle = self.clone_repo(
-                    self.clone_dest_path, self.url, self.checkout_rev
+                    (REF_TAG_PREFIX + self.checkout_rev)
                 )
         self.logger.debug(
             "Created new {} : {}".format(
@@ -238,9 +233,7 @@ class CGitClonedRepository(object):
             )
         )
 
-    def clone_repo(
-        self, dest_full_path, url, checkout_rev_name="refs/heads/master"
-    ):
+    def clone_repo(self, checkout_rev_name="refs/heads/master"):
         """
         Clone a new repository from URL.
 
@@ -248,6 +241,8 @@ class CGitClonedRepository(object):
         checkout revision 'checkout_rev_name' Return a cloned repository
         object.
         """
+        url = self.url
+        dest_path = self.clone_dest_path
         is_commit_hash = False
         if is_valid_git_branch_name(
             checkout_rev_name
@@ -267,25 +262,25 @@ class CGitClonedRepository(object):
             )
 
         # create the destination directory if it does not exist
-        if not os.path.exists(dest_full_path):
-            self.logger.info("Creating new folder {}".format(dest_full_path))
-            os.makedirs(dest_full_path)
+        if not os.path.exists(dest_path):
+            self.logger.info("Creating new folder {}".format(dest_path))
+            os.makedirs(dest_path)
 
         # now clone
         if is_commit_hash:
             self.logger.info(
                 "Cloning repository {} to {} and checking out "
-                "commit hash {}".format(url, dest_full_path, checkout_revision)
+                "commit hash {}".format(url, dest_path, checkout_revision)
             )
-            cloned_repo = git.Repo.clone_from(url, dest_full_path)
+            cloned_repo = git.Repo.clone_from(url, dest_path)
             cloned_repo.git.checkout(checkout_revision)
         else:
             cloned_repo = git.Repo.clone_from(
-                url, dest_full_path, branch=checkout_revision
+                url, dest_path, branch=checkout_revision
             )
             self.logger.info(
                 "Cloning repository {} to {} and checking out "
-                "branch {}".format(url, dest_full_path, checkout_revision)
+                "branch {}".format(url, dest_path, checkout_revision)
             )
 
         assert cloned_repo.__class__ is git.Repo

@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""setup.py file for Mbed Linux OS Application Release Manager package."""
+"""setup.py file for Mbed Linux OS Release Manager package."""
 
 import os
 from setuptools import setup
@@ -15,14 +15,19 @@ def read(fname):
 
 
 setup(
-    name="mbl-app-release-manager",
+    name="mbl-release-manager",
     version="1",
-    description="Mbed Linux OS Application Release Manager",
+    description="Mbed Linux OS Release Manager",
     long_description=read("README.md"),
     author="Arm Ltd.",
     author_email="",
     license="BSD-3-Clause",
-    py_modules=["release_manager.py", "repo_manifest.py", "gith.py", "cli.py"],
+    py_modules=[
+        "release_manager.py",
+        "repo_manifest.py",
+        "git_handler.py",
+        "cli.py",
+    ],
     zip_safe=False,
-    entry_points={"console_scripts": ["mbl-app-release-manager = cli:_main"]},
+    entry_points={"console_scripts": ["mbl-release-manager = cli:_main"]},
 )
