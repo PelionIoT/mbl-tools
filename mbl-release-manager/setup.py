@@ -20,7 +20,6 @@ setup(
     description="Mbed Linux OS Release Manager",
     long_description=read("README.md"),
     author="Arm Ltd.",
-    author_email="",
     license="BSD-3-Clause",
     install_requires=["in_place", "gitpython"],
     py_modules=["release_manager", "repo_manifest", "git_handler", "cli"],

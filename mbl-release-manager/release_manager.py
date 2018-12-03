@@ -91,10 +91,6 @@ SUMMARY_H_BKP = "CREATE BACKUP FILE: "
 SUMMARY_H_BRANCH = "CREATE BRANCH: "
 SUMMARY_H_TAG = "CREATE TAG: "
 
-#
-# CReleaseManager
-#
-
 
 class CReleaseManager(object):
     """
@@ -996,22 +992,22 @@ class CReleaseManager(object):
         # list of tuples
         clone_tup_list = []
         # clone all external repositories under self.tmp_dir_path
-        for (main_key, sd) in self.new_revisions_dict.items():
-            for (key, rev) in sd.items():
-                if main_key == EXTERNAL_SD_KEY_NAME:
-                    if key != mnf.MBL_MANIFEST_REPO_NAME:
-                        prefix, name = key.rsplit("/", 1)
+        for (sd_name, sd) in self.new_revisions_dict.items():
+            for (repo_name, rev) in sd.items():
+                if sd_name == EXTERNAL_SD_KEY_NAME:
+                    if repo_name != mnf.MBL_MANIFEST_REPO_NAME:
+                        prefix, name = repo_name.rsplit("/", 1)
                         clone_tup_list.append(
                             # tuple
                             (
-                                key,
+                                repo_name,
                                 ARM_MRR_REMOTE,
                                 prefix,
                                 name,
                                 self.tmp_dir_path,
                                 rev[0],
                                 rev[1],
-                                main_key,
+                                sd_name,
                             )
                         )
 
