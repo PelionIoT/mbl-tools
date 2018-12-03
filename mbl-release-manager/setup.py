@@ -22,13 +22,8 @@ setup(
     author="Arm Ltd.",
     author_email="",
     license="BSD-3-Clause",
-    install_requires=['in_place', 'gitpython'],
-    py_modules=[
-        "release_manager",
-        "repo_manifest",
-        "git_handler",
-        "cli",
-    ],
+    install_requires=["in_place", "gitpython"],
+    py_modules=["release_manager", "repo_manifest", "git_handler", "cli"],
     zip_safe=False,
     entry_points={"console_scripts": ["mbl-release-manager = cli:_main"]},
 )
