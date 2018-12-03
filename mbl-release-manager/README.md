@@ -1,5 +1,5 @@
 # Release manager Overview
-## Initial Definitions
+### Definitions
 * **MRR** - Manifest Referenced Repository - a repository referenced in a Repo manifest file (in the mbl-manifest repo).
 * **Arm MRR** - Arm owned Manifest Referenced Repository.
 * **Non-Arm MRR**	- Community (or Linaro / 3rd party) owned Manifest Referenced Repository.
@@ -11,17 +11,16 @@
 * **revision** - A git Ref or a Commit hash.
 
 ## 1. Purpose of the Script
-release branch based on user-provided JSON configuration file
-
-This scripts is used in order to create a release branch based on a user-provided JSON configuration file. It modifies Google Repo manifest files in armmbed/mbl-manifest, and mbl-linked-repositories.conf in armmbed/meta-mbl. It then commits these two repositories, create a new branch/tag according to the provided JSON file and pushes all modifications to GitHub. In more details, it performs the next significant operations:  
-1. Clones the repository mbl-manifest and checkout a specific input revision.
-1. Modifies selected Google Repo manifest files in mbl-manifest root according to user input. In particular, 'revision' attribute under 'project' is modified to match a new release branch/tag name.
-1. mbl-manifest changes are committed and pushed to remote, with  a new release branch/tag name given according to user input.
-1. For each modified 'revision' in a Google Repo manifest file:  
-  * If the repository which matches the 'project' name is an Arm-MRR - It is cloned from the current revision stated in the particular manifest file, then a new branch/tag is created (branching from/tagging on  that revision) and pushed to the remote.
-  * If the repository is non Arm-MRR - it is only validated that such a new user input revision exists on remote.
-1. External Arm-managed repositories can be also  given as part of the input. Those repositories are cloned from a user input revision. Then a new branch/tag is created according to user input and pushed to the remote.
-1. The repository meta-mbl holds mbl-linked-repositories.conf. This file is updated according to new user input (This is only optional). If file is modified, a commit is done on this external Arm-managed repository and the new release branch is pushed to the remote (same process as stated in 5, but with a new commit).
+This scripts is used in order to create a release branch based on a user-provided JSON configuration file. It modifies Google Repo manifest files in armmbed/mbl-manifest, and mbl-linked-repositories.conf in armmbed/meta-mbl. It then commits these two repositories, creates a new branch/tag according to the provided JSON file and pushes all modifications to GitHub.
+In more details, it performs the next significant operations:  
+1. Clone the mbl-manifest repository and checks out a new revision.
+1. Modify specified XML manifest files present in the new branch of mbl-manifest by setting the revision for each projects
+1. Commit the changes made to the created mbl-manifest branch/tag and push the branch to a remote repository.
+1. Does the following for each projects with modified revisions in mbl-manifest Google Repo manifest files:
+  * If the repository is an Arm-MRR, clone from the revision stated in the manifest file, create a new branch/tag, and push the branch to the remote repository.
+  * If the repository is not an Arm-MRR, simply set the revision of the projects. The revision in the user configuration file must be an existing revision in the remote repository.
+1. External Arm-managed repositories can also be provided in the user configuration file. After cloning the repository from a specified revision, a new branch/tag is created and pushed to the remote repository.
+1. One of the configuration files in the newly created `meta-mbl` tag/branch (`mbl-linked-repositories.conf`) is optionally updated to point to a specified commit sha in the `mbl-core` repository.
 
 ## 2. How the script works
 #### General steps:
