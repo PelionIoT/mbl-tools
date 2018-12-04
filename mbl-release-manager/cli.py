@@ -28,16 +28,15 @@ The script supports:
 * Execution is accelerated at some parts by using thread pools.
 """
 
-import sys
-
 import release_manager
+
 
 program_name = "mbl-release-manager"
 
 
 def _main():
 
-    with release_manager.CReleaseManager() as rm:
+    with release_manager.ReleaseManager() as rm:
 
         # Parse JSON references input file
         rm.parse_and_validate_input_file()

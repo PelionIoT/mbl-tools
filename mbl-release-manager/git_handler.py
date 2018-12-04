@@ -5,7 +5,7 @@
 """
 This module deals with the Git local and remote repositories.
 
-Defines CGitClonedRepository class which holds cloned repository information,
+Defines GitClonedRepository class which holds cloned repository information,
 and also operations on that repository.
 Also holds Git Common definitions and helper functions.
 
@@ -38,17 +38,19 @@ def build_url_from_repo_name(remote_prefix, repo_name):
 
 def build_url_from_base_repo_name(remote_prefix, prefix, base_name):
     """Build remote URL from given tokens according to template."""
-    return build_url_from_repo_name(remote_prefix, prefix + "/" + base_name)
+    return build_url_from_repo_name(
+        remote_prefix, "{}/{}".format(prefix, base_name)
+    )
 
 
 def list_remote_references(url):
     """Return a dictionary of references for a git remote URL."""
-    remote_refs_dict = {}
+    remote_refs = {}
     git_obj = git.cmd.Git()
     for ref in git_obj.ls_remote(url).split("\n"):
         value, key = ref.split("\t")
-        remote_refs_dict[key] = value
-    return remote_refs_dict
+        remote_refs[key] = value
+    return remote_refs
 
 
 def does_branch_exist_in_remote_repo(repo_url, branch_name, is_base_name):
@@ -165,13 +167,13 @@ def is_valid_git_tag_name(tag_name):
     return is_valid_git_ref_name(tag_name)
 
 
-class CGitClonedRepository(object):
+class GitClonedRepository:
     """
     This storage class defines a Git cloned repository.
 
     All cloned repositories are
-    kept under CRepoManifestProject cloned_repo or
-    CReleaseManager::external_repo_name_to_cloned_repo_dict.
+    kept under RepoManifestProject cloned_repo or
+    ReleaseManager::external_repo_name_to_cloned_repo.
     """
 
     def __init__(

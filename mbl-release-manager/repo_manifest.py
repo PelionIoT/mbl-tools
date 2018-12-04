@@ -5,10 +5,10 @@
 """
 Git repo manifet data storage classes.
 
-This module defines CRepoManifestFile and CRepoManifestProject.
-CRepoManifestFile is a storage class which holds data on a specific
+This module defines RepoManifestFile and RepoManifestProject.
+RepoManifestFile is a storage class which holds data on a specific
 manifest file found in the root of armmbed/mbl-manifest repository.
-CRepoManifestProject is a storage class which holds data on a remote repository
+RepoManifestProject is a storage class which holds data on a remote repository
 to be fetched.
 """
 
@@ -17,7 +17,7 @@ from pprint import pformat
 
 import cli
 
-logger = logging.getLogger(cli.program_name)
+
 MRR_MANIFEST_REMOTE_KEY = "github"
 ARM_MRR_REPO_NAME_PREFIX = "armmbed"
 MBL_MANIFEST_REPO_SHORT_NAME = "mbl-manifest"
@@ -27,7 +27,7 @@ MBL_MANIFEST_REPO_NAME = "{}/{}".format(
 GIT_REMOTE_NAME = "origin"
 
 
-class CRepoManifestFile(object):
+class RepoManifestFile:
     """
     Manifest file related data storage class.
 
@@ -42,8 +42,8 @@ class CRepoManifestFile(object):
         tree,
         root,
         default_rev,
-        remote_key_to_remote_dict,
-        repo_name_to_proj_dict,
+        remote_key_to_remote,
+        repo_name_to_proj,
     ):
         """Object initialization."""
         # destination path
@@ -64,29 +64,30 @@ class CRepoManifestFile(object):
 
         # dictionary : key is a remote name, value is a fetch prefix URL
         # This  dictionary holds all fetch URLs with a remote name as key
-        self.remote_key_to_remote_dict = remote_key_to_remote_dict
+        self.remote_key_to_remote = remote_key_to_remote
 
         # dictionary : key is a repository short name, value is
-        # This dictionary holds all CRepoManifestProject objects with
+        # This dictionary holds all RepoManifestProject objects with
         # repository names as key
-        self.repo_name_to_proj_dict = repo_name_to_proj_dict
+        self.repo_name_to_proj = repo_name_to_proj
 
-        logger.debug(
+        self.logger = logging.getLogger(cli.program_name)
+        self.logger.debug(
             "Created new {} : {}".format(
                 type(self).__name__, pformat(locals())
             )
         )
 
 
-class CRepoManifestProject(object):
+class RepoManifestProject:
     """
     Manifest file project related data storage class.
 
     This class represents a google repo manifest file 'project' entry that
     needs to be cloned.
 
-    Each CRepoManifestFile holds one or more CRepoManifestProject
-    objects inside repo_name_to_proj_dict.
+    Each RepoManifestFile holds one or more RepoManifestProject
+    objects inside repo_name_to_proj.
     """
 
     def __init__(
@@ -102,7 +103,7 @@ class CRepoManifestProject(object):
         # short name such as 'meta-mbl'
         self.short_name = short_name
 
-        # key to CRepoManifestFile::remote_key_to_remote_dict
+        # key to RepoManifestFile::remote_key_to_remote
         self.remote_key = remote_key
 
         # repository URL
@@ -125,7 +126,8 @@ class CRepoManifestProject(object):
         else:
             self.is_arm_mrr = False
 
-        logger.debug(
+        self.logger = logging.getLogger(cli.program_name)
+        self.logger.debug(
             "Created new {} : {}".format(
                 type(self).__name__, pformat(locals())
             )
