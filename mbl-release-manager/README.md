@@ -11,7 +11,7 @@
 * **revision** - A git Ref or a Commit hash.
 
 ## 1. Purpose of the Script
-This scripts is used in order to create a release branch based on a user-provided JSON configuration file. It modifies Google Repo manifest files in armmbed/mbl-manifest, and mbl-linked-repositories.conf in armmbed/meta-mbl. It then commits these two repositories, creates a new branch/tag according to the provided JSON file and pushes all modifications to GitHub.
+This script is used in order to create a release branch based on a user-provided JSON configuration file. It modifies Google Repo manifest files in armmbed/mbl-manifest, and mbl-linked-repositories.conf in armmbed/meta-mbl. It then commits these two repositories, creates a new branch/tag according to the provided JSON file and pushes all modifications to GitHub.
 In more details, it performs the next significant operations:  
 1. Clone the mbl-manifest repository and checks out a new revision.
 1. Modify specified XML manifest files present in the new branch of mbl-manifest by setting the revision for each projects
