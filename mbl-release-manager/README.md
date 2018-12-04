@@ -41,7 +41,7 @@ In more details, it performs the next significant operations:
 Assumptions:
 * The script should always run on a Linux host machine.
 * Python3 is installed (script was tested on Python 3.5.2).
-* The user has write access to Arm GIT repositories on GitHub.
+* The user has write access to Mbed Linux OS product and supporting product repositories on GitHub. For more details on what are they, see: https://confluence.arm.com/display/mbedlinux/Repositories.
 * virtualenv is used. Else, user needs to install in_place and gitpython packages.
 
 Here we will demonstrate how to run script using virtualenv.
@@ -81,12 +81,12 @@ $
 ```
 
 ## 4. User Input
-The Mbed Linux OS  **Release Manager**, can be installed by a setup.py script (or can also be used directly from the command line), receives an input JSON input file. By convention, one should use the name **update.json** as the file name (or **update_%.json** if there are multiple files in the same folder).
+The Mbed Linux OS  **Release Manager**, can be installed by a setup.py script (or can also be used directly from the command line), receives an input JSON input file. By convention,it is recommended (but not a must) to use the name **update.json** as the file name and use **update_<some_name>.json** if there are multiple update input JSON files in the same folder.
 The file holds a dictionary of (**main key**, value) pairs. Each main key points to a sub-dictionary (**SD**) as its value. An SD pointed by an actual file name key (as described in section 1) is called **file-specific SD**.  
 A  pair must belong to one of 3 types:  
 1. **File specific SD** - A manifest file name (without the '.xml' suffix) matching a Git repo manifest file that must exist in armmbed/mbl-manifest repository root. Using that type, a specific  Google Repo manifest file will be updated ( and some Arm MRRs remotes might be updated as well). For example: the key 'default'  match the default.xml file, and the sub-dictionary (**SD**) value matched by 'default' holds pairs of (repository name, new revision to be created).
 1. A special key  **\_common\_** -  SD value for that key described a common update on all Google Repo manifest files in mbl-manifest repository root. We assume that no manifest file is called '\_common\_.xml'. This key points to a dictionary (repository name, new revision) which holds a common update mechanism. Whenever our update is needed across all manifest files, with a single release branch name, the use of _common_ is the simplest.  
-For example, let's assume that  we have a repository called mbl-example in 3 files: default.xml, internal.xml and costum.xml. We want to have the same new revision branch new_rev1 in all 3 manifest files. We can add a pair with a key armmbed/mbl-example and a value as a branch new_rev1 under '_common_' which will refer in a common way to all 3 files. That means: check out from the revision pointed in the manifest file, create a new branch new_rev1 and push to remote. Also, modify the new branch name in all 3 files. All those operations can be described in a single entry when found in _common_.
+For example, let's assume that  we have a repository called mbl-example in 3 files: default.xml, internal.xml and custom.xml. We want to have the same new revision branch new_rev1 in all 3 manifest files. We can add a pair with a key armmbed/mbl-example and a value as a branch new_rev1 under '_common_' which will refer in a common way to all 3 files. That means: check out from the revision pointed in the manifest file, create a new branch new_rev1 and push to remote. Also, modify the new branch name in all 3 files. All those operations can be described in a single entry when found in _common_.
 1. A special key  **\_external\_** - SD value for that key describes Arm non-manifest managed repository needed changes. We assume that no manifest file is called '\_external\_.xml'. This key points to a dictionary which holds pairs of (repository name, [checkout_revision, new revision]) pairs. The value us a list of length 2, with the 1st element for the checkout revision and the second value for the new revision to be created.The repositories under this main keys are Arm managed repositories which cannot be found in any manifest file. For example: mbl-tools, mbl-manifest, mbl-core and mbl-cli. This key MUST be in every file, as it provides the armmbed/mbl-manifest pair with the revision to clone the repository from.
 
 All main keys must be unique inside the main dictionary or inside a sub-dictionary - else file parsing will fail.
@@ -241,3 +241,4 @@ armmbed/meta-mbl-reference-apps has a new revision as a Git commit hash. That's 
 #### External Links
 
 * https://wiki.yoctoproject.org/wiki/Stable_branch_maintenance
+* https://confluence.arm.com/display/mbedlinux/Repositories
