@@ -42,15 +42,15 @@ Assumptions:
 * The script should always run on a Linux host machine.
 * Python3 is installed (script was tested on Python 3.5.2).
 * The user has write access to Mbed Linux OS product and supporting product repositories on GitHub. For more details on what are they, see: https://confluence.arm.com/display/mbedlinux/Repositories.
-* virtualenv is used. Else, user needs to install in_place and gitpython packages.
+* We use venv. Else, user needs to install in_place and gitpython packages.
 
-Here we will demonstrate how to run script using virtualenv.
+Here we will demonstrate how to run script using venv.
 prerequisites:
 * Install pip3:
 ```
 $ sudo apt-get install python3-pip
 ```
-* Install virtualenv:
+* Install venv:
 ```
 $ pip3 install virtualenv
 ```
@@ -58,7 +58,7 @@ $ pip3 install virtualenv
 ```
 $ cd ~/tmp/ ; git clone git@github.com:ARMmbed/mbl-tools.git
 ```
-* Create a virtualenv under ~/tmp/mbl-tools/mbl-release-manager/ , and start it:
+* Create venv under ~/tmp/mbl-tools/mbl-release-manager/ , and start it:
 ```
 $ cd ~/tmp/mbl-tools/mbl-release-manager/
 $ virtualenv venv
@@ -74,14 +74,15 @@ $ source venv/bin/actiavte
 ```
 (venv) $ mbl-release-manager -s -r update.json
 ```
-* To exit virtualenv after script is done type:
+* To exit venv after script is done type:
 ```
 (venv) $ deactivate
 $
 ```
 
 ## 4. User Input
-The Mbed Linux OS  **Release Manager**, can be installed by a setup.py script (or can also be used directly from the command line), receives an input JSON input file. By convention,it is recommended (but not a must) to use the name **update.json** as the file name and use **update_<some_name>.json** if there are multiple update input JSON files in the same folder.
+The Mbed Linux OS  **Release Manager**, can be installed to be ran as a command or can be ran as a script. It receives a JSON formatted configuration file as input. The file name must end with `.json`. A commonly recommended used naming scheme (but not imposed in code) for the configuration file is <release_name>-release-conf.json. i.e For mbl-os-0.5 the configuration file will be named `mbl-os-0.5-release-conf.json`.
+
 The file holds a dictionary of (**main key**, value) pairs. Each main key points to a sub-dictionary (**SD**) as its value. An SD pointed by an actual file name key (as described in section 1) is called **file-specific SD**.  
 A  pair must belong to one of 3 types:  
 1. **File specific SD** - A manifest file name (without the '.xml' suffix) matching a Git repo manifest file that must exist in armmbed/mbl-manifest repository root. Using that type, a specific  Google Repo manifest file will be updated ( and some Arm MRRs remotes might be updated as well). For example: the key 'default'  match the default.xml file, and the sub-dictionary (**SD**) value matched by 'default' holds pairs of (repository name, new revision to be created).
