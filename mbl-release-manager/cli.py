@@ -44,14 +44,17 @@ def _main():
         # Clone the manifest repository and parse its xml files into database
         rm.process_manifest_files()
 
-        # Some more things to validate between input and manifest files file
-        # after parsing both files
+        # Validate additional logical dependencies after parsing user
+        # provided JSON file and mbl-manifest manifest files
         rm.validate_cross_dependencies()
 
+        # prepare clone data to be an input for worker threads
+        # cloning is done using a thread pool
+        clone_data = rm.prepare_clone_data()
+
         # Update new_revision for all manifest files projects and create
-        # reference (where needed on
-        # remote Git repositories)
-        rm.clone_and_create_new_revisions()
+        # reference (where needed on remote Git repositories)
+        rm.clone_and_update_new_revisions(clone_data)
 
         # update all files MBL_LINKED_REPOSITORIES_REPO_PATH in repositories
         # MBL_LINKED_REPOSITORIES_REPO_NAME

@@ -57,7 +57,7 @@ LOGGING_SUMMARY_FORMAT = "%(message)s"
 
 COMMON_SD_KEY_NAME = "_common_"
 EXTERNAL_SD_KEY_NAME = "_external_"
-MAX_TMO_SEC = 120
+MAX_TIMEOUT_IN_SEC = 120
 
 
 INPUT_FILE_NAME = "update.json"
@@ -184,7 +184,7 @@ class ReleaseManager:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Delete all already-pushed references in case of a failure."""
-        if not self.completed and len(self.already_pushed_repository) > 0:
+        if not self.completed and (len(self.already_pushed_repository) > 0):
             self.logger.error(
                 "Removing all pushed references : {}".format(
                     self.already_pushed_repository
@@ -200,7 +200,7 @@ class ReleaseManager:
             rmtree(self.tmp_dir_path)
 
     def repo_push(self, repo, new_rev):
-        """push a revision to remote repository."""
+        """Push a revision to remote repository."""
         _str = "Pushing {} to repository {} url {}".format(
             new_rev, repo.full_name, repo.url
         )
@@ -218,11 +218,122 @@ class ReleaseManager:
                     # re-raise the exception
                     raise
 
+    def parse_repo_manifest_file(self, file_path):
+        """Parse a single repo manifest file found in the mbl-manifest root."""
+        self.logger.debug("Start parsing file {}".format(file_path))
+
+        # get root
+        tree = ElementTree.parse(file_path)
+
+        # root element of the tree
+        root = tree.getroot()
+
+        # get default, if not found, set to master
+        node = tree.find("./default")
+        default_rev = "master"
+        if node:
+            default_rev = node.get("revision", "master")
+
+        # get remotes - store in a dictionary
+        # { remote key : remote URL prefix }
+        remote_key_to_remote = {}
+        for attribute in root.findall("remote"):
+            remote_key_to_remote[attribute.get("name")] = attribute.get(
+                "fetch"
+            )
+
+        # get projects - store in a short project name to
+        base_name = ""
+        name_to_proj = {}
+        has_changed = False
+        for attribute in root.findall("project"):
+            # get name and split to prefix and short name
+            full_name = attribute.get("name")
+            prefix, short_name = full_name.rsplit("/", 1)
+            if short_name in name_to_proj:
+                raise ValueError(
+                    "File {} : project {} repeats multiple times!".format(
+                        file_path, short_name
+                    )
+                )
+
+            # get remote key and build url
+            remote_key = attribute.get("remote")
+            url = remote_key_to_remote[remote_key] + ":/" + full_name + ".git"
+
+            # get and set new revision
+            revision = attribute.get("revision")
+            if not revision:
+                revision = default_rev
+
+            base_name = gith.get_file_name_from_path(file_path, False)
+
+            # create project and insert to dictionary
+            proj = mnf.RepoManifestProject(
+                full_name, prefix, short_name, remote_key, url, revision
+            )
+            name_to_proj[full_name] = proj
+
+            # set the new revision, that will save time,
+            # we are already in the place we want to change!
+            new_ref = self.get_new_ref_from_new_revisions(base_name, full_name)
+            if new_ref == (gith.REF_BRANCH_PREFIX + default_rev):
+                del attribute.attrib["revision"]
+                has_changed = True
+            elif new_ref:
+                if gith.is_valid_git_commit_hash(new_ref):
+                    attribute.set("revision", new_ref)
+                else:
+                    attribute.set("revision", gith.get_base_rev_name(new_ref))
+                has_changed = True
+
+            if has_changed and "upstream" in attribute.attrib:
+                # remove attribute 'upstream' is exist
+                del attribute.attrib["upstream"]
+
+        assert base_name
+
+        rmf = mnf.RepoManifestFile(
+            file_path,
+            base_name,
+            tree,
+            root,
+            default_rev,
+            remote_key_to_remote,
+            name_to_proj,
+        )
+        self.manifest_file_name_to_obj[base_name] = rmf
+
+        if has_changed:
+            # backup file
+            self.summary_logs.append(
+                SUMMARY_H_BKP
+                + "Created back file {} from {}".format(
+                    file_path + FILE_BACKUP_SUFFIX, file_path
+                )
+            )
+            self.logger.info(
+                "Created backup file {} from {}".format(
+                    file_path + FILE_BACKUP_SUFFIX, file_path
+                )
+            )
+            copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
+
+            # write to file
+            rmf.tree.write(file_path)
+            self.summary_logs.append(
+                SUMMARY_H_MODIFY_FILE
+                + "File {} has been modified on repository {}".format(
+                    file_path, mnf.MBL_MANIFEST_REPO_NAME
+                )
+            )
+
+            self.logger.info("File {} has been modified!".format(file_path))
+
     def process_manifest_files(self):
         """parse, validate and modify XML manifest files."""
         self.logger.info("Parse, validate and modify XML manifest files...")
-        adict = self.external_repo_name_to_cloned_repo
-        nrd = self.new_revisions
+        new_revisions = self.new_revisions
 
         # clone mbl-manifest repository first and checkout mbl_
         # manifest_clone_ref
@@ -232,7 +343,7 @@ class ReleaseManager:
             )
         )
 
-        adict[
+        self.external_repo_name_to_cloned_repo[
             mnf.MBL_MANIFEST_REPO_NAME
         ] = self.create_and_update_new_revisions_worker(
             ARM_MRR_REMOTE,
@@ -240,14 +351,17 @@ class ReleaseManager:
             mnf.MBL_MANIFEST_REPO_SHORT_NAME,
             self.tmp_dir_path,
             self.mbl_manifest_clone_ref,
-            nrd[EXTERNAL_SD_KEY_NAME][mnf.MBL_MANIFEST_REPO_NAME][1],
+            new_revisions[EXTERNAL_SD_KEY_NAME][mnf.MBL_MANIFEST_REPO_NAME][1],
         )
 
         # get all files ending with .xml inside this directory.
         # We assume they are all manifest files
         xml_files = []
         path = os.path.join(
-            adict[mnf.MBL_MANIFEST_REPO_NAME].clone_dest_path, "*.xml"
+            self.external_repo_name_to_cloned_repo[
+                mnf.MBL_MANIFEST_REPO_NAME
+            ].clone_dest_path,
+            "*.xml",
         )
         for file_name in glob.glob(path):
             xml_files.append(os.path.abspath(file_name))
@@ -276,122 +390,7 @@ class ReleaseManager:
         # parse all xml files, create a RepoManifestFile object for each and
         # store in manifest_file_name_to_obj
         for file_path in xml_files:
-            self.logger.debug("Start parsing file {}".format(file_path))
-
-            # get root
-            tree = ElementTree.parse(file_path)
-
-            # root element of the tree
-            root = tree.getroot()
-
-            # get default, if not found, set to master
-            node = tree.find("./default")
-            default_rev = "master"
-            if node:
-                default_rev = node.get("revision", "master")
-
-            # get remotes - store in a dictionary
-            # { remote key : remote URL prefix }
-            remote_key_to_remote = {}
-            for atype in root.findall("remote"):
-                remote_key_to_remote[atype.get("name")] = atype.get("fetch")
-
-            # get projects - store in a short project name to
-            base_name = ""
-            name_to_proj = {}
-            is_changed = False
-            for atype in root.findall("project"):
-                # get name and split to prefix and short name
-                full_name = atype.get("name")
-                prefix, short_name = full_name.rsplit("/", 1)
-                if short_name in name_to_proj:
-                    raise ValueError(
-                        "File {} : project {} repeats multiple times!".format(
-                            file_path, short_name
-                        )
-                    )
-
-                # get remote key and build url
-                remote_key = atype.get("remote")
-                url = (
-                    remote_key_to_remote[remote_key]
-                    + ":/"
-                    + full_name
-                    + ".git"
-                )
-
-                # get and set new revision
-                revision = atype.get("revision")
-                if not revision:
-                    revision = default_rev
-
-                base_name = gith.get_file_name_from_path(file_path, False)
-
-                # create project and insert to dictionary
-                proj = mnf.RepoManifestProject(
-                    full_name, prefix, short_name, remote_key, url, revision
-                )
-                name_to_proj[full_name] = proj
-
-                # set the new revision, that will save time,
-                # we are already in the place we want to change!
-                new_ref = self.get_new_ref_from_new_revisions(
-                    base_name, full_name
-                )
-                if new_ref == (gith.REF_BRANCH_PREFIX + default_rev):
-                    del atype.attrib["revision"]
-                    is_changed = True
-                elif new_ref:
-                    if gith.is_valid_git_commit_hash(new_ref):
-                        atype.set("revision", new_ref)
-                    else:
-                        atype.set("revision", gith.get_base_rev_name(new_ref))
-                    is_changed = True
-
-                if is_changed and "upstream" in atype.attrib:
-                    # remove attribute 'upstream' is exist
-                    del atype.attrib["upstream"]
-
-            assert base_name
-
-            rmf = mnf.RepoManifestFile(
-                file_path,
-                base_name,
-                tree,
-                root,
-                default_rev,
-                remote_key_to_remote,
-                name_to_proj,
-            )
-            self.manifest_file_name_to_obj[base_name] = rmf
-
-            if is_changed:
-                # backup file
-                self.summary_logs.append(
-                    SUMMARY_H_BKP
-                    + "Created back file {} from {}".format(
-                        file_path + FILE_BACKUP_SUFFIX, file_path
-                    )
-                )
-                self.logger.info(
-                    "Created backup file {} from {}".format(
-                        file_path + FILE_BACKUP_SUFFIX, file_path
-                    )
-                )
-                copyfile(file_path, file_path + FILE_BACKUP_SUFFIX)
-
-                # write to file
-                rmf.tree.write(file_path)
-                self.summary_logs.append(
-                    SUMMARY_H_MODIFY_FILE
-                    + "File {} has been modified on repository {}".format(
-                        file_path, mnf.MBL_MANIFEST_REPO_NAME
-                    )
-                )
-
-                self.logger.info(
-                    "File {} has been modified!".format(file_path)
-                )
+            self.parse_repo_manifest_file(file_path)
 
     @staticmethod
     def validate_remote_repositories_state_helper(url, new_rev):
@@ -426,26 +425,29 @@ class ReleaseManager:
         remotes_to_check = []
 
         # add all entries from EXTERNAL_SD_KEY_NAME SD:
-        for (k, v) in self.new_revisions[EXTERNAL_SD_KEY_NAME].items():
-            url = gith.build_url_from_repo_name(ARM_MRR_REMOTE, k)
-            remotes_to_check.append((url, v[1], False))
+        for (repo_name, revs) in self.new_revisions[
+            EXTERNAL_SD_KEY_NAME
+        ].items():
+            url = gith.build_url_from_repo_name(ARM_MRR_REMOTE, repo_name)
+            remotes_to_check.append((url, revs[1], False))
 
         for file_obj in self.manifest_file_name_to_obj.values():
             # file_obj is RepoManifestFile
-            for (k, v) in file_obj.repo_name_to_proj.items():
+            for (repo_name, proj) in file_obj.repo_name_to_proj.items():
                 # k is a repository name and v is a matching project
 
                 new_ref = self.get_new_ref_from_new_revisions(
-                    file_obj.file_name, k
+                    file_obj.file_name, repo_name
                 )
 
                 if not new_ref:
                     continue
 
                 url = gith.build_url_from_repo_name(
-                    file_obj.remote_key_to_remote[v.remote_key], v.full_name
+                    file_obj.remote_key_to_remote[proj.remote_key],
+                    proj.full_name,
                 )
-                remotes_to_check.append((url, new_ref, not v.is_arm_mrr))
+                remotes_to_check.append((url, new_ref, not proj.is_arm_mrr))
 
         self.logger.debug("===remotes_to_check:")
         self.logger.debug(pformat(remotes_to_check))
@@ -470,7 +472,7 @@ class ReleaseManager:
             }
 
             for completed_task in concurrent.futures.as_completed(
-                future_to_git_url, MAX_TMO_SEC
+                future_to_git_url, MAX_TIMEOUT_IN_SEC
             ):
                 worker_input = future_to_git_url[completed_task]
                 result = completed_task.result()
@@ -489,14 +491,14 @@ class ReleaseManager:
 
     @staticmethod
     def dict_raise_on_duplicates(ordered_pairs):
-        """Raise an ValueError exception if find duplicate keys."""
-        d = {}
-        for k, v in ordered_pairs:
-            if k in d:
+        """Raise a ValueError exception if find duplicate keys."""
+        pairs_found = {}
+        for key, val in ordered_pairs:
+            if key in pairs_found:
                 raise ValueError("duplicate key: {}".format((k,)))
             else:
-                d[k] = v
-        return d
+                pairs_found[key] = val
+        return pairs_found
 
     def validate_cross_dependencies(self):
         """
@@ -513,7 +515,7 @@ class ReleaseManager:
             "Validating cross dependencies (input file vs manifest files)..."
         )
 
-        for file_name, sd in self.new_revisions.items():
+        for file_name, revisions in self.new_revisions.items():
             if file_name == EXTERNAL_SD_KEY_NAME:
                 continue
 
@@ -536,7 +538,7 @@ class ReleaseManager:
                     )
 
             # checking 2
-            for repo_name in sd:
+            for repo_name in revisions:
                 found = False
                 if file_name != COMMON_SD_KEY_NAME:
                     found = (
@@ -574,7 +576,7 @@ class ReleaseManager:
             self.args.refs_input_file_path, encoding="utf-8"
         ) as data_file:
             try:
-                nrd = json.loads(
+                new_revisions = json.loads(
                     data_file.read(),
                     object_pairs_hook=self.dict_raise_on_duplicates,
                 )
@@ -589,12 +591,15 @@ class ReleaseManager:
         have distinct values.
         2. armmbed/mbl-manifest repository exist in sub-dictionary
         """
-        if EXTERNAL_SD_KEY_NAME not in nrd:
+        if EXTERNAL_SD_KEY_NAME not in new_revisions:
             raise ValueError(
                 "main entry key {} could not be found "
                 "in user input file".format(EXTERNAL_SD_KEY_NAME)
             )
-        if mnf.MBL_MANIFEST_REPO_NAME not in nrd[EXTERNAL_SD_KEY_NAME]:
+        if (
+            mnf.MBL_MANIFEST_REPO_NAME
+            not in new_revisions[EXTERNAL_SD_KEY_NAME]
+        ):
 
             raise ValueError(
                 "{} key could not be found in user input "
@@ -603,7 +608,7 @@ class ReleaseManager:
                 )
             )
 
-        for values in nrd[EXTERNAL_SD_KEY_NAME].values():
+        for values in new_revisions[EXTERNAL_SD_KEY_NAME].values():
             if len(values) != 2:
                 raise ValueError(
                     "Bad length for list {} - All lists under key {} in user "
@@ -621,9 +626,9 @@ class ReleaseManager:
                 )
 
         # Check that all revisions are valid
-        for sd in nrd:
+        for sd in new_revisions:
             if sd == EXTERNAL_SD_KEY_NAME:
-                for refs in nrd[sd].values():
+                for refs in new_revisions[sd].values():
                     if not all(
                         [
                             gith.is_valid_revision(refs[0]),
@@ -635,7 +640,7 @@ class ReleaseManager:
                             "{}!".format(refs[0], refs[1], sd)
                         )
             else:
-                for ref in nrd[sd].values():
+                for ref in new_revisions[sd].values():
                     if not gith.is_valid_revision(ref):
                         raise ValueError(
                             "Invalid revision {} at input file "
@@ -643,7 +648,7 @@ class ReleaseManager:
                         )
 
         # set the clone ref for mbl-manifest
-        self.mbl_manifest_clone_ref = nrd[EXTERNAL_SD_KEY_NAME][
+        self.mbl_manifest_clone_ref = new_revisions[EXTERNAL_SD_KEY_NAME][
             mnf.MBL_MANIFEST_REPO_NAME
         ][0]
 
@@ -654,12 +659,12 @@ class ReleaseManager:
         not in common/external SDs
         """
         validations = []
-        for (key, val) in nrd.items():
+        for (key, val) in new_revisions.items():
             if (key != COMMON_SD_KEY_NAME) and (key != EXTERNAL_SD_KEY_NAME):
                 validations += val
         if validations:
-            if COMMON_SD_KEY_NAME in nrd:
-                for key in nrd[COMMON_SD_KEY_NAME].keys():
+            if COMMON_SD_KEY_NAME in new_revisions:
+                for key in new_revisions[COMMON_SD_KEY_NAME].keys():
                     if key in validations:
                         raise ValueError(
                             "Invalid input in file {} : key {} "
@@ -671,8 +676,8 @@ class ReleaseManager:
                             )
                         )
 
-            if EXTERNAL_SD_KEY_NAME in nrd:
-                for key in nrd[EXTERNAL_SD_KEY_NAME].keys():
+            if EXTERNAL_SD_KEY_NAME in new_revisions:
+                for key in new_revisions[EXTERNAL_SD_KEY_NAME].keys():
                     if key in validations:
                         raise ValueError(
                             "Invalid input in file {} : key {} found in {}, "
@@ -683,7 +688,7 @@ class ReleaseManager:
                             )
                         )
 
-        self.new_revisions = nrd
+        self.new_revisions = new_revisions
 
     def get_new_ref_from_new_revisions(self, sd_key_name, repo_name):
         """
@@ -818,8 +823,8 @@ class ReleaseManager:
         3) SRCREV in that order
             We are going to locate the repo name and change the SRCREV
         """
-        is_changed = False
-        d = self.external_repo_name_to_cloned_repo
+        has_changed = False
+        ext_repo_name_to_cloned_repo = self.external_repo_name_to_cloned_repo
         for repo_name in self.new_revisions[EXTERNAL_SD_KEY_NAME].keys():
             if repo_name not in [
                 mnf.MBL_MANIFEST_REPO_NAME,
@@ -833,20 +838,22 @@ class ReleaseManager:
                             line.lower().find("git@github.com/" + repo_name)
                             != -1
                         ):
-                            active_branch = d[repo_name].handle.active_branch
+                            active_branch = ext_repo_name_to_cloned_repo[
+                                repo_name
+                            ].handle.active_branch
                             commit_hash = active_branch.commit
                             branch_name = active_branch.name
 
                             if line.find(";branch=") != -1:
                                 # match text between two quotes
                                 matches = re.findall(r";branch=(.+?);", line)
-                                for m in matches:
-                                    if m != branch_name:
+                                for match in matches:
+                                    if match != branch_name:
                                         line = line.replace(
-                                            ";{};".format(m),
+                                            ";{};".format(match),
                                             ";branch={};".format(branch_name),
                                         )
-                                        is_changed = True
+                                        has_changed = True
 
                             # TODO : replace former line or reformat file..
                             next_line_replace = True
@@ -862,17 +869,17 @@ class ReleaseManager:
 
                             # match text between two quotes
                             matches = re.findall(r"\"(.+?)\"", line)
-                            for m in matches:
-                                if m != commit_hash.hexsha:
+                            for match in matches:
+                                if match != commit_hash.hexsha:
                                     line = line.replace(
-                                        '"{}"'.format(m),
+                                        '"{}"'.format(match),
                                         '"{}"'.format(commit_hash),
                                     )
-                                    is_changed = True
+                                    has_changed = True
                             next_line_replace = False
                         file.write(line)
 
-        if is_changed:
+        if has_changed:
             ret_list = git_repo.handle.index.add([file_path], write=True)
             assert len(ret_list) == 1
             git_repo.handle.index.commit(
@@ -910,8 +917,10 @@ class ReleaseManager:
         MBL_LINKED_REPOSITORIES_REPO_NAME.
         """
         # update all MBL_LINKED_REPOSITORIES_REPO_NAME repositories
-        d = self.external_repo_name_to_cloned_repo
-        if MBL_LINKED_REPOSITORIES_REPO_NAME in d:
+        if (
+            MBL_LINKED_REPOSITORIES_REPO_NAME
+            in self.external_repo_name_to_cloned_repo
+        ):
             self.update_mbl_linked_repositories_conf_helper(
                 d[MBL_LINKED_REPOSITORIES_REPO_NAME]
             )
@@ -980,15 +989,10 @@ class ReleaseManager:
         else:
             self.logger.info("Skip pushing...")
 
-    def clone_and_create_new_revisions(self):
-        """
-        Clone all external and Arm MRR repositories.
-
-        Concurrently, checkout current revision.
-        """
-        self.logger.info("Cloning and creating new revisions...")
-
-        # list of tuples
+    def prepare_clone_data(self):
+        """Prepare clone data for worker threads."""
+        # list of tuples, each will be an input for a workers thread that
+        # will clone a specific
         clone_data = []
         # clone all external repositories under self.tmp_dir_path
         for (sd_name, sd) in self.new_revisions.items():
@@ -1042,7 +1046,14 @@ class ReleaseManager:
 
         self.logger.debug("=== clone_data:")
         self.logger.debug(pformat(clone_data))
+        return clone_data
 
+    def clone_and_update_new_revisions(self, clone_data):
+        """
+        Clone all external and Arm MRR repositories.
+
+        Concurrently, checkout current revision.
+        """
         self.logger.info(
             "Starting {} concurrent threads to clone repositories...".format(
                 len(clone_data)
@@ -1066,7 +1077,7 @@ class ReleaseManager:
             }
 
             for completed_task in concurrent.futures.as_completed(
-                future_to_git_url, MAX_TMO_SEC
+                future_to_git_url, MAX_TIMEOUT_IN_SEC
             ):
 
                 worker_input = future_to_git_url[completed_task]
