@@ -44,39 +44,36 @@ Assumptions:
 * The user has write access to Mbed Linux OS product and supporting product repositories on GitHub. For more details on what are they, see: https://confluence.arm.com/display/mbedlinux/Repositories.
 * We use venv. Else, user needs to install in_place and gitpython packages.
 
-Here we will demonstrate how to run script using venv.
+Here we will demonstrate how to run script using virtualenv (venv).
 prerequisites:
-* Install pip3:
+* Install pip3 if you don't have it installed:
 ```
 $ sudo apt-get install python3-pip
+$ pip3 --version
+pip 18.1 from ... (python 3.5)
+
 ```
-* Install venv:
+* Create my_venv under /tmp/my_venv , and start it:
 ```
-$ pip3 install virtualenv
+$ cd /tmp
+$ python3 -m venv my_venv
+$ source my_venv/bin/activate
+(my_venv) $
 ```
-* Clone mbl-tools, here we clone it into ~/tmp/:
+* Now we are inside a Python3 virtual environment 'my_venv'. Lets clone the mbl-tools repository and install the script package:
 ```
-$ cd ~/tmp/ ; git clone git@github.com:ARMmbed/mbl-tools.git
+(my_venv) $ git clone git@github.com:ARMmbed/mbl-tools.git
+(my_venv) $ cd mbl-tools/mbl-release-manager/
+(my_venv) $ python setup.py install
 ```
-* Create venv under ~/tmp/mbl-tools/mbl-release-manager/ , and start it:
-```
-$ cd ~/tmp/mbl-tools/mbl-release-manager/
-$ virtualenv venv
-$ source venv/bin/actiavte
-(venv) $
-```
-* Now we are inside a Python3 virtual environment 'venev'. Let's install the script package:
-```
-(venv) $ python setup.py install
-```
-* After installing the script's package, mbl-release-manager can be run from anywhere. It resides under ~/tmp/mbl-tools/mbl-release-manager/venev/bin .
+* After installing the script's package, mbl-release-manager can be run from anywhere. It resides under /tmp/my_venv/mbl-release-manager/venev/bin.
 * Type mbl-release-manager -h for help. A typical run will start by simulating and look like that (after creating an update.json file locally):
 ```
-(venv) $ mbl-release-manager -s -r update.json
+(my_venv) $ mbl-release-manager -s -r update.json
 ```
 * To exit venv after script is done type:
 ```
-(venv) $ deactivate
+(my_venv) $ deactivate
 $
 ```
 
@@ -85,10 +82,10 @@ The Mbed Linux OS  **Release Manager**, can be installed to be ran as a command 
 
 The file holds a dictionary of (**main key**, value) pairs. Each main key points to a sub-dictionary (**SD**) as its value. An SD pointed by an actual file name key (as described in section 1) is called **file-specific SD**.  
 A  pair must belong to one of 3 types:  
-1. **File specific SD** - A manifest file name (without the '.xml' suffix) matching a Git repo manifest file that must exist in armmbed/mbl-manifest repository root. Using that type, a specific  Google Repo manifest file will be updated ( and some Arm MRRs remotes might be updated as well). For example: the key 'default'  match the default.xml file, and the sub-dictionary (**SD**) value matched by 'default' holds pairs of (repository name, new revision to be created).
+1. **File specific SD** - A manifest file name (without the '.xml' suffix) matching a Git repo manifest file that must exist in any cloned armmbed/mbl-manifest repository root. Using that type, a specific  Google Repo manifest file will be updated ( and some Arm MRRs remotes might be updated as well). For example: the key 'default'  match the default.xml file, and the sub-dictionary (**SD**) value matched by 'default' holds pairs of (repository name, new revision to be created).
 1. A special key  **\_common\_** -  SD value for that key described a common update on all Google Repo manifest files in mbl-manifest repository root. We assume that no manifest file is called '\_common\_.xml'. This key points to a dictionary (repository name, new revision) which holds a common update mechanism. Whenever our update is needed across all manifest files, with a single release branch name, the use of _common_ is the simplest.  
 For example, let's assume that  we have a repository called mbl-example in 3 files: default.xml, internal.xml and custom.xml. We want to have the same new revision branch new_rev1 in all 3 manifest files. We can add a pair with a key armmbed/mbl-example and a value as a branch new_rev1 under '_common_' which will refer in a common way to all 3 files. That means: check out from the revision pointed in the manifest file, create a new branch new_rev1 and push to remote. Also, modify the new branch name in all 3 files. All those operations can be described in a single entry when found in _common_.
-1. A special key  **\_external\_** - SD value for that key describes Arm non-manifest managed repository needed changes. We assume that no manifest file is called '\_external\_.xml'. This key points to a dictionary which holds pairs of (repository name, [checkout_revision, new revision]) pairs. The value us a list of length 2, with the 1st element for the checkout revision and the second value for the new revision to be created.The repositories under this main keys are Arm managed repositories which cannot be found in any manifest file. For example: mbl-tools, mbl-manifest, mbl-core and mbl-cli. This key MUST be in every file, as it provides the armmbed/mbl-manifest pair with the revision to clone the repository from.
+1. A special key  **\_external\_** - SD value for that key describes Arm non-manifest managed repository needed changes. We assume that no manifest file is called '\_external\_.xml'. The value for this key is a dictionary which holds pairs of (repository name, [checkout_revision, new revision]) pairs. The value us a list of length 2, with the 1st element for the checkout revision and the second value for the new revision to be created.The repositories under this main keys are Arm managed repositories which cannot be found in any manifest file. For example: mbl-tools, mbl-manifest, mbl-core and mbl-cli. This key MUST be in every file, as it provides the armmbed/mbl-manifest pair with the revision to clone the repository from.
 
 All main keys must be unique inside the main dictionary or inside a sub-dictionary - else file parsing will fail.
 **Additional Comments**:
