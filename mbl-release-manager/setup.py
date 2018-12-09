@@ -21,7 +21,7 @@ setup(
     long_description=read("README.md"),
     author="Arm Ltd.",
     license="BSD-3-Clause",
-    install_requires=["in_place", "gitpython"],
+    install_requires=["in-place", "gitpython"],
     py_modules=["release_manager", "repo_manifest", "git_handler", "cli"],
     zip_safe=False,
     entry_points={"console_scripts": ["mbl-release-manager = cli:_main"]},

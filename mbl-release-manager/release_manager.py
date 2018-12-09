@@ -106,7 +106,7 @@ class ReleaseManager:
         # initial stage. Each log entry will be at least 2 lines.
         logging.basicConfig(level=logging.INFO, format=LOGGING_REGULAR_FORMAT)
         self.logger = logging.getLogger(cli.program_name)
-        self.logger.info("Starting {}".format(cli.program_name))
+        self.logger.debug("Starting {}".format(cli.program_name))
 
         # dictionary of RepoManifestFile objects
         self.manifest_file_name_to_obj = {}
@@ -157,15 +157,9 @@ class ReleaseManager:
         self.logger.debug("Command line arguments:{}".format(self.args))
 
         # create a temporary folder to clone repositories in
-        while True:
-            random_str = "".join(
-                random.choice(string.ascii_lowercase) for m in range(8)
-            )
-            path = os.path.join(tempfile.gettempdir(), "mbl_" + random_str)
-            if not os.path.exists(path):
-                os.makedirs(path)
-                self.tmp_dir_path = path
-                break
+        self.tmp_dir_path = tempfile.mkdtemp(suffix=None,
+                                             prefix="mbl_",
+                                             dir="/tmp")
 
         # list of strings to be printed at the script end, as a summary
         self.summary_logs = []
@@ -495,7 +489,7 @@ class ReleaseManager:
         pairs_found = {}
         for key, val in ordered_pairs:
             if key in pairs_found:
-                raise ValueError("duplicate key: {}".format((k,)))
+                raise ValueError("duplicate key: {}".format(key))
             else:
                 pairs_found[key] = val
         return pairs_found
@@ -581,7 +575,7 @@ class ReleaseManager:
                     object_pairs_hook=self.dict_raise_on_duplicates,
                 )
             except json.decoder.JSONDecodeError as err:
-                self.logger.info("Illegal json file!", err)
+                self.logger.error("Illegal json file!", err)
                 sys.exit(-1)
 
         """

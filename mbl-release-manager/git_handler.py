@@ -259,8 +259,8 @@ class GitClonedRepository:
             is_commit_hash = True
         else:
             raise ValueError(
-                "Invalid checkout_rev_name {} to checkout after cloning!"
-                % checkout_rev_name
+                "Invalid checkout_rev_name {} to checkout "
+                "after cloning!".format(checkout_rev_name)
             )
 
         # create the destination directory if it does not exist
