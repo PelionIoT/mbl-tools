@@ -157,9 +157,9 @@ class ReleaseManager:
         self.logger.debug("Command line arguments:{}".format(self.args))
 
         # create a temporary folder to clone repositories in
-        self.tmp_dir_path = tempfile.mkdtemp(suffix=None,
-                                             prefix="mbl_",
-                                             dir="/tmp")
+        self.tmp_dir_path = tempfile.mkdtemp(
+            suffix=None, prefix="mbl_", dir="/tmp"
+        )
 
         # list of strings to be printed at the script end, as a summary
         self.summary_logs = []
@@ -575,8 +575,12 @@ class ReleaseManager:
                     object_pairs_hook=self.dict_raise_on_duplicates,
                 )
             except json.decoder.JSONDecodeError as err:
-                self.logger.error("Illegal json file!", err)
-                sys.exit(-1)
+                self.logger.error(
+                    "Invalid JSON format for input file {} !".format(
+                        self.args.refs_input_file_path
+                    )
+                )
+                raise
 
         """
         Check that exist at least EXTERNAL_SD_KEY_NAME key with a
