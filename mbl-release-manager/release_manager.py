@@ -157,9 +157,7 @@ class ReleaseManager:
         self.logger.debug("Command line arguments:{}".format(self.args))
 
         # create a temporary folder to clone repositories in
-        self.tmp_dir_path = tempfile.mkdtemp(
-            suffix=None, prefix="mbl_", dir="/tmp"
-        )
+        self.tmp_dir_path = tempfile.mkdtemp(prefix="mbl_")
 
         # list of strings to be printed at the script end, as a summary
         self.summary_logs = []
