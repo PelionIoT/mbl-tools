@@ -51,8 +51,8 @@ prerequisites:
 $ sudo apt-get install python3-pip
 $ pip3 --version
 pip 18.1 from ... (python 3.5)
-
 ```
+
 * Create my_venv under /tmp/my_venv , and start it:
 ```
 $ cd /tmp
@@ -60,10 +60,17 @@ $ python3 -m venv my_venv
 $ source my_venv/bin/activate
 (my_venv) $
 ```
-* Clone the mbl-tools repository and install the script package:
+* Clone the mbl-tools repository:
 ```
 (my_venv) $ git clone git@github.com:ARMmbed/mbl-tools.git
 (my_venv) $ cd mbl-tools/mbl-release-manager/
+```
+* Since the status of the system python installation is unknown, and we do not want to modify it (else than the pip3 installation) - ensure pip, setuptools, and wheel are up to date inside the virtual environment:
+```
+(my_venv) $ python -m pip install --upgrade pip setuptools wheel
+```
+* Install the the script package :
+```
 (my_venv) $ python setup.py install
 ```
 * The package binary mbl-release-manager is only installed within the virtual environment at (`/tmp/my_venv/bin`); it can be run by activating the virtual environment or by calling the binaries by specifying its path on the CLI.
