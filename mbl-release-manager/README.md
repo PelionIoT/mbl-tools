@@ -42,7 +42,7 @@ Assumptions:
 * The script should always run on a Linux host machine.
 * Python3 is installed (script was tested on Python 3.5.2).
 * The user has write access to Mbed Linux OS product and supporting product repositories on GitHub. For more details on what are they, see: https://confluence.arm.com/display/mbedlinux/Repositories.
-* We use venv. Else, user needs to install in_place and gitpython packages.
+* We use Python3 virtual environment (venv). Else, user needs to install in_place and gitpython packages.
 
 Here we will demonstrate how to run script using virtualenv (venv).
 prerequisites:
@@ -60,18 +60,19 @@ $ python3 -m venv my_venv
 $ source my_venv/bin/activate
 (my_venv) $
 ```
-* Now we are inside a Python3 virtual environment 'my_venv'. Lets clone the mbl-tools repository and install the script package:
+* Clone the mbl-tools repository and install the script package:
 ```
 (my_venv) $ git clone git@github.com:ARMmbed/mbl-tools.git
 (my_venv) $ cd mbl-tools/mbl-release-manager/
 (my_venv) $ python setup.py install
 ```
-* After installing the script's package, mbl-release-manager can be run from anywhere. It resides under /tmp/my_venv/mbl-release-manager/venev/bin.
-* Type mbl-release-manager -h for help. A typical run will start by simulating and look like that (after creating an update.json file locally):
+* The package binary mbl-release-manager is only installed within the virtual environment at (`/tmp/my_venv/bin`); it can be run by activating the virtual environment or by calling the binaries by specifying its path on the CLI.
+* Run the command `mbl-release-manager -h` for usage information.
+* Create all required release branches without pushing to remote repositories as follows:
 ```
-(my_venv) $ mbl-release-manager -s -r update.json
+(my_venv) $ mbl-release-manager -s -r mbl-os-v1.0-release-conf.json
 ```
-* To exit venv after script is done type:
+* Deactivate the virtual environment after a successful run:
 ```
 (my_venv) $ deactivate
 $
