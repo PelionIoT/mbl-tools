@@ -238,9 +238,9 @@ class ReleaseManager:
         base_name = ""
         name_to_proj = {}
         has_changed = False
-        for attribute in root.findall("project"):
+        for project_subelement in root.findall("project"):
             # get name and split to prefix and short name
-            full_name = attribute.get("name")
+            full_name = project_subelement.get("name")
             prefix, short_name = full_name.rsplit("/", 1)
             if short_name in name_to_proj:
                 raise ValueError(
@@ -250,11 +250,11 @@ class ReleaseManager:
                 )
 
             # get remote key and build url
-            remote_key = attribute.get("remote")
+            remote_key = project_subelement.get("remote")
             url = remote_key_to_remote[remote_key] + ":/" + full_name + ".git"
 
             # get and set new revision
-            revision = attribute.get("revision")
+            revision = project_subelement.get("revision")
             if not revision:
                 revision = default_rev
 
@@ -270,18 +270,20 @@ class ReleaseManager:
             # we are already in the place we want to change!
             new_ref = self.get_new_ref_from_new_revisions(base_name, full_name)
             if new_ref == (gith.REF_BRANCH_PREFIX + default_rev):
-                del attribute.attrib["revision"]
+                del project_subelement.attrib["revision"]
                 has_changed = True
             elif new_ref:
                 if gith.is_valid_git_commit_hash(new_ref):
-                    attribute.set("revision", new_ref)
+                    project_subelement.set("revision", new_ref)
                 else:
-                    attribute.set("revision", gith.get_base_rev_name(new_ref))
+                    project_subelement.set(
+                        "revision", gith.get_base_rev_name(new_ref)
+                    )
                 has_changed = True
 
-            if has_changed and "upstream" in attribute.attrib:
+            if has_changed and "upstream" in project_subelement.attrib:
                 # remove attribute 'upstream' is exist
-                del attribute.attrib["upstream"]
+                del project_subelement.attrib["upstream"]
 
         assert base_name
 
@@ -323,7 +325,7 @@ class ReleaseManager:
             self.logger.info("File {} has been modified!".format(file_path))
 
     def process_manifest_files(self):
-        """parse, validate and modify XML manifest files."""
+        """Parse, validate and modify XML manifest files."""
         self.logger.info("Parse, validate and modify XML manifest files...")
         new_revisions = self.new_revisions
 
@@ -383,16 +385,6 @@ class ReleaseManager:
         # store in manifest_file_name_to_obj
         for file_path in xml_files:
             self.parse_repo_manifest_file(file_path)
-
-    @staticmethod
-    def validate_remote_repositories_state_helper(url, new_rev):
-        """Check that new rev does not exist on remote."""
-        if new_rev.startswith(gith.REF_BRANCH_PREFIX):
-            return gith.does_branch_exist_in_remote_repo(url, new_rev, False)
-        if new_rev.startswith(gith.REF_TAG_PREFIX):
-            return gith.does_tag_exist_in_remote_repo(url, new_rev, False)
-
-        return True
 
     def validate_remote_repositories_state(self):
         """
@@ -456,7 +448,7 @@ class ReleaseManager:
 
             future_to_git_url = {
                 executor.submit(
-                    self.validate_remote_repositories_state_helper,
+                    gith.validate_remote_repositories_state_helper,
                     worker_input[idx_url],
                     worker_input[idx_rev],
                 ): worker_input
@@ -540,8 +532,8 @@ class ReleaseManager:
                         ].repo_name_to_proj
                     )
                 else:
-                    for f in self.manifest_file_name_to_obj.values():
-                        if repo_name in f.repo_name_to_proj:
+                    for file_object in self.manifest_file_name_to_obj.values():
+                        if repo_name in file_object.repo_name_to_proj:
                             found = True
                             break
                 if not found:
@@ -604,20 +596,20 @@ class ReleaseManager:
                 )
             )
 
-        for values in new_revisions[EXTERNAL_SD_KEY_NAME].values():
-            if len(values) != 2:
+        for revision_list in new_revisions[EXTERNAL_SD_KEY_NAME].values():
+            if len(revision_list) != 2:
                 raise ValueError(
                     "Bad length for list {} - All lists under key {} in user "
                     "input file must be of length 2!".format(
-                        values, EXTERNAL_SD_KEY_NAME
+                        revision_list, EXTERNAL_SD_KEY_NAME
                     )
                 )
 
-            if values[0] == values[1]:
+            if revision_list[0] == revision_list[1]:
                 raise ValueError(
                     "Bad list {} - non-distinct values under "
                     "key {} in user input file!".format(
-                        values, EXTERNAL_SD_KEY_NAME
+                        revision_list, EXTERNAL_SD_KEY_NAME
                     )
                 )
 
@@ -717,7 +709,15 @@ class ReleaseManager:
         cur_rev,
         new_rev,
     ):
-        """create_and_update_new_revisions_worker."""
+        """
+        Worker thread function to create and update new revision.
+
+        The worker gets all the data needed to clon a local repository.
+        The branch-from (current) revision is checked out.
+        Then the new revision (branch/tag)
+        is created locally. If the repository isn't not expected to be
+        modified, the new revision is pushed to remote.
+        """
         repo = gith.GitClonedRepository(
             remote, name_prefix, short_name, clone_base_path, cur_rev
         )
@@ -918,7 +918,9 @@ class ReleaseManager:
             in self.external_repo_name_to_cloned_repo
         ):
             self.update_mbl_linked_repositories_conf_helper(
-                d[MBL_LINKED_REPOSITORIES_REPO_NAME]
+                self.external_repo_name_to_cloned_repo_dict[
+                    MBL_LINKED_REPOSITORIES_REPO_NAME
+                ]
             )
         for file_obj in self.manifest_file_name_to_obj.values():
             if MBL_LINKED_REPOSITORIES_REPO_NAME in file_obj.repo_name_to_proj:
@@ -1112,8 +1114,8 @@ class ReleaseManager:
         )
 
         self.logger.info("\n== Event log ==\n")
-        for (idx, record) in enumerate(self.summary_logs):
-            self.logger.info("{}. {}".format(idx + 1, record))
+        for (index, record) in enumerate(self.summary_logs):
+            self.logger.info("{}. {}".format(index + 1, record))
             self.logger.info("-----")
 
         handler.setFormatter(logging.Formatter(LOGGING_REGULAR_FORMAT))

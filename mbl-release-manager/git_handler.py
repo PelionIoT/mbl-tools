@@ -26,6 +26,16 @@ REF_PREFIX = "refs/"
 HASH_FIXED_LEN = 40
 
 
+def validate_remote_repositories_state_helper(url, new_rev):
+    """Check that new rev does not exist on remote."""
+    if new_rev.startswith(REF_BRANCH_PREFIX):
+        return does_branch_exist_in_remote_repo(url, new_rev, False)
+    if new_rev.startswith(REF_TAG_PREFIX):
+        return does_tag_exist_in_remote_repo(url, new_rev, False)
+
+    return True
+
+
 def build_url_from_repo_name(remote_prefix, repo_name):
     """
     Build a remote URL from remote prefix and remote name.
@@ -48,8 +58,8 @@ def list_remote_references(url):
     remote_refs = {}
     git_obj = git.cmd.Git()
     for ref in git_obj.ls_remote(url).split("\n"):
-        value, key = ref.split("\t")
-        remote_refs[key] = value
+        commit_hash, ref_path = ref.split("\t")
+        remote_refs[ref_path] = commit_hash
     return remote_refs
 
 
