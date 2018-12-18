@@ -89,8 +89,12 @@ SUMMARY_H_BRANCH = "CREATE BRANCH: "
 SUMMARY_H_TAG = "CREATE TAG: "
 
 
-def dict_raise_on_duplicates(ordered_pairs):
-    """Raise a ValueError exception if find duplicate keys."""
+def list_of_pairs_to_dict(ordered_pairs):
+    """
+    Convert a list of pairs to a dictionary.
+
+    Raise a ValueError exception if find duplicate keys.
+    """
     pairs_found = {}
     for key, val in ordered_pairs:
         if key in pairs_found:
@@ -559,8 +563,7 @@ class ReleaseManager:
         ) as data_file:
             try:
                 new_revisions = json.loads(
-                    data_file.read(),
-                    object_pairs_hook=dict_raise_on_duplicates,
+                    data_file.read(), object_pairs_hook=list_of_pairs_to_dict
                 )
             except json.decoder.JSONDecodeError as err:
                 self.logger.error(
