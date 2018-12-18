@@ -89,6 +89,17 @@ SUMMARY_H_BRANCH = "CREATE BRANCH: "
 SUMMARY_H_TAG = "CREATE TAG: "
 
 
+def dict_raise_on_duplicates(ordered_pairs):
+    """Raise a ValueError exception if find duplicate keys."""
+    pairs_found = {}
+    for key, val in ordered_pairs:
+        if key in pairs_found:
+            raise ValueError("duplicate key: {}".format(key))
+        else:
+            pairs_found[key] = val
+    return pairs_found
+
+
 class ReleaseManager:
     """
     Release Manager Class - supplies the script API.
@@ -473,17 +484,6 @@ class ReleaseManager:
 
         self.logger.info("Worker threads done...")
 
-    @staticmethod
-    def dict_raise_on_duplicates(ordered_pairs):
-        """Raise a ValueError exception if find duplicate keys."""
-        pairs_found = {}
-        for key, val in ordered_pairs:
-            if key in pairs_found:
-                raise ValueError("duplicate key: {}".format(key))
-            else:
-                pairs_found[key] = val
-        return pairs_found
-
     def validate_cross_dependencies(self):
         """
         Validate correct logical dependencies between manifest and input files.
@@ -560,7 +560,7 @@ class ReleaseManager:
             try:
                 new_revisions = json.loads(
                     data_file.read(),
-                    object_pairs_hook=self.dict_raise_on_duplicates,
+                    object_pairs_hook=dict_raise_on_duplicates,
                 )
             except json.decoder.JSONDecodeError as err:
                 self.logger.error(
