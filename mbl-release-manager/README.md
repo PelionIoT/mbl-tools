@@ -141,8 +141,14 @@ To keep things simple, each example is kept short. We do not demonstrate 'real w
 ```
 {
    "_external_":{
-      "armmbed/mbl-manifest":["refs/heads/origin1", "refs/heads/new1"],
-      "armmbed/mbl-tools":["refs/tag/origin2", "refs/heads/new2"]
+      "armmbed/mbl-manifest":[
+         "refs/heads/origin1",
+         "refs/heads/new1"
+      ],
+      "armmbed/mbl-tools":[
+         "refs/tag/origin2",
+         "refs/heads/new2"
+      ]
    },
    "_common_":{
       "armmbed/meta-1":"refs/heads/new2",
@@ -167,10 +173,11 @@ Important things to mention:
 
 #### Example 2 - invalid JSON file - no _external_ main key
 ```
-	"_common_": {
-    "armmbed/meta-1": "refs/heads/new2",
-		"git/meta-freescale_2" : "refs/tags/new24"
-	}
+{
+   "_common_":{
+      "armmbed/meta-1":"refs/heads/new2",
+      "git/meta-freescale_2":"refs/tags/new24"
+   }
 }
 ```
 What is invalid?
@@ -178,14 +185,17 @@ The file doesn't have an _external_ main key. Script can't checkout mbl-manifest
 
 #### Example 3 - invalid JSON file - mbl-manifest is missing
 ```
-"_external_": {
-  "armmbed/mbl-tools": ["refs/tag/origin2", "refs/heads/new2"]
-},
-
-"_common_": {
-    "armmbed/meta-1": "refs/heads/new2",
-		"git/meta-freescale_2" : "refs/tags/new24"
-	}
+{
+   "_external_":{
+      "armmbed/mbl-tools":[
+         "refs/tag/origin2",
+         "refs/heads/new2"
+      ]
+   },
+   "_common_":{
+      "armmbed/meta-1":"refs/heads/new2",
+      "git/meta-freescale_2":"refs/tags/new24"
+   }
 }
 ```
 What is invalid?
@@ -193,15 +203,18 @@ The file does have an _external_ main key, but the SD does not have armmbed/mbl-
 
 #### Example 4 - invalid JSON file - duplicated repository
 ```
-"_external_": {
-  "armmbed/mbl-tools": ["refs/tag/origin2", "refs/heads/new2"],
-  "armmbed/meta-1": "refs/heads/new2"
-},
-
-"_common_": {
-    "armmbed/meta-1": "refs/heads/new2",
-		"git/meta-freescale_2" : "refs/tags/new24"
-	}
+{
+   "_external_":{
+      "armmbed/mbl-tools":[
+         "refs/tag/origin2",
+         "refs/heads/new2"
+      ],
+      "armmbed/meta-1":"refs/heads/new2"
+   },
+   "_common_":{
+      "armmbed/meta-1":"refs/heads/new2",
+      "git/meta-freescale_2":"refs/tags/new24"
+   }
 }
 ```
 What is invalid?
@@ -209,15 +222,19 @@ armmbed/meta-1 repeats in _external_ and in _common_.
 
 #### Example 5 - invalid JSON file - duplicated repository
 ```
-"_external_": {
-  "armmbed/mbl-tools": ["refs/tag/origin2", "refs/heads/new2"],
-  "armmbed/meta-1": "refs/heads/new2"
-},
-
-"reference-apps": {
-  "armmbed/meta-mbl-reference-apps": "refs/heads/new4",
-  "armmbed/meta-4": "refs/heads/new_11",
-  "armmbed/meta-1": "refs/heads/new2"
+{
+   "_external_":{
+      "armmbed/mbl-tools":[
+         "refs/tag/origin2",
+         "refs/heads/new2"
+      ],
+      "armmbed/meta-1":"refs/heads/new2"
+   },
+   "reference-apps":{
+      "armmbed/meta-mbl-reference-apps":"refs/heads/new4",
+      "armmbed/meta-4":"refs/heads/new_11",
+      "armmbed/meta-1":"refs/heads/new2"
+   }
 }
 ```
 What is invalid?
@@ -227,15 +244,20 @@ armmbed/meta-1 repeats in _external_ and in reference-apps.
 #### Example 6 - invalid JSON file - duplicated repository
 ```
 {
-	"_external_": {
-		"armmbed/mbl-manifest": ["refs/heads/origin1", "refs/heads/new1"],		
-    "armmbed/mbl-tools": ["refs/tag/origin2", "refs/heads/new2"]
-	},
-
-  "reference-apps": {
-    "armmbed/meta-mbl-reference-apps": "1212121212121212121212121212121212121212",
-    "armmbed/meta-4": "refs/heads/new_11"
-  }
+   "_external_":{
+      "armmbed/mbl-manifest":[
+         "refs/heads/origin1",
+         "refs/heads/new1"
+      ],
+      "armmbed/mbl-tools":[
+         "refs/tag/origin2",
+         "refs/heads/new2"
+      ]
+   },
+   "reference-apps":{
+      "armmbed/meta-mbl-reference-apps":"1212121212121212121212121212121212121212",
+      "armmbed/meta-4":"refs/heads/new_11"
+   }
 }
 ```
 What is invalid?
