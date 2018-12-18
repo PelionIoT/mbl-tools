@@ -39,7 +39,10 @@ def _main():
     with release_manager.ReleaseManager() as rm:
 
         # Parse JSON references input file
-        rm.parse_and_validate_input_file()
+        new_revisions = rm.parse_input_file()
+
+        # Validate JSON input file
+        rm.validate_input_file(new_revisions)
 
         # Clone the manifest repository and parse its xml files into database
         rm.process_manifest_files()

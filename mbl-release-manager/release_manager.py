@@ -281,7 +281,7 @@ class ReleaseManager:
                     )
                 has_changed = True
 
-            if has_changed and "upstream" in project_subelement.attrib:
+            if has_changed and ("upstream" in project_subelement.attrib):
                 # remove attribute 'upstream' is exist
                 del project_subelement.attrib["upstream"]
 
@@ -546,12 +546,10 @@ class ReleaseManager:
 
         self.validate_remote_repositories_state()
 
-    def parse_and_validate_input_file(self):
-        """Parse JSON input file."""
+    def parse_input_file(self):
+        """Validate JSON input file."""
         self.logger.info(
-            "Parsing and validating input file {}...".format(
-                self.args.refs_input_file_path
-            )
+            "Parsing input file {}...".format(self.args.refs_input_file_path)
         )
 
         # Open the given input and parse into new_revision dictionary,
@@ -572,13 +570,24 @@ class ReleaseManager:
                 )
                 raise
 
+        return new_revisions
+
+    def validate_input_file(self, new_revisions):
         """
+        Parse JSON input file.
+
         Check that exist at least EXTERNAL_SD_KEY_NAME key with a
         sub-dictionary that comply with :
         1. All pairs are (key, lists of length 2), and the value list must
         have distinct values.
         2. armmbed/mbl-manifest repository exist in sub-dictionary
         """
+        self.logger.info(
+            "Validating input file {}...".format(
+                self.args.refs_input_file_path
+            )
+        )
+
         if EXTERNAL_SD_KEY_NAME not in new_revisions:
             raise ValueError(
                 "main entry key {} could not be found "
