@@ -131,7 +131,7 @@ All main keys must be unique inside the main dictionary or inside a sub-dictiona
 
 1. **External Arm managed repositories** - These are given in '_external_' SD. These are repository names which are not pointed in any of the mbl-manifest Google Repo manifest files. **'armmbed/mbl-manifest'** is such a type, which MUST be given in the JSON file. If 'armmbed/meta-mbl' is given, the file **meta-mbl/conf/dist/mbl-linked-repositories.conf** will be modified accordingly to point into the new linked references (if such exist).
 
-## 5. Validity checks examples:
+## 5. Validity checks examples
 
 In this section we will go through a valid and invalid JSON files examples. Initially, the script checks that the JSON file is legal and formatted according to RFC 4627 (The application/json Media Type for JavaScript Object Notation (JSON), July 2006). If JSON format check fails, an exception will be raised.  
 After checking format , there are many other validity checks done, in order to make sure that the actual input is valid.  
