@@ -8,7 +8,7 @@
 * **Git tag** - A tag represents a version of a particular branch at a moment in time.
 * **Git ref** - a git tag, local or remote branch is called a ref (short for a reference). Anything that points to a commit is called a Git ref, or just ref.
 * **Commit hash** - A Git commit can be represented by multiple ways. One of the ways to represent a commit is by its Full Commit ID - 40 hexadecimal characters that specify a 160-bit SHA-1 hash.
-* **revision** - A git Ref or a Commit hash.
+* **Revision** - A git Ref or a Commit hash.
 
 ## 1. Purpose of the Script
 This script is used in order to create a release branch based on a user-provided JSON configuration file. It modifies Google Repo manifest files in armmbed/mbl-manifest, and mbl-linked-repositories.conf in armmbed/meta-mbl. It then commits these two repositories, creates a new branch/tag according to the provided JSON file and pushes all modifications to GitHub.
@@ -17,8 +17,8 @@ In more details, it performs the next significant operations:
 1. Modify specified XML manifest files present in the new branch of mbl-manifest by setting the revision for each projects
 1. Commit the changes made to the created mbl-manifest branch/tag and push the branch to a remote repository.
 1. Does the following for each projects with modified revisions in mbl-manifest Google Repo manifest files:
-  * If the repository is an Arm-MRR, clone from the revision stated in the manifest file, create a new branch/tag, and push the branch to the remote repository.
-  * If the repository is not an Arm-MRR, simply set the revision of the projects. The revision in the user configuration file must be an existing revision in the remote repository.
+    *   If the repository is an Arm-MRR, clone from the revision stated in the manifest file, create a new branch/tag, and push the branch to the remote repository.
+    *   If the repository is not an Arm-MRR, simply set the revision of the projects. The revision in the user configuration file must be an existing revision in the remote repository.
 1. External Arm-managed repositories can also be provided in the user configuration file. After cloning the repository from a specified revision, a new branch/tag is created and pushed to the remote repository.
 1. One of the configuration files in the newly created `meta-mbl` tag/branch (`mbl-linked-repositories.conf`) is optionally updated to point to a specified commit sha in the `mbl-core` repository.
 
@@ -131,7 +131,7 @@ All main keys must be unique inside the main dictionary or inside a sub-dictiona
 
 1. **External Arm managed repositories** - These are given in '_external_' SD. These are repository names which are not pointed in any of the mbl-manifest Google Repo manifest files. **'armmbed/mbl-manifest'** is such a type, which MUST be given in the JSON file. If 'armmbed/meta-mbl' is given, the file **meta-mbl/conf/dist/mbl-linked-repositories.conf** will be modified accordingly to point into the new linked references (if such exist).
 
-### Validity checks examples:
+## 5. Validity checks examples:
 
 In this section we will go through a valid and invalid JSON files examples. Initially, the script checks that the JSON file is legal and formatted according to RFC 4627 (The application/json Media Type for JavaScript Object Notation (JSON), July 2006). If JSON format check fails, an exception will be raised.  
 After checking format , there are many other validity checks done, in order to make sure that the actual input is valid.  
@@ -140,26 +140,23 @@ To keep things simple, each example is kept short. We do not demonstrate 'real w
 #### Example 1 - a valid update file
 ```
 {
-	"_external_": {
-		"armmbed/mbl-manifest": ["refs/heads/origin1", "refs/heads/new1"],		
-    "armmbed/mbl-tools": ["refs/tag/origin2", "refs/heads/new2"]
-	},
-
-	"_common_": {
-    "armmbed/meta-1": "refs/heads/new2",
-    "armmbed/meta-mbl": "refs/heads/new28",
-    "git/meta-freescale_2" : "refs/tags/new24"
-	},
-
-  "reference-apps": {
-    "armmbed/meta-mbl-reference-apps": "refs/heads/new4",
-    "armmbed/meta-4": "refs/heads/new_11"
-  },
-
-	"reference-apps-internal": {
-		"armmbed/meta-mbl-reference-apps": "refs/heads/branch_name_3",
-		"armmbed/meta-3": "refs/heads/branch_name_11"
-	}
+   "_external_":{
+      "armmbed/mbl-manifest":["refs/heads/origin1", "refs/heads/new1"],
+      "armmbed/mbl-tools":["refs/tag/origin2", "refs/heads/new2"]
+   },
+   "_common_":{
+      "armmbed/meta-1":"refs/heads/new2",
+      "armmbed/meta-mbl":"refs/heads/new28",
+      "git/meta-freescale_2":"refs/tags/new24"
+   },
+   "reference-apps":{
+      "armmbed/meta-mbl-reference-apps":"refs/heads/new4",
+      "armmbed/meta-4":"refs/heads/new_11"
+   },
+   "reference-apps-internal":{
+      "armmbed/meta-mbl-reference-apps":"refs/heads/branch_name_3",
+      "armmbed/meta-3":"refs/heads/branch_name_11"
+   }
 }
 ```
 In this example There are 4 main pairs: 2 special pairs and 2 file-specific pairs.
@@ -179,7 +176,7 @@ Important things to mention:
 What is invalid?
 The file doesn't have an _external_ main key. Script can't checkout mbl-manifest.
 
-#### Example 2 - invalid JSON file - mbl-manifest is missing
+#### Example 3 - invalid JSON file - mbl-manifest is missing
 ```
 "_external_": {
   "armmbed/mbl-tools": ["refs/tag/origin2", "refs/heads/new2"]
@@ -194,7 +191,7 @@ The file doesn't have an _external_ main key. Script can't checkout mbl-manifest
 What is invalid?
 The file does have an _external_ main key, but the SD does not have armmbed/mbl-manifest.
 
-#### Example 3 - invalid JSON file - duplicated repository
+#### Example 4 - invalid JSON file - duplicated repository
 ```
 "_external_": {
   "armmbed/mbl-tools": ["refs/tag/origin2", "refs/heads/new2"],
@@ -210,7 +207,7 @@ The file does have an _external_ main key, but the SD does not have armmbed/mbl-
 What is invalid?
 armmbed/meta-1 repeats in _external_ and in _common_.
 
-#### Example 4 - invalid JSON file - duplicated repository
+#### Example 5 - invalid JSON file - duplicated repository
 ```
 "_external_": {
   "armmbed/mbl-tools": ["refs/tag/origin2", "refs/heads/new2"],
@@ -227,7 +224,7 @@ What is invalid?
 armmbed/meta-1 repeats in _external_ and in reference-apps.
 
 
-#### Example 5 - invalid JSON file - duplicated repository
+#### Example 6 - invalid JSON file - duplicated repository
 ```
 {
 	"_external_": {
