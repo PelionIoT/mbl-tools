@@ -55,9 +55,8 @@ def _main():
         # cloning is done using a thread pool
         clone_data = rm.prepare_clone_data()
 
-        # Update new_revision for all manifest files projects and create
-        # reference (where needed on remote Git repositories)
-        rm.clone_and_update_new_revisions(clone_data)
+        # Create new revisions (as required by user) on remote repositories
+        rm.create_new_revisions(clone_data)
 
         # update all files MBL_LINKED_REPOSITORIES_REPO_PATH in repositories
         # MBL_LINKED_REPOSITORIES_REPO_NAME

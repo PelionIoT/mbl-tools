@@ -354,7 +354,7 @@ class ReleaseManager:
 
         self.external_repo_name_to_cloned_repo[
             mnf.MBL_MANIFEST_REPO_NAME
-        ] = self.create_and_update_new_revisions_worker(
+        ] = self.create_new_revision(
             ARM_MRR_REMOTE,
             mnf.ARM_MRR_REPO_NAME_PREFIX,
             mnf.MBL_MANIFEST_REPO_SHORT_NAME,
@@ -551,7 +551,15 @@ class ReleaseManager:
         self.validate_remote_repositories_state()
 
     def parse_input_file(self):
-        """Validate JSON input file."""
+        """
+        Parse JSON input file.
+
+        Check that exist at least EXTERNAL_SD_KEY_NAME key with a
+        sub-dictionary that comply with :
+        1. All pairs are (key, lists of length 2), and the value list must
+        have distinct values.
+        2. armmbed/mbl-manifest repository exist in sub-dictionary
+        """
         self.logger.info(
             "Parsing input file {}...".format(self.args.refs_input_file_path)
         )
@@ -576,15 +584,7 @@ class ReleaseManager:
         return new_revisions
 
     def validate_input_file(self, new_revisions):
-        """
-        Parse JSON input file.
-
-        Check that exist at least EXTERNAL_SD_KEY_NAME key with a
-        sub-dictionary that comply with :
-        1. All pairs are (key, lists of length 2), and the value list must
-        have distinct values.
-        2. armmbed/mbl-manifest repository exist in sub-dictionary
-        """
+        """Validate JSON input file."""
         self.logger.info(
             "Validating input file {}...".format(
                 self.args.refs_input_file_path
@@ -712,7 +712,7 @@ class ReleaseManager:
 
         return None
 
-    def create_and_update_new_revisions_worker(
+    def create_new_revision(
         self,
         remote,
         name_prefix,
@@ -722,13 +722,13 @@ class ReleaseManager:
         new_rev,
     ):
         """
-        Worker thread function to create and update new revision.
+        Clone repository and create a new revision.
 
-        The worker gets all the data needed to clon a local repository.
-        The branch-from (current) revision is checked out.
-        Then the new revision (branch/tag)
-        is created locally. If the repository isn't not expected to be
-        modified, the new revision is pushed to remote.
+        Clone repository and checkout revision 'cur_rev'
+        (the branch-from (current) revision is checked out).
+        Then the new revision (branch/tag) new_rev is created.
+        If the repository isn't expected to be modified, the new revision is
+        pushed to remote.
         """
         repo = gith.GitClonedRepository(
             remote, name_prefix, short_name, clone_base_path, cur_rev
@@ -773,7 +773,7 @@ class ReleaseManager:
             mnf.MBL_MANIFEST_REPO_NAME,
             MBL_LINKED_REPOSITORIES_REPO_NAME,
         ]:
-            if self.diag_repo_push(repo):
+            if self.diagnostic_repo_push(repo):
                 self.repo_push(repo, new_rev)
                 self.summary_logs.append(
                     SUMMARY_H_PUSH
@@ -902,7 +902,7 @@ class ReleaseManager:
                 "repository {}".format(file_path, git_repo.full_name)
             )
 
-        if self.diag_repo_push(git_repo):
+        if self.diagnostic_repo_push(git_repo):
             self.repo_push(git_repo, git_repo.handle.active_branch)
             self.summary_logs.append(
                 SUMMARY_H_PUSH
@@ -942,7 +942,7 @@ class ReleaseManager:
                     ].cloned_repo
                 )
 
-    def diag_repo_push(self, repo):
+    def diagnostic_repo_push(self, repo):
         """
         Diagnostic mode - before pushing.
 
@@ -984,7 +984,7 @@ class ReleaseManager:
         repo.handle.git.add(update=True)
         repo.handle.index.commit("release manager automatic commit")
 
-        if self.diag_repo_push(repo):
+        if self.diagnostic_repo_push(repo):
             self.repo_push(repo, repo.handle.active_branch)
             self.summary_logs.append(
                 SUMMARY_H_PUSH + "Pushed from repository clone path={} a new "
@@ -1058,7 +1058,7 @@ class ReleaseManager:
         self.logger.debug(pformat(clone_data))
         return clone_data
 
-    def clone_and_update_new_revisions(self, clone_data):
+    def create_new_revisions(self, clone_data):
         """
         Clone all external and Arm MRR repositories.
 
@@ -1069,13 +1069,15 @@ class ReleaseManager:
                 len(clone_data)
             )
         )
+
+        # Invoke a group of threads, each thread receives a repository to handle
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=len(clone_data)
         ) as executor:
 
             future_to_git_url = {
                 executor.submit(
-                    self.create_and_update_new_revisions_worker,
+                    self.create_new_revision,
                     worker_input[1],
                     worker_input[2],
                     worker_input[3],
@@ -1086,6 +1088,7 @@ class ReleaseManager:
                 for worker_input in clone_data
             }
 
+            # Traverse all completed thread and check its return value
             for completed_task in concurrent.futures.as_completed(
                 future_to_git_url, MAX_TIMEOUT_IN_SEC
             ):
@@ -1107,6 +1110,7 @@ class ReleaseManager:
                         odict = self.manifest_file_name_to_obj[worker_input[7]]
                         pdict = odict.repo_name_to_proj[worker_input[0]]
                         pdict.cloned_repo = result
+
         self.logger.info("Worker threads done...")
 
     def print_summary(self):

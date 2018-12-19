@@ -54,7 +54,13 @@ def build_url_from_base_repo_name(remote_prefix, prefix, base_name):
 
 
 def list_remote_references(url):
-    """Return a dictionary of references for a git remote URL."""
+    """
+    Return a dictionary 'remote_refs' of references for a git remote URL.
+
+    The dictionary is composed of :
+    key - a Git reference available in a remote repository
+    value -  associated commit ID (SHA-1) hash
+    """
     remote_refs = {}
     git_obj = git.cmd.Git()
     for ref in git_obj.ls_remote(url).split("\n"):
