@@ -55,7 +55,7 @@ An example command to submit a job is:
 $ ./run-me.sh -c submit -- \
     --device-type imx7s-warp \
     --lava-server http://mbl-lava-master-dev.com \
-    --image-url http://example.com/mbl-console-image-imx7s-warp-mbl.wic.gz \
+    --image-url http://example.com/mbl-image-release-imx7s-warp-mbl.wic.gz \
     --lava-username dierus01 \
     --lava-token tokentest
 ```
