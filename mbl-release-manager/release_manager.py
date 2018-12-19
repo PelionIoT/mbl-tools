@@ -1070,7 +1070,8 @@ class ReleaseManager:
             )
         )
 
-        # Invoke a group of threads, each thread receives a repository to handle
+        # Invoke a group of threads, each thread receives a repository to
+        # handle
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=len(clone_data)
         ) as executor:
