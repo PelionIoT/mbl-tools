@@ -53,7 +53,7 @@ $ pip3 --version
 pip 18.1 from ... (python 3.5)
 ```
 
-* Create my_venv under /tmp/my_venv , and start it:
+* Create and activate a virtual environment under `/tmp`:
 ```
 $ cd /tmp
 $ python3 -m venv my_venv
