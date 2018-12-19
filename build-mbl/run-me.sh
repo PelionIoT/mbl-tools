@@ -159,6 +159,13 @@ if [ -n "${inject_mcc_files:-}" ]; then
   done
 fi
 
+if [ -z "${SSH_AUTH_SOCK+false}" ]; then
+  printf "error: ssh-agent not found.\n" >&2
+  printf "To connect to Github please run an SSH agent and add your SSH key.\n" >&2
+  printf "More info: https://help.github.com/articles/connecting-to-github-with-ssh/\n" >&2
+  exit 4
+fi
+
 docker build -t "$imagename" "$execdir"
 
 if [ -n "${external_manifest:-}" ]; then
