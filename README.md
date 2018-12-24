@@ -67,6 +67,14 @@ can be specified using the --builddir option to run-me.sh:
 Use the --help option to the run-me.sh script to get brief usage
 information.
 
+#### Supported machines
+
+mbl-tools currently builds for the following machines:
+
+* raspberrypi3-mbl
+* imx7s-warp-mbl
+* imx7d-pico-mbl
+
 #### Build Artifacts
 
 Each build will produce a variety of build artifacts including a
