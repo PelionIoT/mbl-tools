@@ -96,7 +96,7 @@ default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
 default_machines="raspberrypi3-mbl"
 default_distro="mbl"
-default_images="mbl-console-image mbl-console-image-test"
+default_images="mbl-image-production mbl-image-development"
 
 # Set of license package name (PN) exceptions
 # This hash array uses a key (PN) created from reading the recipeinfo
@@ -112,7 +112,7 @@ license_package_exceptions=(
   ["go-cross-arm"]="go-cross"
   ["kmod"]="kmod_git"
   ["libtool"]="libtool-native"
-  ["mbl-console-image"]="mbl-console-image.bb"
+  ["mbl-image-production"]="mbl-image-production.bb"
   ["ncurses"]="ncurses/ncurses"
   ["packagegroup-mbl"]="packagegroup-mbl.bb")
 
