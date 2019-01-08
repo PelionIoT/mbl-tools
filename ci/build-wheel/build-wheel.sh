@@ -3,7 +3,6 @@
 usage()
 {
   cat <<EOF
-
 usage: build-wheel.sh [OPTION] -- [build-wheel.sh arguments]
 
   -h, --help            Print brief usage information and exit.

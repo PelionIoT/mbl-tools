@@ -3,7 +3,6 @@
 usage()
 {
   cat <<EOF
-
 usage: deploy-to-pypi.sh [OPTION] -- [deploy-to-pypi.sh arguments]
 
   -h, --help            Print brief usage information and exit.

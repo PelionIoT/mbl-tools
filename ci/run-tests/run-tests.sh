@@ -3,7 +3,6 @@
 usage()
 {
   cat <<EOF
-
 usage: run-tests.sh [OPTION] -- [run-tests.sh arguments]
 
   -h, --help            Print brief usage information and exit.
