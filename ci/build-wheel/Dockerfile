@@ -1,5 +1,6 @@
 FROM py-deploy-base-image
 
+RUN mkdir -m 777 /work
 ADD . /work
 
 WORKDIR /work

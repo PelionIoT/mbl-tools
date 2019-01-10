@@ -1,6 +1,6 @@
 # Purpose
 
-Tooling to run python unit tests in a docker container.
+This directory contains a Dockerfile to run python unit tests in a docker container.
 
 # Requirements
 
@@ -14,8 +14,12 @@ The tests are executed using pytest, therefore your unit tests must follow the [
 
 # Usage
 
+Execute the `launch_docker_container.py` script (located in ci/launch-container/) and pass in the path to the Dockerfile in this directory.
+
+We must also pass in the `--workdir` and `--cp` options. 
+
 ```bash
-$ ./run-tests.sh --workdir path/to/your/python/project
+$ python launch_docker_container.py <image-name> <container-name> path/to/mbl-tools/ci/run-tests/Dockerfile --workdir path/to/your/python/project --cp work/report
 ```
 
 This will run your unit tests in a docker container using pytest.
