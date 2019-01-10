@@ -1,4 +1,8 @@
-#!/bin/env/python
+#!/usr/bin/env python3
+
+# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
 
 """
 This module is for building and running docker containers.
