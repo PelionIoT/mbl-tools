@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2019, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -29,6 +29,7 @@ def parse_args():
 
     parser.add_argument(
         "--cp",
+        metavar="PATH",
         help="Copy files from the container. "
         "Requires a path (inside the container) to copy any artifacts from. "
         "Artifacts will be copied to --workdir.",
