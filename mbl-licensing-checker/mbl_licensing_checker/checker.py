@@ -66,7 +66,6 @@ class ConventionChecker:
 
         All source code written or modified by ARM should have
         an ARM copyright notice.
-
         """
         if parser.arm_copyright:
             if (
@@ -87,7 +86,6 @@ class ConventionChecker:
         All files that contain Third Party Intellectual Property
         (TPIP) copied and subsequently modified must contain the
         fully qualified path and filename of the original file.
-
         """
         if (
             parser.arm_copyright_tpip
@@ -104,7 +102,6 @@ class ConventionChecker:
         All files that contain Third Party Intellectual Property
         (TPIP) copied and subsequently modified must contain the
         URI to the source code repository.
-
         """
         if (
             parser.arm_copyright_tpip
@@ -121,7 +118,6 @@ class ConventionChecker:
         All files that contain Third Party Intellectual Property
         (TPIP) copied and subsequently modified must contain a
         copy of the original copyright notice
-
         """
         if (
             parser.tpip_source_uri
@@ -136,7 +132,6 @@ class ConventionChecker:
         """D200: Missing the SPDX license Identifier.
 
         All files must include an SPDX identifier.
-
         """
         if not parser.spdx_identifier:
             return violations.D200()
@@ -146,7 +141,6 @@ class ConventionChecker:
         """D300: The SPDX license identifier should be Apache-2.0.
 
         `Apache-2-0` was the expected SPDX identifier.
-
         """
         if (
             parser.tpip_path
@@ -166,7 +160,6 @@ class ConventionChecker:
         """D301: The SPDX license identifier should be BSD-3-Clause.
 
         `BSD-3-Clause` was the expected SPDX identifier.
-
         """
         if (
             parser.tpip_path
@@ -186,7 +179,6 @@ class ConventionChecker:
         """D302: The SPDX license identifier should be MIT.
 
         `MIT` was the expected SPDX identifier.
-
         """
         if (
             parser.tpip_path
