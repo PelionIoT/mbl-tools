@@ -22,6 +22,7 @@ from .violations import ErrorRegistry, conventions
 
 def check_initialized(method):
     """Check that the configuration object was initialized."""
+
     def _decorator(self, *args, **kwargs):
         if self._arguments is None:
             raise RuntimeError("using an uninitialized configuration")
@@ -134,6 +135,7 @@ class ConfigurationParser:
         might be raised.
 
         """
+
         def _get_matches(conf):
             """Return the `match` and `match_dir` functions for `config`."""
             match_func = re(conf.match + "$").match
@@ -657,6 +659,5 @@ class IllegalConfiguration(Exception):
 
 # General configurations for mbl-licensing-checker run.
 RunConfiguration = namedtuple(
-    "RunConfiguration",
-    ("explain", "debug", "verbose", "count", "config"),
+    "RunConfiguration", ("explain", "debug", "verbose", "count", "config"),
 )

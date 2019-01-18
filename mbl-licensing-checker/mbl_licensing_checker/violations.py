@@ -46,11 +46,7 @@ class Error:
         self.filename = None  # type: Optional[str]
         self.explanation = None  # type: Optional[str]
 
-    def set_context(
-        self,
-        filename: str,
-        explanation: str
-    ) -> None:
+    def set_context(self, filename: str, explanation: str) -> None:
         """Set the source code context for this error."""
         self.filename = filename
         self.explanation = explanation
@@ -85,8 +81,7 @@ class Error:
         return str(self)
 
     def __lt__(self, other: "Error") -> bool:
-        """
-        Override the less than operator for an instance based on filename.
+        """Override the less than operator for an instance based on filename.
         """
         return self.filename < other.filename
 

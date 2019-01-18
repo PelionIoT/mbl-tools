@@ -2,8 +2,7 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""
-setup.py file for Mbed Linux OS repositories licensing checker application.
+"""setup.py file for Mbed Linux OS repositories licensing checker application.
 """
 
 import os

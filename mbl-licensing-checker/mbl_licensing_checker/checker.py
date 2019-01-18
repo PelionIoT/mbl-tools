@@ -20,11 +20,12 @@ def check_for(is_check=True):
     def decorator(func):
         func._check_for = is_check
         return func
-        
+
     return decorator
 
 
 BB_FILE_EXTENSIONS = (".bb", ".bbappend", ".bbclass")
+
 
 class ConventionChecker:
     """Checker for REUSE 2.0 and MBL specific license conventions.
