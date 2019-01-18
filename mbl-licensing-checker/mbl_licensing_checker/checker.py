@@ -14,8 +14,6 @@ from .config import IllegalConfiguration
 from .parser import Parser, StringIO
 from .utils import log
 
-__all__ = ("check",)
-
 
 def check_for(is_check=True):
     def decorator(func):
