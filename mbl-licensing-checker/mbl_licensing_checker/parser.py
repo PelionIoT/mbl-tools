@@ -6,6 +6,8 @@
 import re
 from io import StringIO
 
+from .utils import find_pattern
+
 
 ARM_COPYRIGHT_PATTERN = re.compile(
     r"""
@@ -77,7 +79,6 @@ class Parser:
         self.tpip_path = None
         self.tpip_source_uri = None
         self.tpip_copyright = None
-        self.license_identifier = None
         self.spdx_identifier = None
 
     # ---------------------------- Public Methods -----------------------------
@@ -85,10 +86,13 @@ class Parser:
     def parse_filelike(self):
         """Parse the source code."""
         self._check_arm_copyright()
+
         self._check_tpip_path()
+
         self._check_tpip_source_uri()
+
         self._check_tpip_copyright()
-        self._check_license_information()
+
         self._check_spdx_identifier()
 
     # --------------------------- Private Methods -----------------------------
@@ -98,67 +102,39 @@ class Parser:
 
         Also check if the copyright is included in a TPIP.
         """
-        self.arm_copyright = None
-        self.arm_copyright_tpip = None
+        match_group = find_pattern(self.source, ARM_COPYRIGHT_PATTERN)
 
-        for line in self.source:
-            match = ARM_COPYRIGHT_PATTERN.search(line)
-            if match:
-                self.arm_copyright = match.group(0)
-                if match.group(1):
-                    if "Modifications:" in match.group(1):
-                        self.arm_copyright_tpip = match.group(1)
-                        break
-                break
+        self.arm_copyright = match_group(0)
+
+        if match_group(1) and "Modifications:" in match_group(1):
+            self.arm_copyright_tpip = match_group(1)
+        else:
+            self.arm_copyright_tpip = None
 
     def _check_tpip_path(self):
-        """Check if the file contains the qualified path fo the original file.
-        """
-        self.tpip_path = None
-
-        for line in self.source:
-            match = TPIP_PATH_PATTERN.search(line)
-            if match:
-                self.tpip_path = match.group(0)
-                break
+        """Check if the file contains the path fo the original file."""
+        match_group = find_pattern(self.source, TPIP_PATH_PATTERN)
+        self.tpip_path = None if not match_group else match_group(0)
 
     def _check_tpip_source_uri(self):
         """Check if the file contains the URI to the original file."""
-        self.tpip_source_uri = None
-
-        for line in self.source:
-            match = TPIP_URI_PATTERN.search(line)
-            if match:
-                self.tpip_source_uri = match.group(0)
-                break
+        match_group = find_pattern(self.source, TPIP_URI_PATTERN)
+        self.tpip_source_uri = None if not match_group else match_group(0)
 
     def _check_tpip_copyright(self):
         """Check if the file include the original copyright."""
-        self.tpip_copyright = None
-
-        for line in self.source:
-            match = TPIP_COPYRIGHT_PATTERN.search(line)
-            if match:
-                self.tpip_copyright = match.group(0)
-                break
-
-    def _check_license_information(self):
-        """Check if the file includes a license identifier."""
-        self.license_identifier = None
-
-        for line in self.source:
-            match = LICENSE_INFORMATION.search(line)
-            if match:
-                self.license_identifier = match.group(0)
-                break
+        match_group = find_pattern(self.source, TPIP_COPYRIGHT_PATTERN)
+        self.tpip_copyright = None if not match_group else match_group(0)
 
     def _check_spdx_identifier(self):
-        """Check the spdx identifier if one is provided."""
-        self.spdx_identifier = None
+        """Check if the file contains an SPDX id.
 
-        for line in self.source:
-            match = LICENSE_INFORMATION.search(line)
-            if match:
-                self.spdx_identifier = self.license_identifier.replace(
-                    " ", ""
-                ).split(":")[1]
+        The id must in a line that match expect the pattern
+        LICENSE_INFORMATION.
+        """
+        match_group = find_pattern(self.source, LICENSE_INFORMATION)
+        self.spdx_identifier = (
+            None
+            if not match_group
+            else match_group(0).replace(" ", "").split(":")[1]
+        )

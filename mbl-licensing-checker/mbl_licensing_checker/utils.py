@@ -8,12 +8,20 @@
 """Contains utilities."""
 
 import logging
-
+import re
 
 __version__ = "1.0.0"
 log = logging.getLogger(__name__)
 
 
-def is_blank(string: str) -> bool:
+def is_blank(string):
     """Return True iff the string contains only whitespaces."""
     return not string.strip()
+
+
+def find_pattern(lines, pattern):
+    """Return a match group if the pattern is found otherwise return None."""
+    for line in lines:
+        match = pattern.search(line)
+        if match:
+            return match.group

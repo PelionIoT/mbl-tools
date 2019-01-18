@@ -46,21 +46,20 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --version             show program's version number and exit
-  -e EXPLAIN, --explain EXPLAIN
-                        Show explanation of each error (default: False)
-  -d DEBUG, --debug DEBUG
-                        Print debug information (default: False)
-  -v VERBOSE, --verbose VERBOSE
-                        Print application status information (default: False)
-  --count COUNT         Print total number of errors to stdout (default:
-                        False)
+  -e [EXPLAIN], --explain [EXPLAIN]
+                        Show explanation of each error (default: None)
+  -d [DEBUG], --debug [DEBUG]
+                        Print debug information (default: None)
+  -v [VERBOSE], --verbose [VERBOSE]
+                        Print application status information (default: None)
+  --count [COUNT]       Print total number of errors to stdout (default: None)
   --config <path>       Search and use configuration starting from this
                         directory (default: None)
   --match <pattern>     Check only files that exactly match <pattern> regular
                         expression; default is --match='(?!test_).*\.(py|h|cpp
                         |bbappend|bb|bbclass|md)$' which matches files that
-                        don't start with 'test_' but end with '.py' (default:
-                        None)
+                        don't start with 'test_' but end with the file
+                        extensions in <pattern> (default: None)
   --match-dir <pattern>
                         Search only dirs that exactly match <pattern> regular
                         expression; default is --match-dir='[^\.].*', which
@@ -100,6 +99,15 @@ The configuration file can specify:
 * error codes to ignore from a chosen list or convention
 * regular expression for files to include in the check
 * regular expression for directories to include in the check
+
+When a configuration file is found, `mbl-licensing-checker` inherits the configuration from one found in a parent directory and merge them. Set the `inherit` argument to `False` in the configuration file of the child directory to prevent configuration inheritance.
+
+The merge process is as follows:
+
+* If the `convention` is specified in the child configuration, override the parent's and set the new error codes to check.
+* If `add-ignore` or `add-select` were specified, remove/add the specified error codes from the checked error codes list.
+* If `match` or `match-dir` were specified override the parent's.
+
 
 ### Example
 

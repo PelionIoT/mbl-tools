@@ -15,9 +15,6 @@ from typing import Iterable, Optional, List, Callable, Any
 from .utils import is_blank
 
 
-__all__ = ("Error", "ErrorRegistry", "conventions")
-
-
 ErrorParams = namedtuple("ErrorParams", ["code", "short_desc", "context"])
 
 
@@ -181,7 +178,10 @@ D302 = D3xx.create_error(
 
 
 class AttrDict(dict):
+    """Custom dictionary."""
+
     def __getattr__(self, item: str) -> Any:
+        """Override attribute lookup."""
         return self[item]
 
 

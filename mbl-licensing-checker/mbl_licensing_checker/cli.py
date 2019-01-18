@@ -4,7 +4,7 @@
 # Original file: Copyright (c) 2014-2017 Amir Rachum, <http://amir.rachum.com/>
 # Modifications: Copyright (c) 2019 Arm Limited and Contributors. All rights reserved.
 #
-# SPDX-License-Identifier: MIT
+# SPDX-License-Idhentifier: MIT
 """Command line interface for mbl-licensing-checker."""
 import logging
 import sys
@@ -14,8 +14,6 @@ from .utils import log
 from .violations import Error
 from .config import ConfigurationParser, IllegalConfiguration
 from .checker import check
-
-__all__ = ("main",)
 
 
 class ReturnCode(Enum):
@@ -27,6 +25,7 @@ class ReturnCode(Enum):
 
 
 def run_mbl_licensing_checker():
+    """Application main algorithm."""
     log.setLevel(logging.DEBUG)
     conf = ConfigurationParser()
     setup_stream_handlers(conf.get_default_run_configuration())

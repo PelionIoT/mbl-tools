@@ -11,10 +11,10 @@
 import argparse
 import copy
 import os
+import re
 from collections import namedtuple
 from collections.abc import Set
 from configparser import RawConfigParser
-from re import compile as re
 
 from .utils import __version__, log
 from .violations import ErrorRegistry, conventions
@@ -76,9 +76,8 @@ class ConfigurationParser:
         "match",
         "match-dir",
     )
-
-    DEFAULT_MATCH_RE = r"""(?!test_).*\.(py|h|cpp|bbappend|bb|bbclass|md)$"""
-    DEFAULT_MATCH_DIR_RE = r"""[^\.].*"""
+    DEFAULT_MATCH_RE = r"(?!test_).*\.(py|h|cpp|bbappend|bb|bbclass|md)$"
+    DEFAULT_MATCH_DIR_RE = r"[^\.].*"
     DEFAULT_CONVENTION = conventions.reuse_v2_0
 
     PROJECT_CONFIG_FILE = ".mbl-licensing-checker"
@@ -137,8 +136,8 @@ class ConfigurationParser:
 
         def _get_matches(conf):
             """Return the `match` and `match_dir` functions for `config`."""
-            match_func = re(conf.match + "$").match
-            match_dir_func = re(conf.match_dir + "$").match
+            match_func = re.compile(conf.match + "$").match
+            match_dir_func = re.compile(conf.match_dir + "$").match
             return match_func, match_dir_func
 
         for name in self._arguments.pathnames:
@@ -356,8 +355,7 @@ class ConfigurationParser:
         return CheckConfiguration(**kwargs)
 
     def _parse_args(self, args=None, values=None):
-        """Parse the arguments using `self._parser` and reformat the arguments.
-        """
+        """Parse the arguments using `self._parser` and reformat them."""
         arguments = self._parser.parse_args(args, values)
         return self._fix_set_arguments(arguments)
 
@@ -540,29 +538,29 @@ class ConfigurationParser:
         run_config_argument(
             "-e",
             "--explain",
-            type=bool,
-            default=False,
+            const=True,
+            nargs="?",
             help="Show explanation of each error",
         )
         run_config_argument(
             "-d",
             "--debug",
-            type=bool,
-            default=False,
+            const=True,
+            nargs="?",
             help="Print debug information",
         )
         run_config_argument(
             "-v",
             "--verbose",
-            type=bool,
-            default=False,
+            const=True,
+            nargs="?",
             help="Print application status information",
         )
         run_config_argument(
             "--count",
-            type=bool,
+            const=True,
+            nargs="?",
             help="Print total number of errors to stdout",
-            default=False,
         )
         run_config_argument(
             "--config",
@@ -582,7 +580,7 @@ class ConfigurationParser:
                 "Check only files that exactly match <pattern> regular "
                 "expression; default is --match='{}' which matches "
                 "files that don't start with 'test_' but end with "
-                "'.py'"
+                "the file extensions in <pattern>"
             ).format(cls.DEFAULT_MATCH_RE),
         )
         run_config_argument(
