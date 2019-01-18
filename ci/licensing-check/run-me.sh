@@ -107,4 +107,3 @@ docker run --rm -i $flag_tty \
        -v "$workdir":/work "$imagename" \
        ./licensing-check.sh --workdir /work \
        "$@"
-
