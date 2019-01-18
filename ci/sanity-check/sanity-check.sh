@@ -121,8 +121,8 @@ printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty black --line-length 79 -v 
 printf "Running pycodestyle on python files...\n"
 printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty pycodestyle || rc=1
 
-# Run pep257 on python files
-printf "Running pep257 on python files...\n"
-printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty pep257 || rc=1
+# Run pydocstyle on python files
+printf "Running pydocstyle on python files...\n"
+printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty pydocstyle || rc=1
 
 exit "$rc"

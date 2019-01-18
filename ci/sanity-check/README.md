@@ -7,7 +7,7 @@ For *shell scripts*, the following sanity checks will be running:
 For *python files*, the following sanity check will be running:
 * [black] for python files
 * [pycodestyle] (ex pep8) for python files
-* [pep257] (for docstring) for python files
+* [pydocstyle] (ex pep257, for docstring) for python files
 
 If any of the above checks returns a non-zero exit code, the whole sanity check script will fail.
 
@@ -15,7 +15,7 @@ If any of the above checks returns a non-zero exit code, the whole sanity check 
 
 The easiest way is to run it through docker, hence the only requirement is to have docker installed
 
-If you choose to run it natively, then you need to install shellcheck, black, pycodestyle and pep257
+If you choose to run it natively, then you need to install shellcheck, black, pycodestyle and pydocstyle
 
 Note: black requires Python 3.6.
 
@@ -48,10 +48,10 @@ You can disable sanity check for a specific sub-tree, placing an empty file name
 
 ```
 $ tree /path/to/workdir
-/path/to/workdir           
+/path/to/workdir
 ├── dir1
 │   ├── .nosanitycheck
-│   └── file1                
+│   └── file1
 └── dir2
     ├── subdir2
     │   ├── .nosanitycheck
@@ -72,4 +72,4 @@ In the above case only `file4` and `file5` will be checked.
 [shellcheck]: https://www.shellcheck.net/
 [black]: https://black.readthedocs.io/en/stable/
 [pycodestyle]: https://pypi.org/project/pycodestyle/
-[pep257]: https://pypi.org/project/pep257/
+[pydocstyle]: https://pypi.org/project/pydocstyle/

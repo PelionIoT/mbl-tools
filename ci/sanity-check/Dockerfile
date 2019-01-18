@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     shellcheck
 
-RUN pip3 install pycodestyle pep257 black
+RUN pip3 install pycodestyle pydocstyle black
 
 RUN rm -rf /var/lib/apt/lists/*
 
