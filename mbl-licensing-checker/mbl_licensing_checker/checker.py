@@ -247,6 +247,6 @@ def check(filenames, select=None, ignore=None):
                 code = getattr(error, "code", None)
                 if code in checked_codes:
                     yield error
-        except (EnvironmentError, Exception) as error:
+        except EnvironmentError as error:
             log.warning("Error in file {}: {}".format(filename, error))
             yield error
