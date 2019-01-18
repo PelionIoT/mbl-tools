@@ -28,7 +28,7 @@ def run_mbl_licensing_checker():
     """Application main algorithm."""
     log.setLevel(logging.DEBUG)
     conf = ConfigurationParser()
-    setup_stream_handlers(conf.get_default_run_configuration())
+    _setup_stream_handlers(conf.get_default_run_configuration())
 
     try:
         conf.parse()
@@ -38,7 +38,7 @@ def run_mbl_licensing_checker():
     run_conf = conf.get_user_run_configuration()
 
     # Reset the logger according to the command line arguments
-    setup_stream_handlers(run_conf)
+    _setup_stream_handlers(run_conf)
 
     log.debug("starting in debug mode.")
 
@@ -75,9 +75,8 @@ def main():
         print("Exiting the application")
 
 
-def setup_stream_handlers(conf):
-    """Configure logging stream handlers according to the arguments."""
-
+def _setup_stream_handlers(conf):
+    # Configure logging stream handlers according to the arguments.
     class StdoutFilter(logging.Filter):
         def filter(self, record):
             return record.levelno in (logging.DEBUG, logging.INFO)

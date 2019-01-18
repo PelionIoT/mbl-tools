@@ -20,9 +20,8 @@ from .utils import __version__, log
 from .violations import ErrorRegistry, conventions
 
 
-def check_initialized(method):
-    """Check that the configuration object was initialized."""
-
+def _check_initialized(method):
+    # Check that the configuration object was initialized.
     def _decorator(self, *args, **kwargs):
         if self._arguments is None:
             raise RuntimeError("using an uninitialized configuration")
@@ -116,12 +115,12 @@ class ConfigurationParser:
         config = self._create_check_config(self._arguments, use_defaults=False)
         self._override_by_cli = config
 
-    @check_initialized
+    @_check_initialized
     def get_user_run_configuration(self):
         """Return the run configuration for the script."""
         return self._run_conf
 
-    @check_initialized
+    @_check_initialized
     def get_files_to_check(self):
         """Generate files and error codes to check on each one.
 
@@ -133,13 +132,6 @@ class ConfigurationParser:
         With every discovery of a new configuration file `IllegalConfiguration`
         might be raised.
         """
-
-        def _get_matches(conf):
-            """Return the `match` and `match_dir` functions for `config`."""
-            match_func = re.compile(conf.match + "$").match
-            match_dir_func = re.compile(conf.match_dir + "$").match
-            return match_func, match_dir_func
-
         for name in self._arguments.pathnames:
             if os.path.isdir(name):
                 for dirpath, dirnames, filenames in os.walk(name):
@@ -160,6 +152,12 @@ class ConfigurationParser:
                     yield (name, list(config.checked_codes))
 
     # --------------------------- Private Methods -----------------------------
+
+    def _get_matches(conf):
+        """Return the `match` and `match_dir` functions for `config`."""
+        match_func = re.compile(conf.match + "$").match
+        match_dir_func = re.compile(conf.match_dir + "$").match
+        return match_func, match_dir_func
 
     def _get_config_by_discovery(self, node):
         """Get a configuration for checking `node` by config discovery.
