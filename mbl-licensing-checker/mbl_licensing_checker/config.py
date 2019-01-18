@@ -77,8 +77,8 @@ class ConfigurationParser:
         "match-dir",
     )
 
-    DEFAULT_MATCH_RE = "(?!test_).*\.(py|h|cpp|bbappend|bb|bbclass|md)$"
-    DEFAULT_MATCH_DIR_RE = "[^\.].*"
+    DEFAULT_MATCH_RE = r"""(?!test_).*\.(py|h|cpp|bbappend|bb|bbclass|md)$"""
+    DEFAULT_MATCH_DIR_RE = r"""[^\.].*"""
     DEFAULT_CONVENTION = conventions.reuse_v2_0
 
     PROJECT_CONFIG_FILE = ".mbl-licensing-checker"
@@ -133,7 +133,6 @@ class ConfigurationParser:
 
         With every discovery of a new configuration file `IllegalConfiguration`
         might be raised.
-
         """
 
         def _get_matches(conf):
@@ -165,14 +164,13 @@ class ConfigurationParser:
 
     def _get_config_by_discovery(self, node):
         """Get a configuration for checking `node` by config discovery.
-        
+
         Config discovery happens when no explicit config file is specified. The
         file system is searched for config files starting from the directory
         containing the file being checked, and up until the root directory of
         the project.
-        
+
         See `_get_config` for further details.
-        
         """
         path = self._get_node_dir(node)
 
@@ -358,7 +356,8 @@ class ConfigurationParser:
         return CheckConfiguration(**kwargs)
 
     def _parse_args(self, args=None, values=None):
-        """Parse the arguments using `self._parser` and reformat the arguments."""
+        """Parse the arguments using `self._parser` and reformat the arguments.
+        """
         arguments = self._parser.parse_args(args, values)
         return self._fix_set_arguments(arguments)
 
@@ -527,7 +526,9 @@ class ConfigurationParser:
             type=str,
             nargs="*",
             default=".",
-            help="List of path to file and/or directory to check for licensing.",
+            help=(
+                "List of path to file and/or directory to check for licensing."
+            ),
         )
 
         # -------------------------- Optional args ----------------------------
@@ -659,5 +660,5 @@ class IllegalConfiguration(Exception):
 
 # General configurations for mbl-licensing-checker run.
 RunConfiguration = namedtuple(
-    "RunConfiguration", ("explain", "debug", "verbose", "count", "config"),
+    "RunConfiguration", ("explain", "debug", "verbose", "count", "config")
 )

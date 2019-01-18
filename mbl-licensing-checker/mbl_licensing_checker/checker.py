@@ -165,7 +165,7 @@ class ConventionChecker:
     def check_spdx_id_not_bsd(self, parser, filename):
         """D301: The SPDX license identifier should be BSD-3-Clause.
 
-        `BSD-3-Clause` was the expected SPDX identifier. 
+        `BSD-3-Clause` was the expected SPDX identifier.
 
         """
         if (
