@@ -5,7 +5,7 @@ Original file: Copyright (c) 2014-2017 Amir Rachum, <http://amir.rachum.com/>
 Modifications: Copyright (c) 2019 Arm Limited and Contributors. All rights reserved.
 
 SPDX-License-Identifier: MIT -->
-#mbl-licensing-checker - Mbed Linux OS repositories licensing checker
+# mbl-licensing-checker - Mbed Linux OS repositories licensing checker
 
 `mbl-licensing-checker` is a static analysis tool for checking compliance with licensing and copyrights within Mbed Linux OS repositories.
 
