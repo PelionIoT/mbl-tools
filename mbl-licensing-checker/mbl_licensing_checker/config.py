@@ -2,7 +2,8 @@
 # In open-source project: https://github.com/PyCQA/pydocstyle
 #
 # Original file: Copyright (c) 2014-2017 Amir Rachum, <http://amir.rachum.com/>
-# Modifications: Copyright (c) 2019 Arm Limited and Contributors. All rights reserved.
+# Modifications: Copyright (c) 2019 Arm Limited and Contributors. All rights
+#                reserved.
 #
 # SPDX-License-Identifier: MIT
 """Configuration file parsing and utilities."""
@@ -136,7 +137,7 @@ class ConfigurationParser:
             if os.path.isdir(name):
                 for dirpath, dirnames, filenames in os.walk(name):
                     config = self._get_config(os.path.abspath(dirpath))
-                    match, match_dir = _get_matches(config)
+                    match, match_dir = self._get_matches(config)
 
                     # Skip any subdirectories that do not match match_dir
                     dirnames[:] = [d for d in dirnames if match_dir(d)]
@@ -147,13 +148,13 @@ class ConfigurationParser:
                             yield (full_path, list(config.checked_codes))
             else:
                 config = self._get_config(os.path.abspath(name))
-                match, _ = _get_matches(config)
+                match, _ = self._get_matches(config)
                 if match(name):
                     yield (name, list(config.checked_codes))
 
     # --------------------------- Private Methods -----------------------------
 
-    def _get_matches(conf):
+    def _get_matches(self, conf):
         """Return the `match` and `match_dir` functions for `config`."""
         match_func = re.compile(conf.match + "$").match
         match_dir_func = re.compile(conf.match_dir + "$").match

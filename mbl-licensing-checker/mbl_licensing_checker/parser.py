@@ -17,8 +17,8 @@ ARM_COPYRIGHT_PATTERN = re.compile(
     \(c\) \s+
     \d\d\d\d(\s*-\s*\d\d\d\d)? \s+
     Arm \s+ Limited \s+ and \s+ Contributors. \s+
-    All \s+ rights \s+ reserved. \s*
-    $
+    All \s+ rights
+    ($|\b)
     """,
     re.X,
 )
@@ -104,12 +104,13 @@ class Parser:
         """
         match_group = find_pattern(self.source, ARM_COPYRIGHT_PATTERN)
 
-        self.arm_copyright = match_group(0)
+        if match_group:
+            self.arm_copyright = match_group(0)
 
-        if match_group(1) and "Modifications:" in match_group(1):
-            self.arm_copyright_tpip = match_group(1)
-        else:
-            self.arm_copyright_tpip = None
+            if match_group(1) and "Modifications:" in match_group(1):
+                self.arm_copyright_tpip = match_group(1)
+            else:
+                self.arm_copyright_tpip = None
 
     def _check_tpip_path(self):
         """Check if the file contains the path fo the original file."""
