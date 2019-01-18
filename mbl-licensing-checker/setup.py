@@ -2,15 +2,14 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""setup.py file for Mbed Linux OS repositories licensing checker application.
-"""
+"""setup.py file for mbl-licensing-checker application."""
 
 import os
 from setuptools import setup
 
 
 def read(fname):
-    """Utility function to read the README file."""
+    """Read the content of a file."""
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
