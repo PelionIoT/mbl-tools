@@ -22,7 +22,6 @@ from .violations import ErrorRegistry, conventions
 
 def check_initialized(method):
     """Check that the configuration object was initialized."""
-
     def _decorator(self, *args, **kwargs):
         if self._arguments is None:
             raise RuntimeError("using an uninitialized configuration")
@@ -134,7 +133,6 @@ class ConfigurationParser:
         With every discovery of a new configuration file `IllegalConfiguration`
         might be raised.
         """
-
         def _get_matches(conf):
             """Return the `match` and `match_dir` functions for `config`."""
             match_func = re(conf.match + "$").match

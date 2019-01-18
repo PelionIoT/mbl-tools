@@ -95,7 +95,7 @@ class Parser:
 
     def _check_arm_copyright(self):
         """Check if the file contains an ARM copyright.
-        
+
         Also check if the copyright is included in a TPIP.
         """
         self.arm_copyright = None
@@ -112,7 +112,8 @@ class Parser:
                 break
 
     def _check_tpip_path(self):
-        """Check if the file contains the qualified path fo the original file."""
+        """Check if the file contains the qualified path fo the original file.
+        """
         self.tpip_path = None
 
         for line in self.source:

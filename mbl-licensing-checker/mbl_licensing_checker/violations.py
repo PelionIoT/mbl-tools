@@ -81,8 +81,7 @@ class Error:
         return str(self)
 
     def __lt__(self, other: "Error") -> bool:
-        """Override the less than operator for an instance based on filename.
-        """
+        """Override the less than operator for an instance based on filename."""
         return self.filename < other.filename
 
 
