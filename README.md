@@ -74,6 +74,7 @@ mbl-tools currently builds for the following machines:
 * raspberrypi3-mbl
 * imx7s-warp-mbl
 * imx7d-pico-mbl
+* imx8mmevk-mbl
 
 #### Build Artifacts
 
