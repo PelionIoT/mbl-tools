@@ -270,7 +270,7 @@ def _enable_debug_logging(debug=False):
 
 
 def _main(args):
-    """Main execution of the application."""
+    """Perform the main execution of the application."""
     try:
         # Get all the arguments
         args = _parse_arguments(args)
