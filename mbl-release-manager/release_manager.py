@@ -1145,7 +1145,7 @@ class ReleaseManager:
         """
 
         def __call__(self, parser, namespace, values, option_string=None):
-            """Function call operator."""
+            """Override function call operator."""
             file_path = os.path.abspath(values)
             if not os.path.isfile(file_path):
                 raise argparse.ArgumentTypeError(

@@ -37,7 +37,7 @@ def check_tabs(path):
 
 
 def main(args):
-    """Main execution."""
+    """Perform the main execution."""
     parser = argparse.ArgumentParser()
     parser.add_argument("FILE", nargs="*")
     args = parser.parse_args(args)
