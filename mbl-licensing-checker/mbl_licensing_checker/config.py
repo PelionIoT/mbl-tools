@@ -21,17 +21,6 @@ from .utils import __version__, log
 from .violations import ErrorRegistry, conventions
 
 
-def _check_initialized(method):
-    # Check that the configuration object was initialized.
-    @functools.wraps(method)
-    def _decorator(self, *args, **kwargs):
-        if self._arguments is None:
-            raise RuntimeError("using an uninitialized configuration")
-        return method(self, *args, **kwargs)
-
-    return _decorator
-
-
 class ConfigurationParser:
     """Responsible for parsing configuration from files and CLI.
 
@@ -642,6 +631,17 @@ class ConfigurationParser:
         ),
 
         return parser
+
+
+def _check_initialized(method):
+    # Check that the configuration object was initialized.
+    @functools.wraps(method)
+    def _decorator(self, *args, **kwargs):
+        if self._arguments is None:
+            raise RuntimeError("using an uninitialized configuration")
+        return method(self, *args, **kwargs)
+
+    return _decorator
 
 
 # Check configuration - used by the ConfigurationParser class.

@@ -15,15 +15,6 @@ from .parser import Parser, StringIO
 from .utils import log
 
 
-def _check_for(is_check=True):
-    # Add an attribute to recognize error checking methods.
-    def decorator(func):
-        func._check_for = is_check
-        return func
-
-    return decorator
-
-
 BB_FILE_EXTENSIONS = (".bb", ".bbappend", ".bbclass")
 
 
@@ -250,3 +241,12 @@ def check(filenames, select=None, ignore=None):
         except EnvironmentError as error:
             log.warning("Error in file {}: {}".format(filename, error))
             yield error
+
+
+def _check_for(is_check=True):
+    # Add an attribute to recognize error checking methods.
+    def decorator(func):
+        func._check_for = is_check
+        return func
+
+    return decorator
