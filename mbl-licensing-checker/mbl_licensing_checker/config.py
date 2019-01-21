@@ -8,9 +8,9 @@
 # SPDX-License-Identifier: MIT
 """Configuration file parsing and utilities."""
 
-
 import argparse
 import copy
+import functools
 import os
 import re
 from collections import namedtuple
@@ -23,6 +23,7 @@ from .violations import ErrorRegistry, conventions
 
 def _check_initialized(method):
     # Check that the configuration object was initialized.
+    @functools.wraps(method)
     def _decorator(self, *args, **kwargs):
         if self._arguments is None:
             raise RuntimeError("using an uninitialized configuration")
