@@ -89,7 +89,7 @@ repo_init_atomic ()
   mv "$path-ri" "$path"
 }
 
-all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl"
+all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl"
 
 default_branch="master"
 default_manifest="default.xml"
@@ -673,6 +673,9 @@ while true; do
             suffixes="manifest tar.xz wic.gz wic.bmap"
             ;;
           imx7d-pico-mbl)
+            suffixes="manifest tar.xz wic.gz wic.bmap"
+            ;;
+          imx8mmevk-mbl)
             suffixes="manifest tar.xz wic.gz wic.bmap"
             ;;
           esac
