@@ -21,6 +21,18 @@ from .utils import __version__, log
 from .violations import ErrorRegistry, conventions
 
 
+def check_initialized(method):
+    """Check that the configuration object was initialized."""
+    # wrapper
+    @functools.wraps(method)
+    def _decorator(self, *args, **kwargs):
+        if self._arguments is None:
+            raise RuntimeError("using an uninitialized configuration")
+        return method(self, *args, **kwargs)
+
+    return _decorator
+
+
 class ConfigurationParser:
     """Responsible for parsing configuration from files and CLI.
 
@@ -66,7 +78,7 @@ class ConfigurationParser:
         "match",
         "match-dir",
     )
-    DEFAULT_MATCH_RE = r"(?!test_).*\.(bb|bbappend|bbclass|c|cpp|h|md|py|sh)$"
+    DEFAULT_MATCH_RE = r"(?!test_).*\.(bb|bbappend|bbclass|c|cpp|h|hpp|py|sh)$"
     DEFAULT_MATCH_DIR_RE = r"[^\.].*"
     DEFAULT_CONVENTION = conventions.reuse_v2_0
 
@@ -106,12 +118,12 @@ class ConfigurationParser:
         config = self._create_check_config(self._arguments, use_defaults=False)
         self._override_by_cli = config
 
-    @_check_initialized
+    @check_initialized
     def get_user_run_configuration(self):
         """Return the run configuration for the script."""
         return self._run_conf
 
-    @_check_initialized
+    @check_initialized
     def get_files_to_check(self):
         """Generate files and error codes to check on each one.
 
@@ -631,17 +643,6 @@ class ConfigurationParser:
         ),
 
         return parser
-
-
-def _check_initialized(method):
-    # Check that the configuration object was initialized.
-    @functools.wraps(method)
-    def _decorator(self, *args, **kwargs):
-        if self._arguments is None:
-            raise RuntimeError("using an uninitialized configuration")
-        return method(self, *args, **kwargs)
-
-    return _decorator
 
 
 # Check configuration - used by the ConfigurationParser class.

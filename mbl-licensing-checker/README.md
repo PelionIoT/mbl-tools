@@ -1,10 +1,4 @@
-<!-- Based on: en/3.0.0/usage.html
-In open-source project: http://www.pydocstyle.org
-
-Original file: Copyright (c) 2014-2017 Amir Rachum, <http://amir.rachum.com/>
-Modifications: Copyright (c) 2019 Arm Limited and Contributors. All rights reserved.
-
-SPDX-License-Identifier: MIT -->
+<!--Copyright (c) 2019 Arm Limited and Contributors. All rights reserved.-->
 # mbl-licensing-checker - Mbed Linux OS repositories licensing checker
 
 `mbl-licensing-checker` is a static analysis tool for checking compliance with licensing and copyrights within Mbed Linux OS repositories.
@@ -57,7 +51,7 @@ optional arguments:
                         directory (default: None)
   --match <pattern>     Check only files that exactly match <pattern> regular
                         expression; default is --match='(?!test_).*\.(bb
-                        |bbappend|bbclass|c|cpp|h|md|py|sh)$' which matches
+                        |bbappend|bbclass|c|cpp|h|hpp|py|sh)$' which matches
                         files that don't start with 'test_' but end with the
                         file extensions in <pattern> (default: None)
   --match-dir <pattern>

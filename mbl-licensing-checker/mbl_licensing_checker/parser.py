@@ -15,7 +15,7 @@ ARM_COPYRIGHT_PATTERN = re.compile(
     (.*)
     \b Copyright \s+
     \(c\) \s+
-    \d\d\d\d(\s*-\s*\d\d\d\d)? \s+
+    \d\d\d\d(\s*-\s*\d\d\d\d)? ,? \s+
     Arm \s+ Limited \s+ and \s+ Contributors. \s+
     All \s+ rights
     ($|\b)

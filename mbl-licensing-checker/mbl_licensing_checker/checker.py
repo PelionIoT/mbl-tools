@@ -18,6 +18,16 @@ from .utils import log
 BB_FILE_EXTENSIONS = (".bb", ".bbappend", ".bbclass")
 
 
+def check_for(is_check=True):
+    """Add an attribute to recognize error checking methods."""
+    # wrapper
+    def decorator(func):
+        func._check_for = is_check
+        return func
+
+    return decorator
+
+
 class ConventionChecker:
     """Checker for REUSE 2.0 and MBL specific license conventions.
 
@@ -52,7 +62,7 @@ class ConventionChecker:
             if hasattr(this_check, "_check_for")
         ]
 
-    @_check_for()
+    @check_for()
     def check_arm_copyright_missing(self, parser, filename):
         """D100: Missing ARM copyright notice.
 
@@ -71,7 +81,7 @@ class ConventionChecker:
                 return
         return violations.D100()
 
-    @_check_for()
+    @check_for()
     def check_tpip_path_missing(self, parser, filename):
         """D101: Missing the fully qualified path and filename.
 
@@ -87,7 +97,7 @@ class ConventionChecker:
             if not parser.tpip_path:
                 return violations.D101()
 
-    @_check_for()
+    @check_for()
     def check_tpip_uri_missing(self, parser, filename):
         """D102: Missing the URI to the source code repository.
 
@@ -103,7 +113,7 @@ class ConventionChecker:
             if not parser.tpip_source_uri:
                 return violations.D102()
 
-    @_check_for()
+    @check_for()
     def check_tpip_copyright_missing(self, parser, filename):
         """D103: Missing a copy of the original copyright notice.
 
@@ -119,7 +129,7 @@ class ConventionChecker:
             if not parser.tpip_copyright:
                 return violations.D103()
 
-    @_check_for()
+    @check_for()
     def check_spdx_id_missing(self, parser, filename):
         """D200: Missing the SPDX license Identifier.
 
@@ -128,7 +138,7 @@ class ConventionChecker:
         if not parser.spdx_identifier:
             return violations.D200()
 
-    @_check_for()
+    @check_for()
     def check_spdx_id_not_apache_2_0(self, parser, filename):
         """D300: The SPDX license identifier should be Apache-2.0.
 
@@ -147,7 +157,7 @@ class ConventionChecker:
                     return
             return violations.D300(parser.spdx_identifier)
 
-    @_check_for()
+    @check_for()
     def check_spdx_id_not_bsd(self, parser, filename):
         """D301: The SPDX license identifier should be BSD-3-Clause.
 
@@ -166,7 +176,7 @@ class ConventionChecker:
                     return
             return violations.D301(parser.spdx_identifier)
 
-    @_check_for()
+    @check_for()
     def check_spdx_id_not_mit(self, parser, filename):
         """D302: The SPDX license identifier should be MIT.
 
@@ -241,12 +251,3 @@ def check(filenames, select=None, ignore=None):
         except EnvironmentError as error:
             log.warning("Error in file {}: {}".format(filename, error))
             yield error
-
-
-def _check_for(is_check=True):
-    # Add an attribute to recognize error checking methods.
-    def decorator(func):
-        func._check_for = is_check
-        return func
-
-    return decorator
