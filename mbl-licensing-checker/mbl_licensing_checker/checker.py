@@ -142,7 +142,7 @@ class ConventionChecker:
     def check_spdx_id_not_apache_2_0(self, parser, filename):
         """D300: The SPDX license identifier should be Apache-2.0.
 
-        `Apache-2-0` was the expected SPDX identifier.
+        `Apache-2.0` was the expected SPDX identifier.
         """
         if (
             parser.tpip_path
@@ -151,7 +151,7 @@ class ConventionChecker:
             or parser.arm_copyright_tpip
         ):
             return
-        if parser.spdx_identifier != "Apache-2-0":
+        if parser.spdx_identifier != "Apache-2.0":
             for file_extension in BB_FILE_EXTENSIONS:
                 if filename.endswith(file_extension):
                     return
