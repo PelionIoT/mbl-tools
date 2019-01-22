@@ -78,7 +78,9 @@ class ConfigurationParser:
         "match",
         "match-dir",
     )
-    DEFAULT_MATCH_RE = r"(?!test_).*\.(bb|bbappend|bbclass|c|cpp|h|hpp|py|sh)$"
+    DEFAULT_MATCH_RE = (
+        r"(?!test_).*\.(bb|bbappend|bbclass|c|conf|cpp|h|hpp|inc|py|sh)$"
+    )
     DEFAULT_MATCH_DIR_RE = r"[^\.].*"
     DEFAULT_CONVENTION = conventions.reuse_v2_0
 
