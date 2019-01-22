@@ -164,8 +164,9 @@ class ConfigurationParser:
             match_func = re.compile(conf.match + "$").match
             match_dir_func = re.compile(conf.match_dir + "$").match
             return match_func, match_dir_func
-        except re.error as e:
-            raise IllegalConfiguration(e)
+        except re.error:
+            error_msg = "Incorrect regular expression specified."
+            raise IllegalConfiguration(error_msg)
 
     def _get_config_by_discovery(self, node):
         """Get a configuration for checking `node` by config discovery.
