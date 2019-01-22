@@ -15,7 +15,7 @@ from .parser import Parser, StringIO
 from .utils import log
 
 
-BB_FILE_EXTENSIONS = (".bb", ".bbappend", ".bbclass", ".conf", ".inc")
+BB_FILE_EXTENSIONS = (".bb", ".bbappend", ".bbclass", ".inc")
 
 
 def check_for(is_check=True):

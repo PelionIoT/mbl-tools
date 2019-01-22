@@ -50,8 +50,8 @@ optional arguments:
   --config <path>       Search and use configuration starting from this
                         directory (default: None)
   --match <pattern>     Check only files that exactly match <pattern> regular
-                        expression; default is --match='(?!test_).*\.(bb
-                        |bbappend|bbclass|c|cpp|h|hpp|py|sh)$' which matches
+                        expression; default is --match='(?!test_).*\.(bb|bbapp
+                        end|bbclass|c|cpp|h|hpp|inc|py|sh)$' which matches
                         files that don't start with 'test_' but end with the
                         file extensions in <pattern> (default: None)
   --match-dir <pattern>
@@ -72,8 +72,8 @@ Error Check Arguments:
   `--add-[ignore/select]` in order to do so.
 
   --convention <name>   Choose the basic list of checked errors by specifying
-                        an existing convention. Possible conventions:
-                        reuse_v2_0, none. (default: None)
+                        an existing convention. Possible conventions: none,
+                        reuse_v2_0. (default: None)
   --add-select <codes>  Add extra error codes to check to the basic list of
                         errors previously set --convention. (default: None)
   --add-ignore <codes>  Ignore extra error codes by removing them from the
