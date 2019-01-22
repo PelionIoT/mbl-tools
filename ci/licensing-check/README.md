@@ -3,7 +3,7 @@
 SPDX-License-Identifier: BSD-3-Clause -->
 # What licensing checks are running?
 
-The [`mbl-licensing-checker`] python application runs to check for expected license and copyright notice on first and third party source files.
+The [`mbl-licensing-checker`] python application checks for expected licenses and copyright notices on first and third party source files.
 
 The sanity check script fails if the application returns a non-zero exit code.
 
