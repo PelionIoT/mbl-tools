@@ -95,11 +95,11 @@ if [ -z "${workdir:-}" ]; then
 fi
 workdir=$(readlink -f "$workdir")
 
-cp -r ../../mbl-licensing-checker ./
+cp -r $execdir/../../mbl-licensing-checker $execdir
 
 docker build -t "$imagename" "$execdir"
 
-rm -rf mbl-licensing-checker
+rm -rf $execdir/mbl-licensing-checker
 
 docker run --rm -i $flag_tty \
        --name "$default_containername" \
