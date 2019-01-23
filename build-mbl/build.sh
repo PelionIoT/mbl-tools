@@ -2,7 +2,7 @@
 
 # Copyright (c) 2018, diegor Arm Limited and Contributors. All rights reserved.
 # 
-# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-License-Identifier: diegor BSD-3-Clause 
 
 # Workspace layout:
 # --buildir ROOT
