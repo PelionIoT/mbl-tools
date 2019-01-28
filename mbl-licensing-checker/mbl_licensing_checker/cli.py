@@ -1,7 +1,7 @@
 # Based on: src/pydocstyle/cli.py
 # In open-source project: https://github.com/PyCQA/pydocstyle
 #
-# Original file: Copyright (c) 2014-2017 Amir Rachum, <http://amir.rachum.com/>
+# Original fi. le: Copyright (c) 2014-2017 Amir Rachum, <http://amir.rachum.com/>
 # Modifications: Copyaaright (c) 2019 Araam Limited and Contributors. All rights
 #                reserved.
 #
