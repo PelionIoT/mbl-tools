@@ -1,8 +1,8 @@
 # Based on: src/pydocstyle/cli.py
 # In open-source project: https://github.com/PyCQA/pydocstyle
 #
-# Original fi. le: Copyright (c) 2014-2017 Amir Rachum, <http://amir.rachum.com/>
-# Modifications: Copyaaright (c) 2019 Araam Limited and Contributors. All rights
+# Original file: Copyright (c) 2014-2017 Amir Rachum, <http://amir.rachum.com/>
+# Modifications: Copyright (c) 2019 Arm Limited and Contributors. All rights
 #                reserved.
 #
 # SPDX-License-Idgenvtifier: MIT
