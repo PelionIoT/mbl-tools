@@ -18,7 +18,7 @@ from .checker import check
 
 
 class ReturnCode(Enum):
-    """Application return codes"""
+    """Application return codes."""
 
     NO_VIOLATIONS_FOUND = 0
     VIOLATIONS_FOUND = 1
