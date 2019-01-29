@@ -119,10 +119,10 @@ printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty black --line-length 79 -v 
 
 # Run pycodestyle on python files
 printf "Running pycodestyle on python files...\n"
-printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty pycodestyle || rc=1
+printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty pycodestyle --ignore=E203 || rc=1
 
 # Run pydocstyle on python files
 printf "Running pydocstyle on python files...\n"
-printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty pydocstyle || rc=1
+printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty pydocstyle --match='(?!.*test_).*\.py' || rc=1
 
 exit "$rc"
