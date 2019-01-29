@@ -118,10 +118,16 @@ printf "Running black on python files...\n"
 printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty black --line-length 79 -v --check --diff || rc=1
 
 # Run pycodestyle on python files
+# Ignore E203 errors though - they can be spurious
+# (https://github.com/PyCQA/pycodestyle/issues/373)
 printf "Running pycodestyle on python files...\n"
 printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty pycodestyle --ignore=E203 || rc=1
 
 # Run pydocstyle on python files
+# When pydocstyle is given a directory to check it will, by default, skip
+# "test_" files. We're passing pydocstyle full paths to each file though, and
+# the directory part of the paths prevent "test_" files matching pydocstyle's
+# filter. Adjust it here so that "test_" files are actually skipped.
 printf "Running pydocstyle on python files...\n"
 printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty pydocstyle --match='(?!.*test_).*\.py' || rc=1
 
