@@ -118,10 +118,16 @@ printf "Running black on python files...\n"
 printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty black --line-length 79 -v --check --diff || rc=1
 
 # Run pycodestyle on python files
+# --ignore overrides the default ignore list hence we need to explicitly specify
+# the default list of errors that pycodestyle would ignore by default.
+# More info: https://github.com/PyCQA/pycodestyle/blob/master/docs/intro.rst#error-codes
+PYCODESTYLE_DEFAULT_IGNORE="E121,E123,E126,E133,E226,E241,E242,E704,W503,W504,W505"
 # Ignore E203 errors though - they can be spurious
 # (https://github.com/PyCQA/pycodestyle/issues/373)
+PYCODESTYLE_MBL_IGNORE="E203"
+PYCODESTYLE_IGNORE="$PYCODESTYLE_DEFAULT_IGNORE,$PYCODESTYLE_MBL_IGNORE"
 printf "Running pycodestyle on python files...\n"
-printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty pycodestyle --ignore=E203 || rc=1
+printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty pycodestyle --ignore="$PYCODESTYLE_IGNORE" || rc=1
 
 # Run pydocstyle on python files
 # When pydocstyle is given a directory to check it will, by default, skip
