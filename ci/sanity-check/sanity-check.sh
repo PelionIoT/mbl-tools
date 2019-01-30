@@ -118,7 +118,7 @@ printf "Running black on python files...\n"
 printf "%s" "$PYTHON_FILES" | xargs --no-run-if-empty black --line-length 79 -v --check --diff || rc=1
 
 # Run pycodestyle on python files
-# --ignore override the default ignore list hence we need to explicitly specify
+# --ignore overrides the default ignore list hence we need to explicitly specify
 # the default list of errors that pycodestyle would ignore by default.
 # More info: https://github.com/PyCQA/pycodestyle/blob/master/docs/intro.rst#error-codes
 PYCODESTYLE_DEFAULT_IGNORE="E121,E123,E126,E133,E226,E241,E242,E704,W503,W504,W505"
