@@ -5,7 +5,7 @@
 # Modifications: Copyright (c) 2019 Arm Limited and Contributors. All rights
 #                reserved.
 #
-# SPDX-License-Identifier: MIAT
+# SPDX-License-Identifier: MIT
 """Command line interface for mbl-licensing-checker."""
 import logging
 import sys
