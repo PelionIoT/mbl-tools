@@ -50,10 +50,10 @@ optional arguments:
   --config <path>       Search and use configuration starting from this
                         directory (default: None)
   --match <pattern>     Check only files that exactly match <pattern> regular
-                        expression; default is --match='(?!test_).*\.(bb|bbapp
-                        end|bbclass|c|cpp|h|hpp|inc|py|sh)$' which matches
-                        files that don't start with 'test_' but end with the
-                        file extensions in <pattern> (default: None)
+                        expression; default is --match='.*\.(bb|bbappend|bbcla
+                        ss|c|cpp|h|hpp|inc|py|sh)$' which matches files that
+                        don't start with 'test_' but end with the file
+                        extensions in <pattern> (default: None)
   --match-dir <pattern>
                         Search only dirs that exactly match <pattern> regular
                         expression; default is --match-dir='[^\.].*', which
