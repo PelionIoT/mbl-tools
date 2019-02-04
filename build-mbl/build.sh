@@ -668,15 +668,19 @@ while true; do
           case $machine in
           imx7s-warp-mbl)
             suffixes="manifest tar.xz wic.gz wic.bmap"
+            targetsys=arm-oe-linux-gnueabi
             ;;
           raspberrypi3-mbl)
             suffixes="manifest tar.xz wic.gz wic.bmap"
+            targetsys=arm-oe-linux-gnueabi
             ;;
           imx7d-pico-mbl)
             suffixes="manifest tar.xz wic.gz wic.bmap"
+            targetsys=arm-oe-linux-gnueabi
             ;;
           imx8mmevk-mbl)
             suffixes="manifest tar.xz wic.gz wic.bmap"
+            targetsys=aarch64-oe-linux
             ;;
           esac
 
@@ -690,7 +694,7 @@ while true; do
             # If we are archiving 'original' source we need to tar up a
             # directory containing source tarballs, patches, series
             # files and other crud.
-            for path in "$bbtmpdir/deploy/sources/arm-oe-linux-gnueabi/"*; do
+            for path in "$bbtmpdir/deploy/sources/$targetsys/"*; do
               dir=$(dirname "$path")
               pvn=$(basename "$path")
               write_info "save artifact %s\n" "$pvn"
