@@ -29,6 +29,7 @@ actions:
 - boot:
     method: u-boot
     commands: ums
+    failure_retry: 5
     auto_login:
       login_prompt: '(.*) login:'
       username: 'root'
