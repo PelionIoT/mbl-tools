@@ -1,0 +1,128 @@
+# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+device_type: imx7s-warp-mbl
+
+job_name: MBL Hello World {{build_tag}}
+
+timeouts:
+  job:
+    minutes: 100
+  action:
+    minutes: 50
+  connection:
+    minutes: 20
+priority: medium
+visibility: public
+tags: [pete]
+
+protocols:
+  lava-lxc:
+    name: slave-lxc-test
+    template: ubuntu
+    distribution: ubuntu
+    release: xenial
+    verbose: true
+
+actions:
+
+- deploy:
+    namespace: target
+    timeout:
+      minutes: 50
+    to: u-boot-ums
+    os: oe
+    image:
+      url: {{ image_url }}
+      compression: gz
+      root_partition: 2
+
+- boot:
+    namespace: target
+    method: u-boot
+    commands: ums
+    failure_retry: 5
+    auto_login:
+      login_prompt: '(.*) login:'
+      username: 'root'
+    prompts:
+      - 'root@(.*):~#'
+    timeout:
+      minutes: 50
+
+- deploy:
+    namespace: lxc
+    timeout:
+      minutes: 5
+    to: lxc
+    os: ubuntu
+    packages:
+    - avahi-utils
+    prompts:
+      - 'root@(.*):/#'
+
+- boot:
+    namespace: lxc
+    method: lxc
+    timeout:
+      minutes: 20
+    failure-retry: 3
+    prompts:
+      - 'root@slave-lxc-test-(.*):/#'
+
+
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+
+    - path: ci/lava/dependencies/install_docker.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: install_docker
+      from: git
+      history: False
+      branch: pd-iotmbl-1018
+
+    - path: ci/lava/tests/mbl-helloworld-build.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: build_hello_world
+      from: git
+      history: False
+      branch: pd-iotmbl-1018
+
+    - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
+      repository: https://github.com/ARMmbed/mbl-cli-python.git
+      name: install_mbl_cli
+      from: git
+      history: False
+      branch: pd-iotmbl-1018
+
+    - path: ci/lava/tests/mbl-helloworld-run.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: run_hello_world
+      from: git
+      history: False
+      branch: pd-iotmbl-1018
+
+metadata:
+    build url: "{{ build_url }}"
+
+{% if notify_user or notify_emails -%}
+notify:
+    recipients:
+    {% if notify_user -%}
+    - to:
+       method: email
+       user: {{ notify_user }}
+    {% endif -%}
+    {%- for email in notify_emails -%}
+    - to:
+       method: email
+       email: {{ email }}
+    {% endfor -%}
+    criteria:
+      status: finished
+    verbosity: verbose
+{% endif %}
