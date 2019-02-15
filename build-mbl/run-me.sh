@@ -34,7 +34,7 @@ MANDATORY parameters:
   -o, --outputdir PATH  Specify a directory to store built artifacts.
 
 OPTIONAL parameters:
-  --downloaddir PATH    Use PATH to store yocto downloaded sources.
+  --downloaddir PATH    Use PATH to store Yocto downloaded sources.
   --external-manifest PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
