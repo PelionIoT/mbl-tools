@@ -9,7 +9,6 @@ set -u
 
 execdir="$(readlink -e "$(dirname "$0")")"
 
-default_builddir="build-mbl-manifest"
 default_imagename="mbl-manifest-env"
 default_containername="mbl-tools-container.$$"
 
@@ -30,8 +29,12 @@ usage()
 
 usage: run-me.sh [OPTION] -- [build.sh arguments]
 
-  --builddir PATH       Specify the root of the build tree.  Default ${default_builddir}.
-  --downloaddir PATH    Use PATH to store downloaded packages.
+MANDATORY parameters:
+  --builddir PATH       Specify the root of the build tree.
+  -o, --outputdir PATH  Specify a directory to store built arifacts.
+
+OPTIONAL parameters:
+  --downloaddir PATH    Use PATH to store yocto downloaded sources.
   --external-manifest PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
@@ -39,11 +42,8 @@ usage: run-me.sh [OPTION] -- [build.sh arguments]
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys.
-  -o, --outputdir PATH  Specify a directory to store built arifacts.
   --tty                 Enable tty creation (default).
   --no-tty              Disable tty creation.
-  --workdir PATH        Specify the directory where to store artifacts.  Default ${default_builddir}.
-                        Deprecated.  Use --builddir instead.
   -x                    Enable shell debugging in this script.
 
 EOF
@@ -120,35 +120,35 @@ while [ $# -gt 0 ]; do
   shift 1
 done
 
-if [ -n "${downloaddir:-}" ]; then
-  downloaddir=$(readlink -f "$downloaddir")
-  if [ ! -e "$downloaddir" ]; then
-    printf "error: missing downloaddir %s\n" "$downloaddir" >&2
-    exit 3
+if [ -n "${builddir:-}" ]; then
+  builddir=$(readlink -f "$builddir")
+  if [ ! -d "$builddir" ]; then
+    printf "missing builddir %s. Creating it.\n" "$builddir"
+    mkdir -p "$builddir"
   fi
+else
+  printf "error: missing parameter --builddir PATH\n" >&2
+  exit 1
 fi
 
 if [ -n "${outputdir:-}" ]; then
   outputdir=$(readlink -f "$outputdir")
-  if [ ! -e "$outputdir" ]; then
-    printf "error: missing outputdir %s\n" "$outputdir" >&2
-    exit 3
+  if [ ! -d "$outputdir" ]; then
+    printf "missing outputdir %s. Creating it.\n" "$outputdir"
+    mkdir -p "$outputdir"
+  fi
+else
+  printf "error: missing parameter --outputdir PATH\n" >&2
+  exit 1
+fi
+
+if [ -n "${downloaddir:-}" ]; then
+  downloaddir=$(readlink -f "$downloaddir")
+  if [ ! -d "$downloaddir" ]; then
+    printf "missing downloaddir %s. Creating it.\n" "$downloaddir"
+    mkdir -p "$downloaddir"
   fi
 fi
-
-if [ -n "${workdir:-}" ]; then
-  printf "warning: --workdir is deprecated, use --builddir\n" >& 2
-  if [ -z "${builddir:-}" ]; then
-    builddir="$workdir"
-  fi
-fi
-
-if [ -z "${builddir:-}" ]; then
-  builddir="$default_builddir"
-fi
-
-builddir=$(readlink -f "$builddir")
-mkdir -p "$builddir"
 
 if [ -n "${inject_mcc_files:-}" ]; then
   mkdir -p "$builddir/inject-mcc"

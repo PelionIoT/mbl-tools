@@ -91,10 +91,8 @@ repo_init_atomic ()
 
 all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl"
 
-default_branch="master"
 default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
-default_machines="raspberrypi3-mbl"
 default_distro="mbl"
 default_images="mbl-image-production mbl-image-development"
 
@@ -295,9 +293,15 @@ usage()
 
 usage: build.sh [OPTION] [STAGE]..
 
+MANDATORY parameters:
+  --branch BRANCH       Name the mbl-manifest branch to checkout.
+  --machine MACHINE     Yocto MACHINE to build. Repeat --machine MACHINE_2 to build more
+                        than one machine.
+                        Supported machines: $all_machines.
+
+OPTIONAL parameters:
   --archive-source      Enable source package archiving.
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
-  --branch BRANCH       Name the branch to checkout. Default ${default_branch}.
   --[no-]compress       Enable image artifact compression, default enabled.
   --builddir DIR        Use DIR for build, default CWD.
   --build-tag TAG       Specify a unique version tag to identify the build.
@@ -311,7 +315,6 @@ usage: build.sh [OPTION] [STAGE]..
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys.
   --licenses            Collect extra build license info. Default disabled.
-  --machine MACHINE     Add a machine to build.  Default ${default_machines}.
   --manifest MANIFEST   Name the manifest file. Default ${default_manifest}.
   -o, --outputdir PATH  Directory to output build artifacts.
   --url URL             Name the URL to clone. Default ${default_url}.
@@ -328,7 +331,6 @@ Useful STAGE names:
 EOF
 }
 
-branch="$default_branch"
 url="$default_url"
 distro="$default_distro"
 flag_compress=1
@@ -432,8 +434,13 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -n "${external_manifest:-}" ] && [ -n "${manifest:-}" ]; then
-    printf "error: --external-manifest and --manifest are mutually exclusive.\n" >&2
-    exit 3
+  printf "error: --external-manifest and --manifest are mutually exclusive.\n" >&2
+  exit 3
+fi
+
+if [ -z "${branch:-}" ]; then
+  printf "error: missing --branch BRANCH parameter\n" >&2
+  exit 3
 fi
 
 if [ -z "${manifest:-}" ]; then
@@ -456,7 +463,8 @@ if [ -z "${images:-}" ]; then
 fi
 
 if [ -z "${machines:-}" ]; then
-  machines="$default_machines"
+  printf "error: missing --machine MACHINE parameter\n" >&2
+  exit 3
 fi
 
 for machine in $machines; do
