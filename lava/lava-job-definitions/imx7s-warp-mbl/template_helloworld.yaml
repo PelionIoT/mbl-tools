@@ -15,7 +15,6 @@ timeouts:
     minutes: 20
 priority: medium
 visibility: public
-tags: [pete]
 
 protocols:
   lava-lxc:
