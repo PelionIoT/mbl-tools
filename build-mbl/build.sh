@@ -463,7 +463,8 @@ if [ -z "${images:-}" ]; then
 fi
 
 if [ -z "${machines:-}" ]; then
-  printf "error: missing --machine MACHINE parameter\n" >&2
+  printf "error: missing --machine MACHINE parameter. " >&2
+  printf "Supported machines: $all_machines.\n" >&2
   exit 3
 fi
 
