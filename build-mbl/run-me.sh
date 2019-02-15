@@ -31,7 +31,7 @@ usage: run-me.sh [OPTION] -- [build.sh arguments]
 
 MANDATORY parameters:
   --builddir PATH       Specify the root of the build tree.
-  -o, --outputdir PATH  Specify a directory to store built arifacts.
+  -o, --outputdir PATH  Specify a directory to store built artifacts.
 
 OPTIONAL parameters:
   --downloaddir PATH    Use PATH to store yocto downloaded sources.
