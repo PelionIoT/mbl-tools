@@ -128,7 +128,7 @@ if [ -n "${builddir:-}" ]; then
   fi
 else
   printf "error: missing parameter --builddir PATH\n" >&2
-  exit 1
+  exit 3
 fi
 
 if [ -n "${outputdir:-}" ]; then
@@ -139,7 +139,7 @@ if [ -n "${outputdir:-}" ]; then
   fi
 else
   printf "error: missing parameter --outputdir PATH\n" >&2
-  exit 1
+  exit 3
 fi
 
 if [ -n "${downloaddir:-}" ]; then
