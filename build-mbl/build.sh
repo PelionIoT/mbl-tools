@@ -295,7 +295,7 @@ usage: build.sh [OPTION] [STAGE]..
 
 MANDATORY parameters:
   --branch BRANCH       Name the mbl-manifest branch to checkout.
-  --machine MACHINE     Yocto MACHINE to build. Repeat --machine MACHINE_2 to build more
+  --machine MACHINE     Yocto MACHINE to build. Repeat --machine option to build more
                         than one machine.
                         Supported machines: $all_machines.
 
