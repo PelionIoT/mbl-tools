@@ -463,14 +463,13 @@ if [ -z "${images:-}" ]; then
 fi
 
 if [ -z "${machines:-}" ]; then
-  printf "error: missing --machine MACHINE parameter. " >&2
-  printf "Supported machines: $all_machines.\n" >&2
+  printf "error: missing --machine MACHINE parameter. Supported machines: '%s'.\n" "$all_machines" >&2
   exit 3
 fi
 
 for machine in $machines; do
   if ! valid_machine_p "$machine"; then
-    printf "error: unrecognized machine '%s'\n" "$machine" >&2
+    printf "error: unrecognized machine '%s'. Supported machines: '%s'.\n" "$machine" "$all_machines" >&2
     exit 3
   fi
 done
