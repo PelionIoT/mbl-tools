@@ -11,14 +11,6 @@ For more information about Mbed Linux OS, please see [meta-mbl][meta-mbl].
 
 #### Quick Start
 
-Build MBL for Raspberry PI 3 (RPi3):
-
-Checkout and build the tip of the master branch for Mbed linux:
-
-```
-./mbl-tools/build-mbl/run-me.sh
-```
-
 The run-me.sh script will create and launch a docker container to
 encapsulate the Mbed Linux build environment then launch a build
 script, build.sh, inside the container to do the heavy lifting.
@@ -33,12 +25,16 @@ Note the use of -- to separate options to run-me.sh from options that
 are passed through to build.sh
 
 Mandatory options for build-mbl/run-me.sh:
+```
 --builddir PATH       Specify the root of the build tree.
 -o, --outputdir PATH  Specify a directory to store built artifacts.
+```
 
 Mandatory options for build-mbl/build.sh:
+```
 --branch BRANCH       Name the mbl-manifest branch to checkout.
 --machine MACHINE     Yocto MACHINE to build. Repeat --machine option to build more than one machine.
+```
 
 Different branches of Mbed Linux can be checkout and built by passing
 the --branch option through to build.sh.  The bleeding edge of
@@ -48,7 +44,7 @@ branches include: 'mbl-os-0.5', etc.
 For example, to build the tip of the master branch for Raspberry Pi 3:
 
 ```
-./mbl-tools/build-mbl/run-me.sh --builddir PATH --outputdir PATH -- --branch master --machine raspberrypi3-mbl
+./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
 ```
 
 The build process involves the download of many source artifacts.  It
@@ -64,8 +60,8 @@ mkdir downloads
 ./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts --downloaddir my-downloads-dir -- --branch master --machine raspberrypi3-mbl
 ```
 
-The build scripts will by default create the build and output directories
-if they doesn't exist.
+The build scripts will create by default the build and output directories
+if they don't exist.
 
 Use the --help option to the run-me.sh script to get brief usage
 information.
