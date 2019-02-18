@@ -56,7 +56,6 @@ For example, to designate a directory to hold cached downloads
 between successive builds, pass the --downloaddir option to run-me.sh:
 
 ```
-mkdir downloads
 ./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts --downloaddir my-downloads-dir -- --branch master --machine raspberrypi3-mbl
 ```
 
@@ -84,7 +83,6 @@ To get build artifacts out of a build, pass the --outputdir option to
 specify which directory the build artifacts should be placed in:
 
 ```
-mkdir artifacts
 ./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
 ```
 
@@ -98,7 +96,6 @@ To get the pinned manifest for a build, use the --outputdir option to
 get the build artifacts:
 
 ```
-mkdir artifacts
 ./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
 ```
 
