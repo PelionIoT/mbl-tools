@@ -451,15 +451,15 @@ if [ $# -gt 0 ]; then
   stages=("$@")
 fi
 
-if [ -z "${builddir:-}" ]; then
-  printf "error: missing --builddir PATH parameter.\n" >&2
-  exit 3
-else
+if [ -n "${builddir:-}" ]; then
   builddir="$(readlink -f "$builddir")"
   if [ ! -d "$builddir" ]; then
     printf "error: --builddir '%s' directory doesn't exist.\n" "$builddir" >&2
     exit 3
   fi
+else
+  printf "error: missing --builddir PATH parameter.\n" >&2
+  exit 3
 fi
 
 if [ -z "${images:-}" ]; then
