@@ -451,13 +451,6 @@ if [ $# -gt 0 ]; then
   stages=("$@")
 fi
 
-if [ -z "${builddir:-}" ]; then
-  builddir="$(pwd)"
-else
-  mkdir -p "$builddir"
-  builddir="$(readlink -f "$builddir")"
-fi
-
 if [ -z "${images:-}" ]; then
   images="$default_images"
 fi
