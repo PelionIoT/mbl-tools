@@ -298,14 +298,14 @@ MANDATORY parameters:
   --machine MACHINE     Yocto MACHINE to build. Repeat --machine option to build more
                         than one machine.
                         Supported machines: $all_machines.
+  --builddir DIR        Use DIR for build.
 
 OPTIONAL parameters:
   --archive-source      Enable source package archiving.
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
   --[no-]compress       Enable image artifact compression, default enabled.
-  --builddir DIR        Use DIR for build, default CWD.
   --build-tag TAG       Specify a unique version tag to identify the build.
-  --downloaddir DIR     Use DIR to store downloaded packages. Default \$builddir/download
+  --downloaddir DIR     Use DIR to store downloaded packages.
   --external-manifest PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
@@ -452,10 +452,14 @@ if [ $# -gt 0 ]; then
 fi
 
 if [ -z "${builddir:-}" ]; then
-  builddir="$(pwd)"
+  printf "error: missing --builddir PATH parameter.\n" >&2
+  exit 3
 else
-  mkdir -p "$builddir"
   builddir="$(readlink -f "$builddir")"
+  if [ ! -d "$builddir" ]; then
+    printf "error: --builddir '%s' directory doesn't exist.\n" "$builddir" >&2
+    exit 3
+  fi
 fi
 
 if [ -z "${images:-}" ]; then
