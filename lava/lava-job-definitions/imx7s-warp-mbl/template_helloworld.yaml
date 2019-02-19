@@ -96,7 +96,7 @@ actions:
       name: install_mbl_cli
       from: git
       history: False
-      branch: pd-iotmbl-1018
+      branch: master
 
     - path: ci/lava/tests/mbl-helloworld-run.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
