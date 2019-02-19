@@ -52,7 +52,7 @@ EOF
 imagename="$default_imagename"
 flag_tty="-t"
 
-args=$(getopt -o+ho:x -l builddir:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,outputdir:,tty,no-tty,workdir: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+ho:x -l builddir:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,outputdir:,tty,no-tty -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -104,10 +104,6 @@ while [ $# -gt 0 ]; do
     flag_tty=
     ;;
 
-  --workdir)
-    opt_prev=workdir
-    ;;
-
   -x)
     set -x
     ;;
@@ -155,7 +151,7 @@ if [ -n "${inject_mcc_files:-}" ]; then
   for file in ${inject_mcc_files:-}; do
     base="$(basename "$file")"
     cp "$file" "$builddir/inject-mcc/$base"
-    build_args="${build_args:-} --inject-mcc=/work/inject-mcc/$base"
+    build_args="${build_args:-} --inject-mcc=$builddir/inject-mcc/$base"
   done
 fi
 
@@ -171,7 +167,7 @@ docker build -t "$imagename" "$execdir"
 if [ -n "${external_manifest:-}" ]; then
   name="$(basename "$external_manifest")"
   cp "$external_manifest" "$builddir/$name"
-  set -- "--external-manifest=/work/$name" "$@"
+  set -- "--external-manifest=$builddir/$name" "$@"
 fi
 
 # The ${:+} expansion of download upsets shellcheck, but we do not
@@ -182,13 +178,13 @@ docker run --rm -i $flag_tty \
        --name "$default_containername" \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
        -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
-       ${downloaddir:+-v "$downloaddir":/downloads} \
-       ${outputdir:+-v "$outputdir":/artifacts} \
+       ${downloaddir:+-v "$downloaddir":"$downloaddir"} \
+       ${outputdir:+-v "$outputdir":"$outputdir"} \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
-       -v "$builddir":/work \
+       -v "$builddir":"$builddir" \
        "$imagename" \
-       ./build.sh --builddir /work \
+       ./build.sh --builddir "$builddir" \
          ${build_args:-} \
-         ${downloaddir:+--downloaddir /downloads} \
-         ${outputdir:+--outputdir /artifacts} \
+         ${downloaddir:+--downloaddir "$downloaddir"} \
+         ${outputdir:+--outputdir "$outputdir"} \
          "$@"
