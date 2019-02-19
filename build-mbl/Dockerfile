@@ -50,10 +50,6 @@ RUN mkdir -p /usr/local/bin \
     && curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo \
     && chmod a+x "/usr/local/bin/repo"
 
-# The build process needs working space to perform the build and
-# delivery the build products.
-RUN mkdir -m 777 /work
-
 # Make TUN available for qemu
 RUN mkdir -p /dev/net \
     && mknod /dev/net/tun c 10 200 \
