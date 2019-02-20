@@ -19,7 +19,7 @@ import jinja2
 
 
 default_template_base_path = "lava-job-definitions"
-default_template_name = "template.yaml"
+default_template_name = "mbl-core-template.yaml"
 
 
 class LAVATemplates(object):
