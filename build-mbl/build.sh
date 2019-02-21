@@ -142,6 +142,31 @@ maybe_compress()
     fi
 }
 
+bitbake_env_setup() {
+  machine=$1
+  cd "$builddir/machine-$machine/mbl-manifest"
+  set +u
+  set +e
+  # shellcheck disable=SC1091
+  MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
+  set -u
+  set -e
+
+  # This needs to be done after the setup otherwise bitbake does not have
+  # visibility of these variables
+  if [ -n "${flag_jobs:-}" ]; then
+    export PARALLEL_MAKE="-j $flag_jobs"
+    export BB_NUMBER_THREADS="$flag_jobs"
+    export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
+  fi
+
+  if [ -n "$downloaddir" ]; then
+    downloaddir=$(readlink -f "$downloaddir")
+    export DL_DIR="$downloaddir"
+    export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
+  fi
+}
+
 define_conf()
 {
   local path="$1"
@@ -612,33 +637,13 @@ while true; do
 
   build)
     for machine in $machines; do
-      (cd "$builddir/machine-$machine/mbl-manifest"
-       set +u
-       set +e
-       # shellcheck disable=SC1091
-       MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
-       set -u
-       set -e
-
+       (
+       bitbake_env_setup "$machine"
        if [ -n "${build_tag:-}" ]; then
          define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/conf/distro/mbl.conf" \
                      "DISTRO_VERSION" "$build_tag"
        fi
        setup_archiver "$builddir/machine-$machine/mbl-manifest/conf/local.conf" "$flag_archiver"
-
-       # This needs to be done after the setup otherwise bitbake does not have
-       # visibility of these variables
-       if [ -n "${flag_jobs:-}" ]; then
-         export PARALLEL_MAKE="-j $flag_jobs"
-         export BB_NUMBER_THREADS="$flag_jobs"
-         export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
-       fi
-
-       if [ -n "${downloaddir:-}" ]; then
-         downloaddir=$(readlink -f "$downloaddir")
-         export DL_DIR="$downloaddir"
-         export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
-       fi
 
        # If outputdir is specified, the output of bitbake -e is saved in the
        # machine artifact directory. This command will output the configuration
@@ -756,6 +761,32 @@ while true; do
 
         maybe_compress "$machinedir/licenses.tar"
       done
+    fi
+    ;;
+
+  interactive)
+    # We only support on machine in the interactive mode.
+    numof_machines=$(wc -w <<< "${machines}")
+    if [ "$numof_machines" -gt 1 ]; then
+      printf "error: interactive mode only supports on machine at a time.\n" >&2
+      exit 3
+    fi
+
+    # Remove any spaces from the machines string
+    machine="${machines//[[:blank:]]/}"
+
+    # We need to check if the user did run a complete build before
+    path_to_check="$builddir/machine-$machine/mbl-manifest/build-mbl"
+    if [ ! -d "${path_to_check}" ]; then
+      printf "error: '%s' path missing.\n" "$path_to_check" >&2
+      printf "Please run a complete build for '%s' machine before using the interactive mode.\n" "$machine" >&2
+      printf "Would you like to run the complete build now? (Y/N): "
+      read -r complete_build
+      shopt -s nocasematch
+      [[ "$complete_build" == "Y" ]] && push_stages start
+    else
+      bitbake_env_setup "$machine"
+      exec bash
     fi
     ;;
 

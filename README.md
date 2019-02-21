@@ -119,6 +119,22 @@ the meantime, the build scripts provide a work around:
 ./mbl-tools/build-mbl/run-me.sh --inject-mcc mbed_cloud_dev_credentials.c --inject-mcc update_default_resources.c --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
 ```
 
+#### Interactive mode
+
+The user can have an interactive shell inside the Docker build environment
+with the bitbake environment setup for issuing bitbake related commands.
+To achieve this the "interactive" stage needs to be passed to the build.sh
+script. For example:
+
+```
+./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl interactive
+```
+
+Only one --machine option is supported and the user should have run a complete
+build before using the interactive mode.
+To exit from the interactive mode the user just need to enter `exit` or Ctrl+D.
+
+
 ### License
 
 Please see the [License][mbl-license] document for more information.
