@@ -82,14 +82,14 @@ actions:
       name: install_docker
       from: git
       history: False
-      branch: pd-iotmbl-1018
+      branch: master
 
     - path: ci/lava/tests/mbl-helloworld-build.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       name: build_hello_world
       from: git
       history: False
-      branch: pd-iotmbl-1018
+      branch: master
 
     - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
       repository: https://github.com/ARMmbed/mbl-cli-python.git
@@ -103,7 +103,7 @@ actions:
       name: run_hello_world
       from: git
       history: False
-      branch: pd-iotmbl-1018
+      branch: master
 
 metadata:
     build url: "{{ build_url }}"
