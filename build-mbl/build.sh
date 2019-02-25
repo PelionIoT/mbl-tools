@@ -390,7 +390,7 @@ find_license_manifest_dir()
     exit 1
   fi
 
-  printf "${manifest_dir}"
+  printf "%s" "${manifest_dir}"
 }
 
 artifact_image_manifests()
@@ -495,7 +495,7 @@ distro="$default_distro"
 flag_compress=1
 flag_archiver=""
 flag_licenses=0
-flag_bianry_release=0
+flag_binary_release=0
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
