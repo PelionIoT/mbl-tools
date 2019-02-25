@@ -42,6 +42,12 @@ OPTIONAL parameters:
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys.
+  --mbl-tools-version STRING
+                        Specify the version of mbl-tools that this script comes
+                        from. This is written to buildinfo.txt in the output
+                        directory. By default, an attempt is made to obtain
+                        this information automatically, but that is not always
+                        possible.
   --tty                 Enable tty creation (default).
   --no-tty              Disable tty creation.
   -x                    Enable shell debugging in this script.
@@ -52,7 +58,11 @@ EOF
 imagename="$default_imagename"
 flag_tty="-t"
 
-args=$(getopt -o+ho:x -l builddir:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,outputdir:,tty,no-tty -n "$(basename "$0")" -- "$@")
+# Save the full command line for later - when we do a binary release we want a
+# record of how this script was invoked
+command_line="$(printf '%q ' "$0" "$@")"
+
+args=$(getopt -o+ho:x -l builddir:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,mbl-tools-version:,outputdir:,tty,no-tty -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -90,6 +100,10 @@ while [ $# -gt 0 ]; do
 
   --inject-mcc)
     opt_append=inject_mcc_files
+    ;;
+
+  --mbl-tools-version)
+    opt_prev=mbl_tools_version
     ;;
 
   -o | --outputdir)
@@ -155,6 +169,21 @@ if [ -n "${inject_mcc_files:-}" ]; then
   done
 fi
 
+# If we didn't get an mbl-tools version on the command line, try to determine
+# it using git. This isn't important in most cases and won't work in all
+# environments so don't fail the build if it doesn't work.
+if [ -z "${mbl_tools_version:-}" ]; then
+  if which git &> /dev/null; then
+    printf "Found git in path; attempting to determine mbl-tools version\n"
+    if mbl_tools_version=$(git -C "$(dirname "$0")" rev-parse HEAD); then
+      printf "Determined mbl-tools version to be %s\n" "$mbl_tools_version";
+    else
+      printf "Failed to determine mbl-tools version automatically; continuing anyway\n" >&2
+      mbl_tools_version=""
+    fi
+  fi
+fi
+
 if [ -z "${SSH_AUTH_SOCK+false}" ]; then
   printf "error: ssh-agent not found.\n" >&2
   printf "To connect to Github please run an SSH agent and add your SSH key.\n" >&2
@@ -187,4 +216,6 @@ docker run --rm -i $flag_tty \
          ${build_args:-} \
          ${downloaddir:+--downloaddir "$downloaddir"} \
          ${outputdir:+--outputdir "$outputdir"} \
+         --parent-command-line "$command_line" \
+         --mbl-tools-version "$mbl_tools_version" \
          "$@"

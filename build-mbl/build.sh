@@ -131,12 +131,24 @@ valid_machine_p()
   return 1
 }
 
+should_compress()
+{
+  [ "$flag_compress" -eq 1 ]
+}
+
+compress_extension()
+{
+  if should_compress; then
+    echo ".gz"
+  fi
+}
+
 maybe_compress()
 {
     local path="$1"
 
     rm -f "$path.gz"
-    if [ "$flag_compress" -eq 1 ]; then
+    if should_compress; then
         write_info "compress artifact %s\n" "$(basename "$path")"
         gzip "$path"
     fi
@@ -301,6 +313,7 @@ setup_archiver()
 # start build-mbl-archiver
 INHERIT += "archiver"
 ARCHIVER_MODE[src] = "$archiver"
+COPYLEFT_LICENSE_INCLUDE = "*"
 # stop build-mbl-archiver
 EOF
   fi
@@ -310,6 +323,116 @@ EOF
     mv -f "$path.new" "$path"
   fi
   rm -f "$path.new"
+}
+
+create_binary_release()
+{
+  local image=${1:?}
+  local machine=${2:?}
+
+  local artifact_machine_dir="${outputdir}/machine/${machine}"
+  local artifact_image_dir="${artifact_machine_dir}/images/${image}"
+
+  create_binary_release_readme "$image" "$machine"
+
+  # If you add files to the binary release archive, please update
+  # binary_release_README
+  tar -c -f "${artifact_image_dir}/binary_release.tar" \
+    -C "${artifact_image_dir}/images" \
+      "${image}-${machine}.wic.gz" \
+      "${image}-${machine}.wic.bmap" \
+    -C "${artifact_image_dir}" \
+      source \
+      license.manifest \
+      image_license.manifest \
+      initramfs-license.manifest \
+      initramfs-image_license.manifest \
+      README \
+    -C "${artifact_machine_dir}" \
+      "licenses.tar$(compress_extension)" \
+    -C  "$outputdir" \
+      pinned-manifest.xml \
+      buildinfo.txt
+}
+
+create_binary_release_readme()
+{
+  local image=${1:?}
+  local machine=${2:?}
+
+  local artifact_image_dir="${outputdir}/machine/${machine}/images/${image}"
+
+  sed \
+    -e "s|__REPLACE_ME_WITH_IMAGE__|$image|g" \
+    -e "s|__REPLACE_ME_WITH_MACHINE__|$machine|g" \
+    -e "s|__REPLACE_ME_WITH_COMPRESS_EXTENSION__|$(compress_extension)|g" \
+    "${execdir}/binary_release_README" > "${artifact_image_dir}/README"
+}
+
+find_license_manifest_dir()
+{
+  local image=${1:?}
+  local machine=${2:?}
+
+  local licdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc/deploy/licenses"
+  local manifest_dir_pattern="${image}-${machine}-*"
+
+  local manifest_dir
+  manifest_dir=$(find "$licdir" -maxdepth 1 -type d -name "$manifest_dir_pattern")
+  local count
+  count=$(printf "%s" "$manifest_dir" | wc -w)
+  if [ "$count" -ne 1 ]; then
+    printf "error: found unexpected number of files matching \"%s\" in %s (%d)" \
+      "$manifest_dir_pattern" \
+      "$licdir" \
+      "$count" \
+      1>&2
+    exit 1
+  fi
+
+  printf "${manifest_dir}"
+}
+
+artifact_image_manifests()
+{
+  local image=${1:?}
+  local machine=${2:?}
+
+  local artifact_image_dir="${outputdir}/machine/${machine}/images/${image}"
+
+  local manifest_dir
+  local initramfs_manifest_dir
+  manifest_dir=$(find_license_manifest_dir "$image" "$machine")
+  initramfs_manifest_dir=$(find_license_manifest_dir mbl-image-initramfs "$machine")
+
+  cp "${manifest_dir}/license.manifest" "${artifact_image_dir}/license.manifest"
+  cp "${manifest_dir}/image_license.manifest" "${artifact_image_dir}/image_license.manifest"
+  cp "${initramfs_manifest_dir}/license.manifest" "${artifact_image_dir}/initramfs-license.manifest"
+  cp "${initramfs_manifest_dir}/image_license.manifest" "${artifact_image_dir}/initramfs-image_license.manifest"
+}
+
+artifact_build_info()
+{
+  [ -n "$outputdir" ] || return 0
+
+  local script_name
+  script_name=$(basename "$0")
+  local buildinfo_path="${outputdir}/buildinfo.txt"
+  local buildinfo_tmppath="${buildinfo_path}.tmp"
+
+  rm -f "${buildinfo_tmppath}"
+
+  if [ -n "${parent_command_line:-}" ]; then
+    printf "%s parent command line: [%s]\n\n" "$script_name" "${parent_command_line}" >> "${buildinfo_tmppath}"
+  fi
+
+  printf "%s command line: [%s]\n\n" "$script_name" "${command_line}" >> "${buildinfo_tmppath}"
+
+  if [ -n "${mbl_tools_version:-}" ]; then
+    printf "mbl-tools version: %s\n\n" "$mbl_tools_version" >> "${buildinfo_tmppath}"
+  fi
+
+  mv "${buildinfo_tmppath}" "${buildinfo_path}"
 }
 
 usage()
@@ -327,6 +450,8 @@ MANDATORY parameters:
 
 OPTIONAL parameters:
   --archive-source      Enable source package archiving.
+  --binary-release      Enable creation of a binary release archive. This
+                        option implies --licenses and --archive-source.
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
   --[no-]compress       Enable image artifact compression, default enabled.
   --build-tag TAG       Specify a unique version tag to identify the build.
@@ -341,7 +466,16 @@ OPTIONAL parameters:
                         mechanism to inject development keys.
   --licenses            Collect extra build license info. Default disabled.
   --manifest MANIFEST   Name the manifest file. Default ${default_manifest}.
-  -o, --outputdir PATH  Directory to output build artifacts.
+  --mbl-tools-version STRING
+                        Specify the version of mbl-tools that this script came
+                        from. This is written to buildinfo.txt in the output
+                        directory.
+  -o, --outputdir PATH  Directory to output build artifacts. Mandatory if
+                        --binary-release is given.
+  --parent-command-line STRING
+                        Specify the command line that was used to invoke the
+                        script that invokes build.sh. This is written to
+                        buildinfo.txt in the output directory.
   --url URL             Name the URL to clone. Default ${default_url}.
   -x                    Enable shell debugging in this script.
 
@@ -361,8 +495,13 @@ distro="$default_distro"
 flag_compress=1
 flag_archiver=""
 flag_licenses=0
+flag_bianry_release=0
 
-args=$(getopt -o+hj:o:x -l archive-source,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,machine:,manifest:,outputdir:,url: -n "$(basename "$0")" -- "$@")
+# Save the full command line for later - when we do a binary release we want a
+# record of how this script was invoked
+command_line="$(printf '%q ' "$0" "$@")"
+
+args=$(getopt -o+hj:o:x -l archive-source,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -381,6 +520,10 @@ while [ $# -gt 0 ]; do
     flag_archiver=original
     ;;
 
+  --binary-release)
+    flag_binary_release=1
+    ;;
+
   --branch)
     opt_prev=branch
     ;;
@@ -397,8 +540,16 @@ while [ $# -gt 0 ]; do
     flag_compress=1
     ;;
 
+  --mbl-tools-version)
+    opt_prev=mbl_tools_version
+    ;;
+
   --no-compress)
     flag_compress=0
+    ;;
+
+  --parent-command-line)
+      opt_prev=parent_command_line
     ;;
 
   --downloaddir)
@@ -506,6 +657,16 @@ done
 if [ -n "${outputdir:-}" ]; then
   outputdir="$(readlink -f "$outputdir")"
 fi
+
+if [ "${flag_binary_release}" -eq 1 ]; then
+    flag_licenses=1
+    flag_archiver=original
+    if [ -z "$outputdir" ]; then
+        printf "error: --outputdir option is mandatory when --binary-release is specified\n" >&2
+        exit 3
+    fi
+fi
+
 
 if empty_stages_p; then
   if [ -r "$builddir/,stage" ]; then
@@ -753,6 +914,9 @@ while true; do
               cp "$path" "$imagedir/info/"
             fi
           done
+
+          # License manifests
+          artifact_image_manifests "$image" "$machine"
         done
 
         # ... the license information...
@@ -761,6 +925,16 @@ while true; do
 
         maybe_compress "$machinedir/licenses.tar"
       done
+      artifact_build_info
+
+      if [ "$flag_binary_release" -eq 1 ]; then
+        for machine in $machines; do
+          for image in $images; do
+            create_binary_release "$image" "$machine"
+          done
+        done
+      fi
+
     fi
     ;;
 
