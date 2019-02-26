@@ -387,7 +387,7 @@ find_license_manifest_dir()
       "$licdir" \
       "$count" \
       1>&2
-    exit 1
+    return 1
   fi
 
   printf "%s" "${manifest_dir}"
@@ -401,14 +401,17 @@ artifact_image_manifests()
   local artifact_image_dir="${outputdir}/machine/${machine}/images/${image}"
 
   local manifest_dir
-  local initramfs_manifest_dir
   manifest_dir=$(find_license_manifest_dir "$image" "$machine")
-  initramfs_manifest_dir=$(find_license_manifest_dir mbl-image-initramfs "$machine")
-
   cp "${manifest_dir}/license.manifest" "${artifact_image_dir}/license.manifest"
   cp "${manifest_dir}/image_license.manifest" "${artifact_image_dir}/image_license.manifest"
-  cp "${initramfs_manifest_dir}/license.manifest" "${artifact_image_dir}/initramfs-license.manifest"
-  cp "${initramfs_manifest_dir}/image_license.manifest" "${artifact_image_dir}/initramfs-image_license.manifest"
+
+  # Don't exit (due to "set -e") if we can't find initramfs image license
+  # manifests - we may not have an initramfs image on some platforms
+  local initramfs_manifest_dir
+  if initramfs_manifest_dir=$(find_license_manifest_dir mbl-image-initramfs "$machine"); then
+    cp "${initramfs_manifest_dir}/license.manifest" "${artifact_image_dir}/initramfs-license.manifest"
+    cp "${initramfs_manifest_dir}/image_license.manifest" "${artifact_image_dir}/initramfs-image_license.manifest"
+  fi
 }
 
 artifact_build_info()
