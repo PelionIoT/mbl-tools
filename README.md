@@ -90,7 +90,7 @@ specify which directory the build artifacts should be placed in:
 
 For binary releases we need to build an archive containing images, source,
 license information, and build information. To create a binary release archive,
-use build.sh's `--binary-release` flag. Notes:
+use build.sh's `--binary-release` flag. Note that:
 * `--binary-release` implies the `--archive-source` flag.
 * `--binary-release` implies the `--archive-source` flag.
 * Most build information is available to build.sh when it runs, but the version
@@ -99,6 +99,7 @@ use build.sh's `--binary-release` flag. Notes:
   be able to determine the mbl-tools version and pass it to build.sh.
   Otherwise, the mbl-tools version can be manually passed to run-me.sh on the
   command line using the `--mbl-tools-version` option.
+
 For example, to create a binary release for the imx7s-warp-mbl machine:
 ```
 ./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine imx7s-warp-mbl --image mbl-image-development --binary-release
