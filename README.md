@@ -86,6 +86,25 @@ specify which directory the build artifacts should be placed in:
 ./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
 ```
 
+#### Binary Releases
+
+For binary releases we need to build an archive containing images, source,
+license information, and build information. To create a binary release archive,
+use build.sh's `--binary-release` flag. Notes:
+* `--binary-release` implies the `--archive-source` flag.
+* `--binary-release` implies the `--archive-source` flag.
+* Most build information is available to build.sh when it runs, but the version
+  of the mbl-tools repo that was used is not. If run-me.sh is run from within
+  the mbl-tools repository and the host machine has `git` then run-me.sh should
+  be able to determine the mbl-tools version and pass it to build.sh.
+  Otherwise, the mbl-tools version can be manually passed to run-me.sh on the
+  command line using the `--mbl-tools-version` option.
+For example, to create a binary release for the imx7s-warp-mbl machine:
+```
+./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine imx7s-warp-mbl --image mbl-image-development --binary-release
+```
+The binary release archive will be created at `artifacts/machine/imx7s-warp-mbl/images/mbl-image-development/binary_release.tar`.
+
 #### Pinned Manifests and Rebuilds
 
 Each build produces a pinned manifest as a build artifact.  A pinned
