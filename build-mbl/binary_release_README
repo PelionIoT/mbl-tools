@@ -9,8 +9,8 @@ This is an Mbed Linux OS binary release archive containing:
 * source: a directory containing source archives for each piece of software in
   the disk image.
 
-* license.manifest: a file containing license information about each opkg
-  package installed on the root filesystem in the disk image.
+* license.manifest: a file containing license information about each package
+  installed on the root filesystem in the disk image.
 
 * image_license.manifest: a file containing license information about each
   BitBake recipe that contributed files to the disk image, but which haven't
@@ -18,7 +18,7 @@ This is an Mbed Linux OS binary release archive containing:
   contents of Linux's initramfs.
 
 * initramfs-license.manifest: a file containing license information about each
-  opkg package installed into Linux's intramfs.
+  package installed into Linux's intramfs.
 
 * initramfs-image_license.manifest: a file containing license information about
   each BitBake recipe that contributed files to Linux's initramfs, but which
