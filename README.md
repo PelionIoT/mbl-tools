@@ -88,11 +88,11 @@ specify which directory the build artifacts should be placed in:
 
 #### Binary Releases
 
-For binary releases we need to build an archive containing images, source,
+For binary releases we need to build an archive containing images, sources,
 license information, and build information. To create a binary release archive,
 use build.sh's `--binary-release` flag. Note that:
 * `--binary-release` implies the `--archive-source` flag.
-* `--binary-release` implies the `--archive-source` flag.
+* `--binary-release` implies the `--licenses` flag.
 * Most build information is available to build.sh when it runs, but the version
   of the mbl-tools repo that was used is not. If run-me.sh is run from within
   the mbl-tools repository and the host machine has `git` then run-me.sh should
