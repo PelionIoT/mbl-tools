@@ -160,7 +160,7 @@ bitbake_env_setup() {
     export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
   fi
 
-  if [ -n "$downloaddir" ]; then
+  if [ -n "${downloaddir:-}" ]; then
     downloaddir=$(readlink -f "$downloaddir")
     export DL_DIR="$downloaddir"
     export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
