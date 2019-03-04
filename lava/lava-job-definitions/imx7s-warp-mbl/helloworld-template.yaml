@@ -43,7 +43,7 @@ actions:
     commands: ums
     failure_retry: 5
     auto_login:
-    login_prompt: 'mbed-linux-os-(.*) login:'
+      login_prompt: 'mbed-linux-os-(.*) login:'
       username: 'root'
     prompts:
       - 'root@mbed-linux-os(.*):~#'
