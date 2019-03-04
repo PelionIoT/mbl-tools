@@ -327,8 +327,8 @@ EOF
 
 create_binary_release()
 {
-  local image=${1:?}
-  local machine=${2:?}
+  local image=${1:?Missing image parameter of ${FUNCNAME[0]}}
+  local machine=${2:?Missing machine parameter of ${FUNCNAME[0]}}
 
   local artifact_machine_dir="${outputdir}/machine/${machine}"
   local artifact_image_dir="${artifact_machine_dir}/images/${image}"
@@ -336,7 +336,7 @@ create_binary_release()
   create_binary_release_readme "$image" "$machine"
 
   # If you add files to the binary release archive, please update
-  # binary_release_README
+  # README.binary_release_template
   tar -c -f "${artifact_image_dir}/binary_release.tar" \
     -C "${artifact_image_dir}/images" \
       "${image}-${machine}.wic.gz" \
@@ -357,8 +357,8 @@ create_binary_release()
 
 create_binary_release_readme()
 {
-  local image=${1:?}
-  local machine=${2:?}
+  local image=${1:?Missing image parameter of ${FUNCNAME[0]}}
+  local machine=${2:?Missing machine parameter of ${FUNCNAME[0]}}
 
   local artifact_image_dir="${outputdir}/machine/${machine}/images/${image}"
 
@@ -366,51 +366,51 @@ create_binary_release_readme()
     -e "s|__REPLACE_ME_WITH_IMAGE__|$image|g" \
     -e "s|__REPLACE_ME_WITH_MACHINE__|$machine|g" \
     -e "s|__REPLACE_ME_WITH_COMPRESS_EXTENSION__|$(compress_extension)|g" \
-    "${execdir}/binary_release_README" > "${artifact_image_dir}/README"
+    "${execdir}/README.binary_release_template" > "${artifact_image_dir}/README"
 }
 
 find_license_manifest_dir()
 {
-  local image=${1:?}
-  local machine=${2:?}
+  local image=${1:?Missing image parameter of ${FUNCNAME[0]}}
+  local machine=${2:?Missing machine parameter of ${FUNCNAME[0]}}
 
   local licdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc/deploy/licenses"
-  local manifest_dir_pattern="${image}-${machine}-*"
+  local license_manifest_dir_pattern="${image}-${machine}-*"
 
-  local manifest_dir
-  manifest_dir=$(find "$licdir" -maxdepth 1 -type d -name "$manifest_dir_pattern")
+  local license_manifest_dir
+  license_manifest_dir=$(find "$licdir" -maxdepth 1 -type d -name "$license_manifest_dir_pattern")
   local count
-  count=$(printf "%s" "$manifest_dir" | wc -w)
+  count=$(printf "%s" "$license_manifest_dir" | wc -w)
   if [ "$count" -ne 1 ]; then
     printf "error: found unexpected number of files matching \"%s\" in %s (%d)" \
-      "$manifest_dir_pattern" \
+      "$license_manifest_dir_pattern" \
       "$licdir" \
       "$count" \
       1>&2
     return 1
   fi
 
-  printf "%s" "${manifest_dir}"
+  printf "%s" "${license_manifest_dir}"
 }
 
 artifact_image_manifests()
 {
-  local image=${1:?}
-  local machine=${2:?}
+  local image=${1:?Missing image parameter of ${FUNCNAME[0]}}
+  local machine=${2:?Missing machine parameter of ${FUNCNAME[0]}}
 
   local artifact_image_dir="${outputdir}/machine/${machine}/images/${image}"
 
-  local manifest_dir
-  manifest_dir=$(find_license_manifest_dir "$image" "$machine")
-  cp "${manifest_dir}/license.manifest" "${artifact_image_dir}/license.manifest"
-  cp "${manifest_dir}/image_license.manifest" "${artifact_image_dir}/image_license.manifest"
+  local license_manifest_dir
+  license_manifest_dir=$(find_license_manifest_dir "$image" "$machine")
+  cp "${license_manifest_dir}/license.manifest" "${artifact_image_dir}/license.manifest"
+  cp "${license_manifest_dir}/image_license.manifest" "${artifact_image_dir}/image_license.manifest"
 
   # Don't exit (due to "set -e") if we can't find initramfs image license
   # manifests - we may not have an initramfs image on some platforms
-  local initramfs_manifest_dir
-  if initramfs_manifest_dir=$(find_license_manifest_dir mbl-image-initramfs "$machine"); then
-    cp "${initramfs_manifest_dir}/license.manifest" "${artifact_image_dir}/initramfs-license.manifest"
-    cp "${initramfs_manifest_dir}/image_license.manifest" "${artifact_image_dir}/initramfs-image_license.manifest"
+  local initramfs_license_manifest_dir
+  if initramfs_license_manifest_dir=$(find_license_manifest_dir mbl-image-initramfs "$machine"); then
+    cp "${initramfs_license_manifest_dir}/license.manifest" "${artifact_image_dir}/initramfs-license.manifest"
+    cp "${initramfs_license_manifest_dir}/image_license.manifest" "${artifact_image_dir}/initramfs-image_license.manifest"
   fi
 }
 
