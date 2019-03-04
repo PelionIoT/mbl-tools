@@ -18,7 +18,7 @@ visibility: public
 
 protocols:
   lava-lxc:
-    name: slave-lxc-test
+    name: hello-world-lxc
     template: ubuntu
     distribution: ubuntu
     release: xenial
@@ -43,10 +43,10 @@ actions:
     commands: ums
     failure_retry: 5
     auto_login:
-      login_prompt: '(.*) login:'
+    login_prompt: 'mbed-linux-os-(.*) login:'
       username: 'root'
     prompts:
-      - 'root@(.*):~#'
+      - 'root@mbed-linux-os(.*):~#'
     timeout:
       minutes: 50
 
@@ -59,7 +59,7 @@ actions:
     packages:
     - avahi-utils
     prompts:
-      - 'root@(.*):/#'
+      - 'root@hello-world-lxc-(.*):/#'
 
 - boot:
     namespace: lxc
@@ -68,7 +68,7 @@ actions:
       minutes: 20
     failure-retry: 3
     prompts:
-      - 'root@slave-lxc-test-(.*):/#'
+      - 'root@hello-world-lxc-(.*):/#'
 
 
 - test:
@@ -84,7 +84,7 @@ actions:
       history: False
       branch: master
 
-    - path: ci/lava/tests/mbl-helloworld-build.yaml
+    - path: ci/lava/tests/lxc-buld-helloworld.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       name: build_hello_world
       from: git
@@ -98,7 +98,7 @@ actions:
       history: False
       branch: master
 
-    - path: ci/lava/tests/mbl-helloworld-run.yaml
+    - path: ci/lava/tests/mbl-cli-run-helloworld.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       name: run_hello_world
       from: git
