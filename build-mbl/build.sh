@@ -91,10 +91,8 @@ repo_init_atomic ()
 
 all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl"
 
-default_branch="master"
 default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
-default_machines="raspberrypi3-mbl"
 default_distro="mbl"
 default_images="mbl-image-production mbl-image-development"
 
@@ -142,6 +140,31 @@ maybe_compress()
         write_info "compress artifact %s\n" "$(basename "$path")"
         gzip "$path"
     fi
+}
+
+bitbake_env_setup() {
+  machine=$1
+  cd "$builddir/machine-$machine/mbl-manifest"
+  set +u
+  set +e
+  # shellcheck disable=SC1091
+  MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
+  set -u
+  set -e
+
+  # This needs to be done after the setup otherwise bitbake does not have
+  # visibility of these variables
+  if [ -n "${flag_jobs:-}" ]; then
+    export PARALLEL_MAKE="-j $flag_jobs"
+    export BB_NUMBER_THREADS="$flag_jobs"
+    export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
+  fi
+
+  if [ -n "${downloaddir:-}" ]; then
+    downloaddir=$(readlink -f "$downloaddir")
+    export DL_DIR="$downloaddir"
+    export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
+  fi
 }
 
 define_conf()
@@ -295,13 +318,19 @@ usage()
 
 usage: build.sh [OPTION] [STAGE]..
 
+MANDATORY parameters:
+  --branch BRANCH       Name the mbl-manifest branch to checkout.
+  --machine MACHINE     Yocto MACHINE to build. Repeat --machine option to build more
+                        than one machine.
+                        Supported machines: $all_machines.
+  --builddir DIR        Use DIR for build.
+
+OPTIONAL parameters:
   --archive-source      Enable source package archiving.
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
-  --branch BRANCH       Name the branch to checkout. Default ${default_branch}.
   --[no-]compress       Enable image artifact compression, default enabled.
-  --builddir DIR        Use DIR for build, default CWD.
   --build-tag TAG       Specify a unique version tag to identify the build.
-  --downloaddir DIR     Use DIR to store downloaded packages. Default \$builddir/download
+  --downloaddir DIR     Use DIR to store downloaded packages.
   --external-manifest PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
@@ -311,7 +340,6 @@ usage: build.sh [OPTION] [STAGE]..
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys.
   --licenses            Collect extra build license info. Default disabled.
-  --machine MACHINE     Add a machine to build.  Default ${default_machines}.
   --manifest MANIFEST   Name the manifest file. Default ${default_manifest}.
   -o, --outputdir PATH  Directory to output build artifacts.
   --url URL             Name the URL to clone. Default ${default_url}.
@@ -328,7 +356,6 @@ Useful STAGE names:
 EOF
 }
 
-branch="$default_branch"
 url="$default_url"
 distro="$default_distro"
 flag_compress=1
@@ -432,8 +459,13 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -n "${external_manifest:-}" ] && [ -n "${manifest:-}" ]; then
-    printf "error: --external-manifest and --manifest are mutually exclusive.\n" >&2
-    exit 3
+  printf "error: --external-manifest and --manifest are mutually exclusive.\n" >&2
+  exit 3
+fi
+
+if [ -z "${branch:-}" ]; then
+  printf "error: missing --branch BRANCH parameter\n" >&2
+  exit 3
 fi
 
 if [ -z "${manifest:-}" ]; then
@@ -444,11 +476,15 @@ if [ $# -gt 0 ]; then
   stages=("$@")
 fi
 
-if [ -z "${builddir:-}" ]; then
-  builddir="$(pwd)"
-else
-  mkdir -p "$builddir"
+if [ -n "${builddir:-}" ]; then
   builddir="$(readlink -f "$builddir")"
+  if [ ! -d "$builddir" ]; then
+    printf "error: --builddir '%s' directory doesn't exist.\n" "$builddir" >&2
+    exit 3
+  fi
+else
+  printf "error: missing --builddir PATH parameter.\n" >&2
+  exit 3
 fi
 
 if [ -z "${images:-}" ]; then
@@ -456,12 +492,13 @@ if [ -z "${images:-}" ]; then
 fi
 
 if [ -z "${machines:-}" ]; then
-  machines="$default_machines"
+  printf "error: missing --machine MACHINE parameter. Supported machines: '%s'.\n" "$all_machines" >&2
+  exit 3
 fi
 
 for machine in $machines; do
   if ! valid_machine_p "$machine"; then
-    printf "error: unrecognized machine '%s'\n" "$machine" >&2
+    printf "error: unrecognized machine '%s'. Supported machines: '%s'.\n" "$machine" "$all_machines" >&2
     exit 3
   fi
 done
@@ -600,33 +637,13 @@ while true; do
 
   build)
     for machine in $machines; do
-      (cd "$builddir/machine-$machine/mbl-manifest"
-       set +u
-       set +e
-       # shellcheck disable=SC1091
-       MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
-       set -u
-       set -e
-
+       (
+       bitbake_env_setup "$machine"
        if [ -n "${build_tag:-}" ]; then
          define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/conf/distro/mbl.conf" \
                      "DISTRO_VERSION" "$build_tag"
        fi
        setup_archiver "$builddir/machine-$machine/mbl-manifest/conf/local.conf" "$flag_archiver"
-
-       # This needs to be done after the setup otherwise bitbake does not have
-       # visibility of these variables
-       if [ -n "${flag_jobs:-}" ]; then
-         export PARALLEL_MAKE="-j $flag_jobs"
-         export BB_NUMBER_THREADS="$flag_jobs"
-         export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE PARALLEL_MAKE BB_NUMBER_THREADS"
-       fi
-
-       if [ -n "${downloaddir:-}" ]; then
-         downloaddir=$(readlink -f "$downloaddir")
-         export DL_DIR="$downloaddir"
-         export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE DL_DIR"
-       fi
 
        # If outputdir is specified, the output of bitbake -e is saved in the
        # machine artifact directory. This command will output the configuration
@@ -744,6 +761,32 @@ while true; do
 
         maybe_compress "$machinedir/licenses.tar"
       done
+    fi
+    ;;
+
+  interactive)
+    # We only support on machine in the interactive mode.
+    numof_machines=$(wc -w <<< "${machines}")
+    if [ "$numof_machines" -gt 1 ]; then
+      printf "error: interactive mode only supports on machine at a time.\n" >&2
+      exit 3
+    fi
+
+    # Remove any spaces from the machines string
+    machine="${machines//[[:blank:]]/}"
+
+    # We need to check if the user did run a complete build before
+    path_to_check="$builddir/machine-$machine/mbl-manifest/build-mbl"
+    if [ ! -d "${path_to_check}" ]; then
+      printf "error: '%s' path missing.\n" "$path_to_check" >&2
+      printf "Please run a complete build for '%s' machine before using the interactive mode.\n" "$machine" >&2
+      printf "Would you like to run the complete build now? (Y/N): "
+      read -r complete_build
+      shopt -s nocasematch
+      [[ "$complete_build" == "Y" ]] && push_stages start
+    else
+      bitbake_env_setup "$machine"
+      exec bash
     fi
     ;;
 
