@@ -1,47 +1,14 @@
-# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
-#
-# SPDX-License-Identifier: BSD-3-Clause
+{% extends "imx7s_warp_mbl_base.yaml" %}
 
-device_type: imx7s-warp-mbl
+{% set job_name = "MBL Core Tests" %}
+{% set lxc_creation = false %}
 
-job_name: MBL {{build_tag}}
-timeouts:
-  job:
-    minutes: 100
-  action:
-    minutes: 50
-  connection:
-    minutes: 20
-priority: medium
-visibility: public
-
-actions:
-- deploy:
-    timeout:
-      minutes: 50
-    to: u-boot-ums
-    os: oe
-    image:
-      url: {{ image_url }}
-      compression: gz
-      root_partition: 2
-
-- boot:
-    method: u-boot
-    commands: ums
-    failure_retry: 5
-    auto_login:
-      login_prompt: '(.*) login:'
-      username: 'root'
-    prompts:
-      - 'root@(.*):~#'
-    timeout:
-      minutes: 50
+{% block test %}
 - test:
     timeout:
       minutes: 50
+    namespace: target
     definitions:
-
     - path: lava/tests/mbl-test-dependency.yaml
       repository: https://github.com/ARMmbed/mbl-scratch.git
       name: test-dependencies
@@ -159,24 +126,4 @@ actions:
       branch: master
       parameters:
           COMPONENT: "secure-services"
-
-metadata:
-    build url: "{{ build_url }}"
-
-{% if notify_user or notify_emails -%}
-notify:
-    recipients:
-    {% if notify_user -%}
-    - to:
-       method: email
-       user: {{ notify_user }}
-    {% endif -%}
-    {%- for email in notify_emails -%}
-    - to:
-       method: email
-       email: {{ email }}
-    {% endfor -%}
-    criteria:
-      status: finished
-    verbosity: verbose
-{% endif %}
+{% endblock %}
