@@ -217,5 +217,5 @@ docker run --rm -i $flag_tty \
          ${downloaddir:+--downloaddir "$downloaddir"} \
          ${outputdir:+--outputdir "$outputdir"} \
          --parent-command-line "$command_line" \
-         --mbl-tools-version "$mbl_tools_version" \
+         ${mbl_tools_version:+--mbl-tools-version "$mbl_tools_version"} \
          "$@"
