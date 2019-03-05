@@ -4,7 +4,7 @@
 
 device_type: imx7s-warp-mbl
 
-job_name: {{ job_name }} - {{ build_tag }}
+job_name: {{ build_tag }} - {{ job_name }}
 
 metadata:
     build url: "{{ build_url }}"
@@ -77,7 +77,10 @@ actions:
       - "root@{{ lxc_name }}-(.*):/#"
 {% endif %}
 
-{% block test %}{% endblock test %}
+{% block test %}
+{# This block should contain LAVA test definitions. Those are defined in the
+   templates that are extending this file. #}
+{% endblock test %}
 
 {% if notify_user or notify_emails -%}
 notify:

@@ -1,6 +1,6 @@
 {% extends "bcm2837_rpi_3_b_plus_32_base.yaml" %}
 
-{% set job_name = "MBL Hello World" %}
+{% set job_name = "Hello World" %}
 {% set lxc_creation = true %}
 {% set lxc_name = "hello-world-lxc" %}
 

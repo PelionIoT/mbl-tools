@@ -1,6 +1,6 @@
 {% extends "bcm2837_rpi_3_b_32_base.yaml" %}
 
-{% set job_name = "MBL Core Tests" %}
+{% set job_name = "Core/Linaro Tests" %}
 {% set lxc_creation = false %}
 
 {% block test %}
