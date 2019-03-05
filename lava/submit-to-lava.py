@@ -73,9 +73,11 @@ class LAVATemplates(object):
                 template_loader = jinja2.FileSystemLoader(
                     searchpath=template_full_path
                 )
-                template_env = jinja2.Environment(loader=template_loader,
-                                                  trim_blocks=True,
-                                                  lstrip_blocks=True)
+                template_env = jinja2.Environment(
+                    loader=template_loader,
+                    trim_blocks=True,
+                    lstrip_blocks=True,
+                )
                 template = template_env.get_template(template_name)
         except jinja2.exceptions.TemplateNotFound as e:
             raise Exception(
