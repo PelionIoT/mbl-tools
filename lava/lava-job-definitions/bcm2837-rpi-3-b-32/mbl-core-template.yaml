@@ -1,4 +1,4 @@
-{% extends "imx7s_warp_mbl_base.yaml" %}
+{% extends "bcm2837_rpi_3_b_32_base.yaml" %}
 
 {% set job_name = "Core/Linaro Tests" %}
 {% set lxc_creation = false %}
@@ -34,12 +34,14 @@
       from: git
       branch: linaro-mbl
 
-    - path: automated/linux/optee/optee-xtest.yaml
-      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
-      history: false
-      name: optee-xtest
-      from: git
-      branch: linaro-mbl
+      # This test is disabled because it is crashing the DUT:
+      # See IOTMBL-1765 and IOTMBL-1766
+      #    - path: automated/linux/optee/optee-xtest.yaml
+      #      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      #      history: false
+      #      name: optee-xtest
+      #      from: git
+      #      branch: linaro-mbl
 
     - path: automated/linux/mbl/mbl_auto.yaml
       repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
