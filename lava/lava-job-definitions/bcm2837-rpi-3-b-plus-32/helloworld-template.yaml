@@ -1,0 +1,40 @@
+{% extends "bcm2837_rpi_3_b_plus_32_base.yaml" %}
+
+{% set job_name = "MBL Hello World" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "hello-world-lxc" %}
+
+{% block test %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+    - path: ci/lava/dependencies/install_docker.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: install_docker
+      from: git
+      history: False
+      branch: master
+
+    - path: ci/lava/tests/lxc-build-helloworld.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: build_hello_world
+      from: git
+      history: False
+      branch: master
+
+    - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
+      repository: https://github.com/ARMmbed/mbl-cli-python.git
+      name: install_mbl_cli
+      from: git
+      history: False
+      branch: master
+
+    - path: ci/lava/tests/mbl-cli-run-helloworld.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: run_hello_world
+      from: git
+      history: False
+      branch: master
+{% endblock test %}

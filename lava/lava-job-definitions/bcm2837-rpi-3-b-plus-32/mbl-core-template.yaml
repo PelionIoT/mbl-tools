@@ -1,0 +1,131 @@
+{% extends "bcm2837_rpi_3_b_plus_32_base.yaml" %}
+
+{% set job_name = "MBL Core Tests" %}
+{% set lxc_creation = false %}
+
+{% block test %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: target
+    definitions:
+    - path: lava/tests/mbl-test-dependency.yaml
+      repository: https://github.com/ARMmbed/mbl-scratch.git
+      name: test-dependencies
+      from: git
+      history: False
+
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: mbl-test
+          description: "MBL basic test"
+        run:
+          steps:
+            - uname -a
+      name: mbl-test
+      path: inline/mbl-test.yaml
+
+    - path: automated/linux/v4l2/v4l2-compliance.yaml
+      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      history: false
+      name: v4l2-compliance
+      from: git
+      branch: linaro-mbl
+
+      # This test is disabled because it is crashing the DUT:
+      # See IOTMBL-1765 and IOTMBL-1766
+      #    - path: automated/linux/optee/optee-xtest.yaml
+      #      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      #      history: false
+      #      name: optee-xtest
+      #      from: git
+      #      branch: linaro-mbl
+
+    - path: automated/linux/mbl/mbl_auto.yaml
+      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      history: false
+      name: mbl_auto
+      from: git
+      branch: linaro-mbl
+
+    - path: automated/linux/badblocks/badblocks.yaml
+      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      history: false
+      name: badblocks
+      from: git
+      branch: linaro-mbl
+
+    - path: automated/linux/memtester/memtester.yaml
+      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      history: false
+      name: memtester
+      from: git
+      branch: linaro-mbl
+
+    - path: ci/lava/tests/mbl-component-tests.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: application-framework-tests
+      from: git
+      history: False
+      branch: master
+      parameters:
+          COMPONENT: "application-framework"
+
+    - path: ci/lava/tests/mbl-component-tests.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: cloud-services-tests
+      from: git
+      history: False
+      branch: master
+      parameters:
+          COMPONENT: "cloud-services"
+
+    - path: ci/lava/tests/mbl-component-tests.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: firmware-management-tests
+      from: git
+      history: False
+      branch: master
+      parameters:
+          COMPONENT: "firmware-management"
+          SETUP: "python3 firmware-management/mbl-app-manager/tests/native/test_case_generator_mbl-app-manager.py -o /home/app -v"
+          TEARDOWN: "/bin/rm -rf /home/app/*"
+
+    - path: ci/lava/tests/mbl-component-tests.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: management-agents-tests
+      from: git
+      history: False
+      branch: master
+      parameters:
+          COMPONENT: "management-agents"
+
+    - path: ci/lava/tests/mbl-component-tests.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: mbl-core-tests
+      from: git
+      history: False
+      branch: master
+      parameters:
+          COMPONENT: "mbl-core"
+
+    - path: ci/lava/tests/mbl-component-tests.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: platform-services-tests
+      from: git
+      history: False
+      branch: master
+      parameters:
+          COMPONENT: "platform-services"
+
+    - path: ci/lava/tests/mbl-component-tests.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: secure-services-tests
+      from: git
+      history: False
+      branch: master
+      parameters:
+          COMPONENT: "secure-services"
+{% endblock %}
