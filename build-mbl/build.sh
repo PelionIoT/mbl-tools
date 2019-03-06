@@ -646,7 +646,8 @@ if [ -z "${images:-}" ]; then
 fi
 
 if [[ ${images} == *"mbl-image-production"* ]]; then
-    echo "WARNING: mbl-image-production Not supported in this release"
+    printf "error: mbl-image-production not supported in this release.\n" >&2
+    exit 3
 fi
 
 if [ -z "${machines:-}" ]; then
