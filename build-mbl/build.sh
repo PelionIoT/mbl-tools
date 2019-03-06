@@ -94,7 +94,7 @@ all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl"
 default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
 default_distro="mbl"
-default_images="mbl-image-production mbl-image-development"
+default_images="mbl-image-development"
 
 # Set of license package name (PN) exceptions
 # This hash array uses a key (PN) created from reading the recipeinfo
@@ -643,6 +643,10 @@ fi
 
 if [ -z "${images:-}" ]; then
   images="$default_images"
+fi
+
+if [[ ${images} == *"mbl-image-production"* ]]; then
+    echo "WARNING: mbl-image-production Not supported in this release"
 fi
 
 if [ -z "${machines:-}" ]; then
