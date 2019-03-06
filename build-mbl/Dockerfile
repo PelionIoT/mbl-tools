@@ -56,4 +56,4 @@ RUN mkdir -p /dev/net \
     && chmod 600 /dev/net/tun
 
 # Scripts used to build mbed-linux image
-COPY git-setup.sh ssh-setup.sh build.sh ./
+COPY git-setup.sh ssh-setup.sh build.sh README.binary_release_template ./
