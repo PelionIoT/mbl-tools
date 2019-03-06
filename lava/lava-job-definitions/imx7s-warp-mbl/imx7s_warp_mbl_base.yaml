@@ -1,0 +1,101 @@
+# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+device_type: imx7s-warp-mbl
+
+job_name: {{ build_tag }} - {{ job_name }}
+
+metadata:
+    build url: "{{ build_url }}"
+
+priority: medium
+visibility: public
+
+timeouts:
+  job:
+    minutes: 100
+  action:
+    minutes: 50
+  connection:
+    minutes: 20
+
+{% if lxc_creation %}
+protocols:
+  lava-lxc:
+    name: {{ lxc_name }}
+    template: ubuntu
+    distribution: ubuntu
+    release: xenial
+    verbose: true
+{% endif %}
+
+actions:
+- deploy:
+    namespace: target
+    timeout:
+      minutes: 50
+    to: u-boot-ums
+    os: oe
+    image:
+      url: {{ image_url }}
+      compression: gz
+      root_partition: 2
+
+- boot:
+    namespace: target
+    method: u-boot
+    commands: ums
+    failure_retry: 5
+    auto_login:
+      login_prompt: "mbed-linux-os-(.*) login:"
+      username: "root"
+    prompts:
+      - "root@mbed-linux-os(.*):~#"
+    timeout:
+      minutes: 50
+
+{% if lxc_creation %}
+- deploy:
+    namespace: lxc
+    timeout:
+      minutes: 5
+    to: lxc
+    os: ubuntu
+    packages:
+    - avahi-utils
+    prompts:
+      - "root@{{ lxc_name }}-(.*):/#"
+
+- boot:
+    namespace: lxc
+    method: lxc
+    timeout:
+      minutes: 20
+    failure-retry: 3
+    prompts:
+      - "root@{{ lxc_name }}-(.*):/#"
+{% endif %}
+
+{% block test %}
+{# This block should contain LAVA test definitions. Those are defined in the
+   templates that are extending this file. #}
+{% endblock test %}
+
+{% if notify_user or notify_emails -%}
+notify:
+    recipients:
+    {% if notify_user %}
+    - to:
+       method: email
+       user: {{ notify_user }}
+    {% endif %}
+    {% for email in notify_emails %}
+    - to:
+       method: email
+       email: {{ email }}
+    {% endfor %}
+    criteria:
+      status: finished
+    verbosity: verbose
+{% endif %}

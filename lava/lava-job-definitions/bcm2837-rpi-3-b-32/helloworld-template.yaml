@@ -1,4 +1,4 @@
-{% extends "imx7s_warp_mbl_base.yaml" %}
+{% extends "bcm2837_rpi_3_b_32_base.yaml" %}
 
 {% set job_name = "Hello World" %}
 {% set lxc_creation = true %}
