@@ -72,7 +72,7 @@
       name: ifconfig_part2
       path: inline/ifconfig_2.yaml
 
-    - path: ci/lava/tests/mbl-rootfs-run.yaml
+    - path: ci/lava/tests/mbl-cli-run-rootfs-test.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       name: run_rootfs_test_post_check
       from: git
