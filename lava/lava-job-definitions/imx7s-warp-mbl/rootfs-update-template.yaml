@@ -34,12 +34,13 @@
 
     - path: ci/lava/tests/mbl-rootfs-run.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: run_rootfs_test_part1
+      name: run_rootfs_test_update
       from: git
       history: False
       branch: pd-iotmbl-1536-rootfs-test
       parameters:
-         test_stage: PART_1
+         test_stage: UPDATE
+         image_url: {{ image_url }}
 
 - boot:
     namespace: target
@@ -73,12 +74,13 @@
 
     - path: ci/lava/tests/mbl-rootfs-run.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: run_rootfs_test_part2
+      name: run_rootfs_test_post_check
       from: git
       history: False
       branch: pd-iotmbl-1536-rootfs-test
       parameters:
-         test_stage: PART_2
+         test_stage: POST_CHECK
+         image_url: {{ image_url }}
 
 {% endblock test %}
 
