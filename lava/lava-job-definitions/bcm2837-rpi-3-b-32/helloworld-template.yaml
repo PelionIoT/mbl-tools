@@ -15,26 +15,26 @@
       name: install_docker
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
 
     - path: ci/lava/tests/lxc-build-helloworld.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       name: build_hello_world
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
 
     - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
       repository: https://github.com/ARMmbed/mbl-cli.git
       name: install_mbl_cli
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
 
     - path: ci/lava/tests/mbl-cli-run-helloworld.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       name: run_hello_world
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
 {% endblock test %}
