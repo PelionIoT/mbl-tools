@@ -67,7 +67,7 @@
       name: application-framework-tests
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
       parameters:
           COMPONENT: "application-framework"
 
@@ -76,7 +76,7 @@
       name: cloud-services-tests
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
       parameters:
           COMPONENT: "cloud-services"
 
@@ -85,7 +85,7 @@
       name: firmware-management-tests
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
       parameters:
           COMPONENT: "firmware-management"
           SETUP: "python3 firmware-management/mbl-app-manager/tests/native/test_case_generator_mbl-app-manager.py -o /home/app -v"
@@ -96,7 +96,7 @@
       name: management-agents-tests
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
       parameters:
           COMPONENT: "management-agents"
 
@@ -105,7 +105,7 @@
       name: mbl-core-tests
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
       parameters:
           COMPONENT: "mbl-core"
 
@@ -114,7 +114,7 @@
       name: platform-services-tests
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
       parameters:
           COMPONENT: "platform-services"
 
@@ -123,7 +123,7 @@
       name: secure-services-tests
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
       parameters:
           COMPONENT: "secure-services"
 {% endblock %}

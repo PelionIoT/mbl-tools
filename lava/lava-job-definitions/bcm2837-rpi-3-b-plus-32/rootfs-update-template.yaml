@@ -30,14 +30,14 @@
       name: install_mbl_cli
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
 
     - path: ci/lava/tests/mbl-cli-run-rootfs-test.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       name: run_rootfs_test_update
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
       parameters:
          test_stage: UPDATE
          image_url: {{ image_url }}
@@ -77,7 +77,7 @@
       name: run_rootfs_test_post_check
       from: git
       history: False
-      branch: master
+      branch: {{ mbl_branch }}
       parameters:
          test_stage: POST_CHECK
          image_url: {{ image_url }}
