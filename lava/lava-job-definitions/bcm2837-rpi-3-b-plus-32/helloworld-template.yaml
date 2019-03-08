@@ -25,7 +25,7 @@
       branch: master
 
     - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
-      repository: https://github.com/ARMmbed/mbl-cli-python.git
+      repository: https://github.com/ARMmbed/mbl-cli.git
       name: install_mbl_cli
       from: git
       history: False
