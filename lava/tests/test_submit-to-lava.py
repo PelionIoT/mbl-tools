@@ -93,8 +93,9 @@ class TestLAVATemplates(object):
             "img_url",
             "build_tag",
             "build_url",
+            "mbl_branch",
             "notify_user",
-            ["notify_email"],
+            ["notify_emails"],
         )
 
         # Check the results
@@ -102,9 +103,10 @@ class TestLAVATemplates(object):
         template_mock.render.assert_called_with(
             build_tag="build_tag",
             build_url="build_url",
+            mbl_branch="mbl_branch",
             image_url="img_url",
             notify_user="notify_user",
-            notify_emails=["notify_email"],
+            notify_emails=["notify_emails"],
         )
         lt._dump_job.assert_called_with(
             "some yaml string", "lava_template_name"
@@ -171,7 +173,11 @@ class TestLAVATemplates(object):
         )
         mock_jinja2_env.assert_has_calls(
             [
-                call(loader=mock_template_loader),
+                call(
+                    loader=mock_template_loader,
+                    lstrip_blocks=True,
+                    trim_blocks=True,
+                ),
                 call().get_template("template name"),
             ]
         )
@@ -354,7 +360,7 @@ class TestParseArguments(object):
         assert args.build_tag is None
         assert args.build_url is None
         assert args.template_path == "lava-job-definitions"
-        assert args.template_names == ["template.yaml"]
+        assert args.template_names == ["mbl-core-template.yaml"]
         assert args.notify_user is False
         assert args.notify_emails == []
         assert args.debug is False
@@ -423,7 +429,12 @@ def test__main(monkeypatch):
 
     # Check the results
     mock_process.assert_called_once_with(
-        "http://image.url/image.wic.gz", "lava_username build", "-", False, []
+        "http://image.url/image.wic.gz",
+        "lava_username build",
+        "-",
+        "master",
+        False,
+        [],
     )
     mock_connect.assert_called_once_with()
     mock_submit_job.assert_has_calls(
