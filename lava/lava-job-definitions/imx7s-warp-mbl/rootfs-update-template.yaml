@@ -6,10 +6,7 @@
 
 {% block test %}
 - test:
-    timeout:
-        minutes: 50
     namespace: lxc
-
     definitions:
 
     - from: inline
@@ -51,12 +48,12 @@
     prompts:
         - 'root@lava-mbed-linux-os-(.*):~#'
     timeout:
-        minutes: 20
+        minutes: 5
     failure-retry: 3
 
 - test:
    timeout:
-      minutes: 50
+      minutes: 5
    namespace: lxc
    definitions:
     - from: inline

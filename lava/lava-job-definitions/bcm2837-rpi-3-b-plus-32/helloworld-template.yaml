@@ -6,8 +6,6 @@
 
 {% block test %}
 - test:
-    timeout:
-      minutes: 50
     namespace: lxc
     definitions:
     - path: ci/lava/dependencies/install_docker.yaml
