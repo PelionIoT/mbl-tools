@@ -978,7 +978,7 @@ while true; do
       [[ "$complete_build" == "Y" ]] && push_stages start
     else
       bitbake_env_setup "$machine"
-      exec bash
+      exec env TERM=screen bash
     fi
     ;;
 
