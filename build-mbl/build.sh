@@ -335,14 +335,17 @@ create_binary_release()
 
   create_binary_release_readme "$image" "$machine"
 
+  declare -a lic_manifest_files
+  lic_manifest_files+=(license.manifest)
+  lic_manifest_files+=(image_license.manifest)
+
   # Initramfs manifest files are optional - we don't have an initramfs on some
   # platforms
-  declare -a initramfs_manifest_files
   if [ -e "${artifact_image_dir}/initramfs-license.manifest" ]; then
-    initramfs_manifest_files+=(initramfs-license.manifest)
+    lic_manifest_files+=(initramfs-license.manifest)
   fi
   if [ -e "${artifact_image_dir}/initramfs-image_license.manifest" ]; then
-    initramfs_manifest_files+=(initramfs-image_license.manifest)
+    lic_manifest_files+=(initramfs-image_license.manifest)
   fi
 
   # If you add files to the binary release archive, please update
@@ -353,9 +356,7 @@ create_binary_release()
       "${image}-${machine}.wic.bmap" \
     -C "${artifact_image_dir}" \
       source \
-      license.manifest \
-      image_license.manifest \
-      "${initramfs_manifest_files[@]}" \
+      "${lic_manifest_files[@]}" \
       README \
     -C "${artifact_machine_dir}" \
       "licenses.tar$(compress_extension)" \
