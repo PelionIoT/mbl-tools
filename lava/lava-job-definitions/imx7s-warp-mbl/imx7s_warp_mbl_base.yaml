@@ -15,11 +15,11 @@ visibility: public
 
 timeouts:
   job:
-    minutes: 100
+    minutes: 30
   action:
-    minutes: 50
+    minutes: 15
   connection:
-    minutes: 20
+    minutes: 15
 
 {% if lxc_creation %}
 protocols:
@@ -34,8 +34,6 @@ protocols:
 actions:
 - deploy:
     namespace: target
-    timeout:
-      minutes: 50
     to: u-boot-ums
     os: oe
     image:
@@ -47,14 +45,14 @@ actions:
     namespace: target
     method: u-boot
     commands: ums
-    failure_retry: 5
+    failure_retry: 3
     auto_login:
       login_prompt: "mbed-linux-os-(.*) login:"
       username: "root"
     prompts:
       - "root@mbed-linux-os(.*):~#"
     timeout:
-      minutes: 50
+      minutes: 5
 
 {% if lxc_creation %}
 - deploy:
@@ -72,7 +70,7 @@ actions:
     namespace: lxc
     method: lxc
     timeout:
-      minutes: 20
+      minutes: 5
     failure-retry: 3
     prompts:
       - "root@{{ lxc_name }}-(.*):/#"
