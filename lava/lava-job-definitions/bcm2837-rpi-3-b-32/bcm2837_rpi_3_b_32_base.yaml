@@ -15,11 +15,11 @@ visibility: public
 
 timeouts:
   job:
-    minutes: 100
+    minutes: 30
   action:
-    minutes: 50
+    minutes: 15
   connection:
-    minutes: 20
+    minutes: 15
 
 {% if lxc_creation %}
 protocols:
@@ -62,7 +62,7 @@ actions:
     namespace: target
     method: u-boot
     commands: nfs
-    failure_retry: 5
+    failure_retry: 3
     auto_login:
       login_prompt: 'login:'
       username: root
@@ -101,7 +101,7 @@ actions:
 - boot:
     namespace: target
     connection-namespace: target
-    failure_retry: 5
+    failure_retry: 3
     method: minimal
     # We use transfer_overlay to download and uncompress test tarball
     # This is required since LAVA can not apply test overlay to the SDCARD/rootfs image.
@@ -132,7 +132,7 @@ actions:
     namespace: lxc
     method: lxc
     timeout:
-      minutes: 20
+      minutes: 5
     failure-retry: 3
     prompts:
       - "root@{{ lxc_name }}-(.*):/#"
