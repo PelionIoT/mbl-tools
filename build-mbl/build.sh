@@ -337,12 +337,12 @@ create_binary_release()
 
   # Initramfs manifest files are optional - we don't have an initramfs on some
   # platforms
-  local initramfs_manifest_files=""
+  declare -a initramfs_manifest_files
   if [ -e "${artifact_image_dir}/initramfs-license.manifest" ]; then
-    initramfs_manifest_files="${initramfs_manifest_files} initramfs-license.manifest"
+    initramfs_manifest_files+=(initramfs-license.manifest)
   fi
   if [ -e "${artifact_image_dir}/initramfs-image_license.manifest" ]; then
-    initramfs_manifest_files="${initramfs_manifest_files} initramfs-image_license.manifest"
+    initramfs_manifest_files+=(initramfs-image_license.manifest)
   fi
 
   # If you add files to the binary release archive, please update
@@ -355,7 +355,7 @@ create_binary_release()
       source \
       license.manifest \
       image_license.manifest \
-      ${initramfs_manifest_files} \
+      "${initramfs_manifest_files[@]}" \
       README \
     -C "${artifact_machine_dir}" \
       "licenses.tar$(compress_extension)" \
