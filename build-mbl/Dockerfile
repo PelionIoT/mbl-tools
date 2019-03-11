@@ -32,6 +32,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     socat \
     texinfo \
+    tmux \
     unzip \
     wget \
     xterm \
