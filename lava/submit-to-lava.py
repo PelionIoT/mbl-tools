@@ -20,6 +20,7 @@ import jinja2
 
 default_template_base_path = "lava-job-definitions"
 default_template_name = "mbl-core-template.yaml"
+default_mbl_branch = "master"
 
 
 class LAVATemplates(object):
@@ -35,7 +36,13 @@ class LAVATemplates(object):
         self.dry_run = dry_run
 
     def process(
-        self, image_url, build_tag, build_url, notify_user, notify_emails
+        self,
+        image_url,
+        build_tag,
+        build_url,
+        mbl_branch,
+        notify_user,
+        notify_emails,
     ):
         """Process templates rendering them with the right values."""
         lava_jobs = []
@@ -45,6 +52,7 @@ class LAVATemplates(object):
                 image_url=image_url,
                 build_tag=build_tag,
                 build_url=build_url,
+                mbl_branch=mbl_branch,
                 notify_user=notify_user,
                 notify_emails=notify_emails,
             )
@@ -200,6 +208,12 @@ def _parse_arguments(cli_args):
     parser.add_argument("--build-tag", help="Build tag", dest="build_tag")
     parser.add_argument("--build-url", help="Build url", dest="build_url")
     parser.add_argument(
+        "--mbl-branch",
+        help="Branch of MBL repositories",
+        dest="mbl_branch",
+        default=default_mbl_branch,
+    )
+    parser.add_argument(
         "--template-path",
         help="Path to LAVA job templates",
         dest="template_path",
@@ -298,6 +312,7 @@ def _main(args):
             args.image_url,
             args.build_tag,
             args.build_url,
+            args.mbl_branch,
             args.notify_user,
             args.notify_emails,
         )
