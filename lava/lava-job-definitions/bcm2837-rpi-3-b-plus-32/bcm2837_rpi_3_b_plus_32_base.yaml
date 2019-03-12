@@ -120,7 +120,7 @@ actions:
 - deploy:
     namespace: lxc
     timeout:
-      minutes: 5
+      minutes: 10
     to: lxc
     os: ubuntu
     packages:

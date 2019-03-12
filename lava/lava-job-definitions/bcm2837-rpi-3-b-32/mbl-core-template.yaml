@@ -5,6 +5,8 @@
 
 {% block test %}
 - test:
+    timeout:
+      minutes: 20
     namespace: target
     definitions:
     - path: lava/tests/mbl-test-dependency.yaml
@@ -25,12 +27,13 @@
       name: mbl-test
       path: inline/mbl-test.yaml
 
-    - path: automated/linux/v4l2/v4l2-compliance.yaml
-      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
-      history: false
-      name: v4l2-compliance
-      from: git
-      branch: linaro-mbl
+      # It doesn't make any sense to run this test on RPi3 as there is no video device
+      #    - path: automated/linux/v4l2/v4l2-compliance.yaml
+      #      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
+      #      history: false
+      #      name: v4l2-compliance
+      #      from: git
+      #      branch: linaro-mbl
 
       # This test is disabled because it is crashing the DUT:
       # See IOTMBL-1765 and IOTMBL-1766
