@@ -5,6 +5,8 @@
 
 {% block test %}
 - test:
+    timeout:
+      minutes: 20
     namespace: target
     definitions:
     - path: lava/tests/mbl-test-dependency.yaml
