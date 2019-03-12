@@ -348,9 +348,11 @@ create_binary_release()
     lic_manifest_files+=(initramfs-image_license.manifest)
   fi
 
+  local release_archive_name="${build_tag:-mbl-os}-${machine}-release.tar"
+
   # If you add files to the binary release archive, please update
   # README.binary_release_template
-  tar -c -f "${artifact_image_dir}/binary_release.tar" \
+  tar -c -f "${artifact_image_dir}/${release_archive_name}" \
     -C "${artifact_image_dir}/images" \
       "${image}-${machine}.wic.gz" \
       "${image}-${machine}.wic.bmap" \
