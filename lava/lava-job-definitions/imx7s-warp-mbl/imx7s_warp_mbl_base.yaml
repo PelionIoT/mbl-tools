@@ -52,13 +52,13 @@ actions:
     prompts:
       - "root@mbed-linux-os(.*):~#"
     timeout:
-      minutes: 5
+      minutes: 10
 
 {% if lxc_creation %}
 - deploy:
     namespace: lxc
     timeout:
-      minutes: 5
+      minutes: 10
     to: lxc
     os: ubuntu
     packages:
