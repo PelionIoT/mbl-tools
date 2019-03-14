@@ -15,7 +15,7 @@ visibility: public
 
 timeouts:
   job:
-    minutes: 30
+    minutes: 50
   action:
     minutes: 15
   connection:
@@ -47,14 +47,14 @@ actions:
       minutes: 5
     to: tftp
     kernel:
-      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.37/zImage
+      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/zImage
       type: zimage
     nfsrootfs:
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/mbl/linaro-pyro-pinned/raspberrypi3/31/rpb/rpb-console-image-raspberrypi3-20171109202053-31.rootfs.tar.xz
       compression: xz
     os: oe
     dtb:
-      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.37/bcm2710-rpi-3-b.dtb
+      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/bcm2710-rpi-3-b.dtb
     preseed:
       url: {{ image_url }}
 # We firstly boot on the NFS
