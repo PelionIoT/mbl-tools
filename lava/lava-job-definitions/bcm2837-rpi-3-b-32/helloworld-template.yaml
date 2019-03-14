@@ -23,6 +23,8 @@
       from: git
       history: False
       branch: {{ mbl_branch }}
+      parameters:
+        arm_arch: armv7
 
     - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
       repository: https://github.com/ARMmbed/mbl-cli.git
