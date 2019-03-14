@@ -1,7 +1,7 @@
 This is an Mbed Linux OS binary release archive containing:
 
 * __REPLACE_ME_WITH_IMAGE__-__REPLACE_ME_WITH_MACHINE__.wic.gz: a full disk image for the
-  __REPLACE_ME_WITH_MACHINE__ target.
+  __REPLACE_ME_WITH_MACHINE__ target. See Licensing and Acknowledgement Notes below.
 
 * __REPLACE_ME_WITH_IMAGE__-__REPLACE_ME_WITH_MACHINE__.wic.bmap: a file that helps bmap-tool
   copy only the necessary parts of the image onto the device.
