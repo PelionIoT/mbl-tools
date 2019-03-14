@@ -15,7 +15,7 @@ visibility: public
 
 timeouts:
   job:
-    minutes: 30
+    minutes: 50
   action:
     minutes: 15
   connection:
