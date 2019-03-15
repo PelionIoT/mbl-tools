@@ -1,7 +1,7 @@
 This is an Mbed Linux OS binary release archive containing:
 
 * __REPLACE_ME_WITH_IMAGE__-__REPLACE_ME_WITH_MACHINE__.wic.gz: a full disk image for the
-  __REPLACE_ME_WITH_MACHINE__ target.
+  __REPLACE_ME_WITH_MACHINE__ target. See Licensing and Acknowledgement Notes below.
 
 * __REPLACE_ME_WITH_IMAGE__-__REPLACE_ME_WITH_MACHINE__.wic.bmap: a file that helps bmap-tool
   copy only the necessary parts of the image onto the device.
@@ -25,7 +25,7 @@ This is an Mbed Linux OS binary release archive containing:
   haven't been installed as packages in the initramfs.
 
 * licenses.tar__REPLACE_ME_WITH_COMPRESS_EXTENSION__: an archive containing license files for each piece of software
-  in the disk image.
+  in the disk image. See Licensing and Acknowledgement Notes below.
 
 * pinned-manifest.xml: a file containing the versions of repositories used to
   build the disk image.
@@ -35,3 +35,18 @@ This is an Mbed Linux OS binary release archive containing:
   mbl-tools.
 
 * README: this file.
+
+
+Licensing and Acknowledgement Notes
+
+* If no specific copyrights are stated in the supplied licenses for a piece
+  of software, you can find the copyrights in the respective source archives
+  for that software.
+
+* The supplied disk image includes OpenSSL and the following acknowledgements
+  are applicable:
+
+    This product includes software developed by the OpenSSL Project for use in
+    the OpenSSL Toolkit. (http://www.openssl.org/)
+    This product includes cryptographic software written by Eric Young 
+    (eay@cryptsoft.com)
