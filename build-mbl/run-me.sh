@@ -31,7 +31,6 @@ usage: run-me.sh [OPTION] -- [build.sh arguments]
 
 MANDATORY parameters:
   --builddir PATH       Specify the root of the build tree.
-  -o, --outputdir PATH  Specify a directory to store built artifacts.
 
 OPTIONAL parameters:
   --downloaddir PATH    Use PATH to store Yocto downloaded sources.
@@ -48,6 +47,9 @@ OPTIONAL parameters:
                         directory. By default, an attempt is made to obtain
                         this information automatically, but that is not always
                         possible.
+  -o, --outputdir PATH  Specify a directory to store non-interactively built 
+                        artifacts. Note: Will not be updated by builds in
+                        interactive mode.
   --tty                 Enable tty creation (default).
   --no-tty              Disable tty creation.
   -x                    Enable shell debugging in this script.
@@ -147,9 +149,6 @@ if [ -n "${outputdir:-}" ]; then
     printf "missing outputdir %s. Creating it.\n" "$outputdir"
     mkdir -p "$outputdir"
   fi
-else
-  printf "error: missing parameter --outputdir PATH\n" >&2
-  exit 3
 fi
 
 if [ -n "${downloaddir:-}" ]; then
