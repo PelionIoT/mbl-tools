@@ -95,6 +95,7 @@ default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
 default_distro="mbl"
 default_images="mbl-image-development"
+default_accept_eula_machines=""
 
 # Set of license package name (PN) exceptions
 # This hash array uses a key (PN) created from reading the recipeinfo
@@ -156,6 +157,7 @@ maybe_compress()
 
 bitbake_env_setup() {
   machine=$1
+  export_eula_env_vars "${machine}"
   cd "$builddir/machine-$machine/mbl-manifest"
   set +u
   set +e
@@ -450,6 +452,20 @@ artifact_build_info()
   mv "${buildinfo_tmppath}" "${buildinfo_path}"
 }
 
+# Function used to export the ACCEPT_EULA_machine-name environment
+# variable to be consumed by the setup-environment-internal from mbl-config
+export_eula_env_vars() {
+    local machine="$1"
+
+    # Iterate over the accept_eulas list and only export the ACCEPT_EULA_machine-name environment
+    # variable if the passed machine is in this list.
+    for accept_eula_machine in $accept_eulas; do
+        if [ "$machine" == "$accept_eula_machine" ]; then
+            export "ACCEPT_EULA_$(printf "%s" "${machine%-mbl}" | sed 's/-//g')=1"
+        fi
+    done
+}
+
 usage()
 {
   cat <<EOF
@@ -464,6 +480,9 @@ MANDATORY parameters:
   --builddir DIR        Use DIR for build.
 
 OPTIONAL parameters:
+  --accept-eula MACHINE Automatically accept any EULAs required for building MACHINE.
+                        Repeat the --accept-eula option to accept EULAs for
+                        more than one MACHINE.
   --archive-source      Enable source package archiving.
   --binary-release      Enable creation of a binary release archive. This
                         option implies --licenses and --archive-source.
@@ -516,7 +535,7 @@ flag_binary_release=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l archive-source,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -531,6 +550,10 @@ while [ $# -gt 0 ]; do
     continue
   fi
   case $1 in
+  --accept-eula)
+    opt_append=accept_eulas
+    ;;
+
   --archive-source)
     flag_archiver=original
     ;;
@@ -667,7 +690,11 @@ if [ -z "${machines:-}" ]; then
   exit 3
 fi
 
-for machine in $machines; do
+if [ -z "${accept_eulas:-}" ]; then
+  accept_eulas="$default_accept_eula_machines"
+fi
+
+for machine in $machines $accept_eulas; do
   if ! valid_machine_p "$machine"; then
     printf "error: unrecognized machine '%s'. Supported machines: '%s'.\n" "$machine" "$all_machines" >&2
     exit 3
@@ -793,6 +820,7 @@ while true; do
   setup)
     for machine in $machines; do
       (cd "$builddir/machine-$machine/mbl-manifest"
+       export_eula_env_vars "${machine}"
        set +u
        set +e
        # shellcheck disable=SC1091
