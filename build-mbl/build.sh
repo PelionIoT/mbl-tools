@@ -95,7 +95,6 @@ default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
 default_distro="mbl"
 default_images="mbl-image-development"
-interactive_mode_state="off"
 
 # Set of license package name (PN) exceptions
 # This hash array uses a key (PN) created from reading the recipeinfo
@@ -514,6 +513,7 @@ flag_compress=1
 flag_archiver=""
 flag_licenses=0
 flag_binary_release=0
+flag_interactive_mode=0
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
@@ -792,8 +792,8 @@ while true; do
       )
     done
 
-    if [ $interactive_mode_state = "on" ]; then
-      interactive_mode_state="off"
+    if [ "${flag_interactive_mode}" -eq 1 ]; then
+      flag_interactive_mode=0
       push_stages interactive
     else
       push_stages setup
@@ -982,7 +982,7 @@ while true; do
     # Check if the layers have been checked out before launching
     path_to_check="$builddir/machine-$machine/mbl-manifest/layers"
     if ! [ -d "${path_to_check}" ]; then
-      interactive_mode_state="on"
+      flag_interactive_mode=1
       push_stages start
     else
       bitbake_env_setup "$machine"
