@@ -95,7 +95,7 @@ default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
 default_distro="mbl"
 default_images="mbl-image-development"
-default_accept_eulas=""
+default_accept_eula_machines=""
 
 # Set of license package name (PN) exceptions
 # This hash array uses a key (PN) created from reading the recipeinfo
@@ -156,8 +156,8 @@ maybe_compress()
 }
 
 bitbake_env_setup() {
-  export_eula_env_vars
   machine=$1
+  export_eula_env_vars "${machine}"
   cd "$builddir/machine-$machine/mbl-manifest"
   set +u
   set +e
@@ -452,9 +452,17 @@ artifact_build_info()
   mv "${buildinfo_tmppath}" "${buildinfo_path}"
 }
 
+# Function used to export the ACCEPT_EULA_machine-name environment
+# variable to be consumed by the setup-environment-internal from mbl-config
 export_eula_env_vars() {
-    for machine in $accept_eulas; do
-        export "ACCEPT_EULA_$(printf "%s" "${machine%-mbl}" | sed 's/-//g')=1"
+    local machine="$1"
+
+    # Iterate over the accept_eulas list and only export the ACCEPT_EULA_machine-name environment
+    # variable if the passed machine is in this list.
+    for accept_eula_machine in $accept_eulas; do
+        if [ "$machine" == "$accept_eula_machine" ]; then
+            export "ACCEPT_EULA_$(printf "%s" "${machine%-mbl}" | sed 's/-//g')=1"
+        fi
     done
 }
 
@@ -683,7 +691,7 @@ if [ -z "${machines:-}" ]; then
 fi
 
 if [ -z "${accept_eulas:-}" ]; then
-  accept_eulas="$default_accept_eulas"
+  accept_eulas="$default_accept_eula_machines"
 fi
 
 for machine in $machines $accept_eulas; do
@@ -812,7 +820,7 @@ while true; do
   setup)
     for machine in $machines; do
       (cd "$builddir/machine-$machine/mbl-manifest"
-       export_eula_env_vars
+       export_eula_env_vars "${machine}"
        set +u
        set +e
        # shellcheck disable=SC1091
