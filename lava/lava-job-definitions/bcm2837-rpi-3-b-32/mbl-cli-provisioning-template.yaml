@@ -1,0 +1,35 @@
+{% extends "bcm2837_rpi_3_b_32_base.yaml" %}
+
+{% set job_name = "MBL-CLI Provisioning" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "mbl-cli-provisioning-lxc" %}
+
+{% block test %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+
+    - path: ci/lava/tests/mbl-avahi-discovery-test.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: avahi-discovery
+      from: git
+      history: False
+      branch: {{ mbl_branch }}
+
+    - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
+      repository: https://github.com/ARMmbed/mbl-cli.git
+      name: install_mbl_cli
+      from: git
+      history: False
+      branch: {{ mbl_branch }}
+
+    - path: ci/lava/tests/mbl-cli-provisioning.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: mbl-cli-provisioning
+      from: git
+      history: False
+      branch: {{ mbl_branch }}
+
+{% endblock test %}
