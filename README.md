@@ -27,7 +27,6 @@ are passed through to build.sh
 Mandatory options for build-mbl/run-me.sh:
 ```
 --builddir PATH       Specify the root of the build tree.
--o, --outputdir PATH  Specify a directory to store built artifacts.
 ```
 
 Mandatory options for build-mbl/build.sh:
@@ -79,12 +78,15 @@ mbl-tools currently builds for the following machines:
 Each build will produce a variety of build artifacts including a
 pinned manifest, target specific images and license information.
 
-To get build artifacts out of a build, pass the --outputdir option to
+To get build artifacts out of a build, pass the `--outputdir` option to
 specify which directory the build artifacts should be placed in:
 
 ```
 ./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
 ```
+
+This does not work with interactive builds, only artifacts built by
+`run-me.sh` in non-interactive mode will be placed in the output path.
 
 #### Binary Releases
 
@@ -99,6 +101,8 @@ use build.sh's `--binary-release` flag. Note that:
   be able to determine the mbl-tools version and pass it to build.sh.
   Otherwise, the mbl-tools version can be manually passed to run-me.sh on the
   command line using the `--mbl-tools-version` option.
+* It is mandatory to specify the `--outputdir` option to specify the location
+  of the binary release archive.
 
 For example, to create a binary release for the imx7s-warp-mbl machine:
 ```
@@ -147,9 +151,11 @@ To achieve this the "interactive" stage needs to be passed to the build.sh
 script. For example:
 
 ```
-./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl interactive
+./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir -- --branch master --machine raspberrypi3-mbl interactive
 ```
 
+It is not recommended to use `outputdir` with interactive mode as the contents
+will not be updated when you perform an interactive build.
 Only one --machine option is supported and the user should have run a complete
 build before using the interactive mode.
 To exit from the interactive mode the user just need to enter `exit` or Ctrl+D.
