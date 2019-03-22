@@ -16,9 +16,6 @@
       from: git
       history: False
       branch: {{ mbl_branch }}
-      parameters:
-         test_stage: DISCOVER
-         image_url: {{ image_url }}
 
     - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
       repository: https://github.com/ARMmbed/mbl-cli.git
@@ -70,8 +67,5 @@
       from: git
       history: False
       branch: {{ mbl_branch }}
-      parameters:
-         test_stage: DISCOVER_POST
-         image_url: {{ image_url }}
 {% endblock test %}
 

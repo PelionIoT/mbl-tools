@@ -12,13 +12,10 @@
     definitions:
     - path: ci/lava/tests/mbl-avahi-discovery-test.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: run_avahi_discovery_pre_rootfs_test
+      name: run_avahi_discovery_pre_rootfs_test 
       from: git
       history: False
       branch: {{ mbl_branch }}
-      parameters:
-         test_stage: DISCOVER
-         image_url: {{ image_url }}
 
     - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
       repository: https://github.com/ARMmbed/mbl-cli.git
@@ -66,12 +63,9 @@
 
     - path: ci/lava/tests/mbl-avahi-discovery-test.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: run_avahi_discovery_post_rootfs_test
+      name: run_avahi_discovery_post_rootfs_test 
       from: git
       history: False
       branch: {{ mbl_branch }}
-      parameters:
-         test_stage: DISCOVER_POST
-         image_url: {{ image_url }}
 {% endblock test %}
 
