@@ -10,19 +10,12 @@
       minutes: 20
     namespace: lxc
     definitions:
-
-    - from: inline
-      repository:
-          metadata:
-              format: Lava-Test Test Definition 1.0
-              name: ifconfig
-              description: "LXC ifconfig"
-          run:
-              steps:
-                 - ifconfig
-                 - avahi-browse -v -t --all
-      name: ifconfig
-      path: inline/ifconfig.yaml
+    - path: ci/lava/tests/mbl-avahi-discovery-test.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: run_avahi_discovery_pre_rootfs_test
+      from: git
+      history: False
+      branch: {{ mbl_branch }}
 
     - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
       repository: https://github.com/ARMmbed/mbl-cli.git
@@ -58,19 +51,6 @@
       minutes: 5
    namespace: lxc
    definitions:
-    - from: inline
-      repository:
-          metadata:
-              format: Lava-Test Test Definition 1.0
-              name: ifconfig
-              description: "LXC ifconfig"
-          run:
-              steps:
-                 - ifconfig
-                 - avahi-browse -v -t --all
-      name: ifconfig_part2
-      path: inline/ifconfig_2.yaml
-
     - path: ci/lava/tests/mbl-cli-run-rootfs-test.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       name: run_rootfs_test_post_check
@@ -81,5 +61,11 @@
          test_stage: POST_CHECK
          image_url: {{ image_url }}
 
+    - path: ci/lava/tests/mbl-avahi-discovery-test.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: run_avahi_discovery_post_rootfs_test
+      from: git
+      history: False
+      branch: {{ mbl_branch }}
 {% endblock test %}
 
