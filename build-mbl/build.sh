@@ -820,7 +820,6 @@ while true; do
     done
 
     if [ "${flag_interactive_mode}" -eq 1 ]; then
-      flag_interactive_mode=0
       push_stages interactive
     else
       push_stages setup
