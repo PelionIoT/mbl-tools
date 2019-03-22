@@ -520,6 +520,8 @@ Useful STAGE names:
   clean                 Blow away the working tree and start over.
   start                 Start at the beginning.
   build                 Execute the bitbake build for all images and machines.
+  interactive           Launch interactive mode to run BitBake and associated
+                        commands.
 
 EOF
 }
@@ -530,6 +532,7 @@ flag_compress=1
 flag_archiver=""
 flag_licenses=0
 flag_binary_release=0
+flag_interactive_mode=0
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
@@ -763,6 +766,7 @@ while true; do
     ;;
 
   sync)
+    # Replace the manifest if a custom one is provided
     if [ -n "${external_manifest:-}" ]; then
         name="$(basename "$external_manifest")"
         manifest="custom-$name"
@@ -814,7 +818,12 @@ while true; do
        repo sync
       )
     done
-    push_stages setup
+
+    if [ "${flag_interactive_mode}" -eq 1 ]; then
+      push_stages interactive
+    else
+      push_stages setup
+    fi
     ;;
 
   setup)
@@ -987,7 +996,7 @@ while true; do
     ;;
 
   interactive)
-    # We only support on machine in the interactive mode.
+    # Check the number of machines passed
     numof_machines=$(wc -w <<< "${machines}")
     if [ "$numof_machines" -gt 1 ]; then
       printf "error: interactive mode only supports on machine at a time.\n" >&2
@@ -997,17 +1006,26 @@ while true; do
     # Remove any spaces from the machines string
     machine="${machines//[[:blank:]]/}"
 
-    # We need to check if the user did run a complete build before
-    path_to_check="$builddir/machine-$machine/mbl-manifest/build-mbl"
-    if [ ! -d "${path_to_check}" ]; then
-      printf "error: '%s' path missing.\n" "$path_to_check" >&2
-      printf "Please run a complete build for '%s' machine before using the interactive mode.\n" "$machine" >&2
-      printf "Would you like to run the complete build now? (Y/N): "
-      read -r complete_build
-      shopt -s nocasematch
-      [[ "$complete_build" == "Y" ]] && push_stages start
+    # Check if the layers have been checked out before launching
+    path_to_check="$builddir/machine-$machine/mbl-manifest/layers"
+    if ! [ -d "${path_to_check}" ]; then
+      flag_interactive_mode=1
+      push_stages start
     else
       bitbake_env_setup "$machine"
+      cat <<EOF
+
+Welcome to interactive mode.
+You can perform BitBake or repo commands. You can use the Yocto devtool
+to modify a component. It is recommended you edit files outside of this
+interactive shell. Any changes in the build directory ${builddir}
+gets reflected in the interactive mode.
+To exit interactive mode use the "exit" command.
+For more information and examples please see the
+"Developing Mbed Linux OS" section on the website:
+https://os.mbed.com/docs/mbed-linux-os.
+
+EOF
       exec env TERM=screen bash
     fi
     ;;
