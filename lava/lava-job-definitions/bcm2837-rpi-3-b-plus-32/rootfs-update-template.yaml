@@ -7,7 +7,7 @@
 {% block test %}
 - test:
     timeout:
-      minutes: 20
+      minutes: 30
     namespace: lxc
     definitions:
     - path: ci/lava/tests/mbl-avahi-discovery-test.yaml
