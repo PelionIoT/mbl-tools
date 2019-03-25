@@ -7,12 +7,12 @@
 {% block test %}
 - test:
     timeout:
-      minutes: 20
+      minutes: 30
     namespace: lxc
     definitions:
     - path: ci/lava/tests/mbl-avahi-discovery-test.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: run_avahi_discovery_pre_rootfs_test 
+      name: run_avahi_discovery_pre_rootfs_test
       from: git
       history: False
       branch: {{ mbl_branch }}
@@ -63,7 +63,7 @@
 
     - path: ci/lava/tests/mbl-avahi-discovery-test.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: run_avahi_discovery_post_rootfs_test 
+      name: run_avahi_discovery_post_rootfs_test
       from: git
       history: False
       branch: {{ mbl_branch }}
