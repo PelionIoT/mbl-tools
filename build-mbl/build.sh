@@ -163,6 +163,9 @@ bitbake_env_setup() {
   set +e
   # shellcheck disable=SC1091
   MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
+  if [ $? -ne 0 ]; then
+      exit 1 
+  fi
   set -u
   set -e
 
@@ -834,6 +837,9 @@ while true; do
        set +e
        # shellcheck disable=SC1091
        MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
+       if [ $? -ne 0 ]; then
+           exit 1
+       fi
        set -u
        set -e
       )
