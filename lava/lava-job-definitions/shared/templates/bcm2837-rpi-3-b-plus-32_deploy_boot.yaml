@@ -1,36 +1,3 @@
-# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
-#
-# SPDX-License-Identifier: BSD-3-Clause
-
-device_type: bcm2837-rpi-3-b-plus-32
-
-job_name: {{ build_tag }} - {{ job_name }}
-
-metadata:
-    build-url: "{{ build_url }}"
-    build-tag: "{{ build_tag }}"
-
-priority: medium
-visibility: public
-
-timeouts:
-  job:
-    minutes: 50
-  action:
-    minutes: 15
-  connection:
-    minutes: 15
-
-{% if lxc_creation %}
-protocols:
-  lava-lxc:
-    name: {{ lxc_name }}
-    template: ubuntu
-    distribution: ubuntu
-    release: xenial
-    verbose: true
-{% endif %}
-
 # lava_ip and lava_dir are used by the ramdisk to construct sdcard image URL
 # We cannot directly pass the path of the test image to the initial ramdisk.
 # We work around this by passing the path of the ramdisk because
@@ -57,12 +24,13 @@ actions:
       url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/bcm2710-rpi-3-b-plus.dtb
     preseed:
       url: {{ image_url }}
-# We firstly boot on the NFS
+
 - boot:
     namespace: target
     method: u-boot
+    # We firstly boot on the NFS
     commands: nfs
-    failure_retry: 5
+    failure_retry: 3
     auto_login:
       login_prompt: 'login:'
       username: root
@@ -70,6 +38,7 @@ actions:
     - 'root@raspberrypi3:~#'
     timeout:
       minutes: 5
+
 - test:
     namespace: target
     timeout:
@@ -97,11 +66,12 @@ actions:
           - addr=http://${ip}/tftp/${dir}/preseed/mbl-image-development-raspberrypi3-mbl.wic.gz
           - wget -O- ${addr} | gunzip -c > /dev/mmcblk0
           - sync
+
 # Reboot on (just flashed) SDCARD, nothing to do (minimal method)
 - boot:
     namespace: target
     connection-namespace: target
-    failure_retry: 5
+    failure_retry: 3
     method: minimal
     # We use transfer_overlay to download and uncompress test tarball
     # This is required since LAVA can not apply test overlay to the SDCARD/rootfs image.
@@ -115,48 +85,3 @@ actions:
       - "root@mbed-linux-os(.*):~#"
     timeout:
       minutes: 5
-
-{% if lxc_creation %}
-- deploy:
-    namespace: lxc
-    timeout:
-      minutes: 10
-    to: lxc
-    os: ubuntu
-    packages:
-    - avahi-utils
-    prompts:
-      - "root@{{ lxc_name }}-(.*):/#"
-
-- boot:
-    namespace: lxc
-    method: lxc
-    timeout:
-      minutes: 5
-    failure-retry: 3
-    prompts:
-      - "root@{{ lxc_name }}-(.*):/#"
-{% endif %}
-
-{% block test %}
-{# This block should contain LAVA test definitions. Those are defined in the
-   templates that are extending this file. #}
-{% endblock test %}
-
-{% if notify_user or notify_emails -%}
-notify:
-    recipients:
-    {% if notify_user %}
-    - to:
-       method: email
-       user: {{ notify_user }}
-    {% endif %}
-    {% for email in notify_emails %}
-    - to:
-       method: email
-       email: {{ email }}
-    {% endfor %}
-    criteria:
-      status: finished
-    verbosity: verbose
-{% endif %}

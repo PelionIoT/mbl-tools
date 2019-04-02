@@ -1,0 +1,10 @@
+- path: ci/lava/tests/mbl-component-tests.yaml
+  repository: https://github.com/ARMmbed/mbl-core.git
+  name: {{ component_name }}-tests
+  from: git
+  history: False
+  branch: {{ mbl_branch }}
+  parameters:
+      COMPONENT: "{{ component_name }}"
+      SETUP: "{{ setup }}"
+      TEARDOWN: "{{ teardown }}"
