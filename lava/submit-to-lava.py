@@ -8,6 +8,7 @@
 
 This application is responsible to submit jobs to LAVA.
 """
+import enum
 import argparse
 import logging
 import sys
@@ -22,16 +23,27 @@ default_template_base_path = "lava-job-definitions"
 default_template_name = "mbl-core-template.yaml"
 default_mbl_branch = "master"
 
+valid_device_types = (
+    "bcm2837-rpi-3-b-32",
+    "bcm2837-rpi-3-b-plus-32",
+    "imx7s-warp-mbl",
+)
+
+
+class ExitCode(enum.Enum):
+    """Application return codes."""
+
+    SUCCESS = 0
+    CTRLC = 1
+    ERROR = 2
+
 
 class LAVATemplates(object):
     """LAVA templates class."""
 
-    def __init__(
-        self, template_path, device_type, lava_template_names, dry_run
-    ):
+    def __init__(self, template_path, lava_template_names, dry_run):
         """Initialise LAVATemplates class."""
         self.template_path = template_path
-        self.device_type = device_type
         self.lava_template_names = lava_template_names
         self.dry_run = dry_run
 
@@ -43,6 +55,7 @@ class LAVATemplates(object):
         mbl_branch,
         notify_user,
         notify_emails,
+        device_type,
     ):
         """Process templates rendering them with the right values."""
         lava_jobs = []
@@ -55,16 +68,17 @@ class LAVATemplates(object):
                 mbl_branch=mbl_branch,
                 notify_user=notify_user,
                 notify_emails=notify_emails,
+                device_type=device_type,
             )
             lava_jobs.append(lava_job)
             if self.dry_run:
-                self._dump_job(lava_job, template_name)
+                self._dump_job(lava_job, device_type, template_name)
         return lava_jobs
 
-    def _dump_job(self, job, template_name):
+    def _dump_job(self, job, device_type, template_name):
         """Dump LAVA job into yaml files under tmp/ directory structure."""
         output_path = "tmp"
-        testpath = os.path.join(output_path, self.device_type, template_name)
+        testpath = os.path.join(output_path, device_type, template_name)
         logging.info("Dumping job data into {}".format(testpath))
         if not os.path.exists(os.path.dirname(testpath)):
             os.makedirs(os.path.dirname(testpath))
@@ -76,10 +90,10 @@ class LAVATemplates(object):
         try:
             if template_name:
                 template_full_path = os.path.join(
-                    self.template_path, self.device_type
+                    self.template_path, "testplans"
                 )
                 template_loader = jinja2.FileSystemLoader(
-                    searchpath=template_full_path
+                    searchpath=[template_full_path, self.template_path]
                 )
                 template_env = jinja2.Environment(
                     loader=template_loader,
@@ -89,7 +103,7 @@ class LAVATemplates(object):
                 template = template_env.get_template(template_name)
         except jinja2.exceptions.TemplateNotFound as e:
             raise Exception(
-                "Cannot find template {} on {}".format(
+                "Cannot find template {} in {}".format(
                     template_name, template_full_path
                 )
             )
@@ -197,6 +211,7 @@ def _parse_arguments(cli_args):
         "--device-type",
         help="Device type in LAVA",
         dest="device_type",
+        choices=valid_device_types,
         required=True,
     )
     parser.add_argument(
@@ -301,10 +316,7 @@ def _main(args):
 
         # Load LAVA templates
         lava_template = LAVATemplates(
-            args.template_path,
-            args.device_type,
-            args.template_names,
-            args.dry_run,
+            args.template_path, args.template_names, args.dry_run
         )
 
         # Create LAVA jobs yaml file from templates
@@ -315,6 +327,7 @@ def _main(args):
             args.mbl_branch,
             args.notify_user,
             args.notify_emails,
+            args.device_type,
         )
 
         # Instantiate a LAVA server
@@ -332,14 +345,15 @@ def _main(args):
 
     except KeyboardInterrupt:
         logging.error("Ctrl-C detected. Stopping.")
-        return 1
+        return ExitCode.CTRLC.value
     except Exception as e:
-        import traceback
-
         logging.error(e)
-        traceback.print_exc()
-        return 2
-    return 0
+        if args.debug:
+            import traceback
+
+            traceback.print_exc()
+        return ExitCode.ERROR.value
+    return ExitCode.SUCCESS.value
 
 
 if __name__ == "__main__":

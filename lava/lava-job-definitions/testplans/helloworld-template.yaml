@@ -1,21 +1,20 @@
-{% extends "imx7s_warp_mbl_base.yaml" %}
+{% extends "shared/templates/base.yaml" %}
 
 {% set job_name = "Hello World" %}
 {% set lxc_creation = true %}
 {% set lxc_name = "hello-world-lxc" %}
 
-{% block test %}
+{% block testplan %}
 - test:
     timeout:
       minutes: 50
     namespace: lxc
     definitions:
-    - path: ci/lava/dependencies/install_docker.yaml
-      repository: https://github.com/ARMmbed/mbl-core.git
-      name: install_docker
-      from: git
-      history: False
-      branch: {{ mbl_branch }}
+    {{ macros.mbl_avahi_discovery_test() | indent }}
+
+    {{ macros.install_mbl_cli() | indent }}
+
+    {{ macros.install_docker() | indent }}
 
     - path: ci/lava/tests/lxc-build-helloworld.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
@@ -26,17 +25,10 @@
       parameters:
         arm_arch: armv7
 
-    - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
-      repository: https://github.com/ARMmbed/mbl-cli.git
-      name: install_mbl_cli
-      from: git
-      history: False
-      branch: {{ mbl_branch }}
-
     - path: ci/lava/tests/mbl-cli-run-helloworld.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       name: run_hello_world
       from: git
       history: False
       branch: {{ mbl_branch }}
-{% endblock test %}
+{% endblock testplan %}

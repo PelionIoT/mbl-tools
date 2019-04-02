@@ -1,0 +1,28 @@
+{# This file contains common actions that might be reused across jobs.
+   This file is imported in the base template, so every job has access to them #}
+
+{# Common actions #}
+{% macro install_docker() %}
+    {% include "shared/actions/install_docker.yaml" %}
+{% endmacro %}
+
+{% macro install_mbl_cli() %}
+    {% include "shared/actions/install_mbl_cli.yaml" %}
+{% endmacro %}
+
+{% macro mbl_test_dependency() %}
+    {% include "shared/actions/mbl_test_dependency.yaml" %}
+{% endmacro %}
+
+{% macro mbl_cli_provisioning() %}
+    {% include "shared/actions/mbl_cli_provisioning.yaml" %}
+{% endmacro %}
+
+{# Reusable tests #}
+{% macro mbl_avahi_discovery_test(stage) %}
+    {% include "shared/tests/mbl_avahi_discovery_test.yaml" %}
+{% endmacro %}
+
+{% macro mbl_component_test(component_name, setup, teardown) %}
+    {% include "shared/tests/mbl_component_test.yaml" %}
+{% endmacro %}
