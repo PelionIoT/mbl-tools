@@ -43,7 +43,7 @@ class TestLAVATemplates(object):
     # Define common parameter which are used for every test
     lava_template_names = ["lava_template_name"]
     template_path = "/template/path"
-    device_type = "imx7s-warp"
+    device_type = "imx7s-warp-mbl"
     dry_run = True
 
     def test___init__(self):
@@ -53,16 +53,12 @@ class TestLAVATemplates(object):
         """
         # Call the method under test
         lt = LAVATemplates(
-            self.template_path,
-            self.device_type,
-            self.lava_template_names,
-            self.dry_run,
+            self.template_path, self.lava_template_names, self.dry_run
         )
 
         # Check the results
         assert lt.lava_template_names == self.lava_template_names
         assert lt.template_path == self.template_path
-        assert lt.device_type == self.device_type
         assert lt.dry_run == self.dry_run
 
     def test_process(self):
@@ -78,10 +74,7 @@ class TestLAVATemplates(object):
         """
         # Set up Mock objects
         lt = LAVATemplates(
-            self.template_path,
-            self.device_type,
-            self.lava_template_names,
-            self.dry_run,
+            self.template_path, self.lava_template_names, self.dry_run
         )
         template_mock = MagicMock()
         template_mock.render.return_value = "some yaml string"
@@ -96,6 +89,7 @@ class TestLAVATemplates(object):
             "mbl_branch",
             "notify_user",
             ["notify_emails"],
+            "imx7s-warp-mbl",
         )
 
         # Check the results
@@ -107,9 +101,10 @@ class TestLAVATemplates(object):
             image_url="img_url",
             notify_user="notify_user",
             notify_emails=["notify_emails"],
+            device_type="imx7s-warp-mbl",
         )
         lt._dump_job.assert_called_with(
-            "some yaml string", "lava_template_name"
+            "some yaml string", "imx7s-warp-mbl", "lava_template_name"
         )
         assert lava_jobs == ["some yaml string"]
 
@@ -121,23 +116,20 @@ class TestLAVATemplates(object):
         """
         # Set up Mock objects
         lt = LAVATemplates(
-            self.template_path,
-            self.device_type,
-            self.lava_template_names,
-            self.dry_run,
+            self.template_path, self.lava_template_names, self.dry_run
         )
         job_content = "job content"
-        device_type = "imx7s-warp"
+        device_type = "imx7s-warp-mbl"
         template_name = "template.yaml"
 
         mock_open = MagicMock()
         monkeypatch.setattr("builtins.open", mock_open)
 
         # Call the method under test
-        lt._dump_job(job_content, template_name)
+        lt._dump_job(job_content, device_type, template_name)
 
         # Check the results
-        expected_full_path = "tmp/imx7s-warp/template.yaml"
+        expected_full_path = "tmp/imx7s-warp-mbl/template.yaml"
         calls = [
             call(expected_full_path, "w"),
             call().__enter__().write(job_content),
@@ -152,10 +144,7 @@ class TestLAVATemplates(object):
         """
         # Set up Mock objects
         lt = LAVATemplates(
-            self.template_path,
-            self.device_type,
-            self.lava_template_names,
-            self.dry_run,
+            self.template_path, self.lava_template_names, self.dry_run
         )
 
         mock_template_loader = MagicMock()
@@ -169,7 +158,7 @@ class TestLAVATemplates(object):
 
         # Check the results
         mock_jinja2_fs_loader.assert_called_once_with(
-            searchpath="/template/path/imx7s-warp"
+            searchpath=["/template/path/testplans", "/template/path"]
         )
         mock_jinja2_env.assert_has_calls(
             [
@@ -342,7 +331,7 @@ class TestParseArguments(object):
         cli_args.extend(["--lava-server", "lava.server"])
         cli_args.extend(["--lava-username", "lava_username"])
         cli_args.extend(["--lava-token", "lava_token"])
-        cli_args.extend(["--device-type", "imx7s-warp"])
+        cli_args.extend(["--device-type", "imx7s-warp-mbl"])
         cli_args.extend(["--image-url", "http://image.url/image.wic.gz"])
 
         # Call the method under test
@@ -353,7 +342,7 @@ class TestParseArguments(object):
         assert args.lava_server == "lava.server"
         assert args.lava_username == "lava_username"
         assert args.lava_token == "lava_token"
-        assert args.device_type == "imx7s-warp"
+        assert args.device_type == "imx7s-warp-mbl"
         assert args.image_url == "http://image.url/image.wic.gz"
 
         # Optional args
@@ -413,7 +402,7 @@ def test__main(monkeypatch):
     cli_args.extend(["--lava-server", "lava.server"])
     cli_args.extend(["--lava-username", "lava_username"])
     cli_args.extend(["--lava-token", "lava_token"])
-    cli_args.extend(["--device-type", "imx7s-warp"])
+    cli_args.extend(["--device-type", "imx7s-warp-mbl"])
     cli_args.extend(["--image-url", "http://image.url/image.wic.gz"])
 
     mock_process = MagicMock(return_value=["job1", "job2"])
@@ -435,6 +424,7 @@ def test__main(monkeypatch):
         "master",
         False,
         [],
+        "imx7s-warp-mbl",
     )
     mock_connect.assert_called_once_with()
     mock_submit_job.assert_has_calls(
