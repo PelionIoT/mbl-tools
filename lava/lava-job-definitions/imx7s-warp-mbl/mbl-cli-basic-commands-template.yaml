@@ -1,0 +1,26 @@
+{% extends "imx7s_warp_mbl_base.yaml" %}
+
+{% set job_name = "MBL CLI Basic Commands" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "mbl-cli-lxc" %}
+
+{% block test %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+    - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
+      repository: https://github.com/ARMmbed/mbl-cli.git
+      name: install_mbl_cli
+      from: git
+      history: False
+      branch: {{ mbl_branch }}
+
+    - path: ci/lava/tests/mbl_cli_basic_commands.yaml
+      repository: https://github.com/ARMmbed/mbl-cli.git
+      name: run_mbl_cli_basic_commands
+      from: git
+      history: False
+      branch: {{ mbl_branch }}
+{% endblock test %}
