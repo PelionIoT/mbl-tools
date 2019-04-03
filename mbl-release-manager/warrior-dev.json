@@ -1,0 +1,34 @@
+{
+   "_external_":{
+      "armmbed/mbl-manifest":[
+         "refs/heads/master",
+         "refs/heads/warrior-dev"
+      ],
+      "armmbed/mbl-tools":[
+         "refs/heads/master",
+         "refs/heads/warrior-dev"
+      ],
+      "armmbed/mbl-core":[
+         "refs/heads/master",
+         "refs/heads/warrior-dev"
+      ],
+      "armmbed/mbl-jenkins-libraries":[
+         "refs/heads/master",
+         "refs/heads/warrior-dev"
+      ]
+   },
+   "_common_":{
+      "armmbed/mbl-config": "refs/heads/warrior-dev",
+      "armmbed/meta-mbl": "refs/heads/warrior-dev",
+      "armmbed/meta-mbl-internal-extras": "refs/heads/warrior-dev",
+      "Freescale/meta-freescale-3rdparty": "3b60f3e31a9aba22bd635d7f0d34fd2304296bdc",
+      "git/meta-freescale": "02125de2a9b765649a7a71d18c7dbe69404450c8",
+      "git/meta-raspberrypi": "7af614b2ee362765f299faaa732cafc436aa0ae1",
+      "git/meta-virtualization": "24218342dc5d4b80e406ccf3d31cc7959217f3bd",
+      "openembedded/bitbake": "refs/heads/1.42",
+      "openembedded/meta-linaro": "7e7f09b731ac8ec09cc87ed058908c8479b8c7ab",
+      "openembedded/meta-openembedded": "f352612e772ec19927278b62da153b3164ba08e8",
+      "openembedded/openembedded-core": "5e6d7760c599b09b9417aa8d044084f4c5123762"
+   }
+}
+
