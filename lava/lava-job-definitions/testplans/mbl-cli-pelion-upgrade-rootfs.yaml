@@ -2,7 +2,7 @@
 
 {% set job_name = "Pelion RootFS Update" %}
 {% set lxc_creation = true %}
-{% set lxc_name = "pelion_rootfs_update-lxc" %}
+{% set lxc_name = "pelion-rootfs-update-lxc" %}
 
 {% block testplan %}
 - test:
