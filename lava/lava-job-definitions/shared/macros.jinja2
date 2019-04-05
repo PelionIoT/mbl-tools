@@ -26,3 +26,11 @@
 {% macro mbl_component_test(component_name, setup, teardown) %}
     {% include "shared/tests/mbl_component_test.yaml" %}
 {% endmacro %}
+
+{% macro enable_wifi(device_type) %}
+    {% include "shared/actions/enable-wifi.yaml" %}
+{% endmacro %}
+
+{% macro delete_certificate() %}
+    {% include "shared/actions/delete-certificate.yaml" %}
+{% endmacro %}

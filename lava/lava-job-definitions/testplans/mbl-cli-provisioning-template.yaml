@@ -15,4 +15,6 @@
     {{ macros.install_mbl_cli() | indent }}
 
     {{ macros.mbl_cli_provisioning() | indent }}
+
+    {{ macros.delete_certificate() | indent }}
 {% endblock testplan %}
