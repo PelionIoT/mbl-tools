@@ -2,7 +2,7 @@
 
 {% set job_name = "Pelion App Update" %}
 {% set lxc_creation = true %}
-{% set lxc_name = "pelion_app_update-lxc" %}
+{% set lxc_name = "pelion-app-update-lxc" %}
 
 {% block testplan %}
 - test:
