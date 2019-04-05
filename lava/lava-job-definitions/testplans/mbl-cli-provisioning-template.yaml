@@ -1,0 +1,18 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "MBL-CLI Provisioning" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "mbl-cli-provisioning-lxc" %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+    {{ macros.mbl_avahi_discovery_test() | indent }}
+
+    {{ macros.install_mbl_cli() | indent }}
+
+    {{ macros.mbl_cli_provisioning() | indent }}
+{% endblock testplan %}
