@@ -60,7 +60,7 @@
       name: pelion-app-update
       from: git
       history: False
-      branch: pd-add-pelion-update-tests
+      branch: {{ mbl_branch }} 
 
     {{ macros.delete_certificate() | indent }}
 
