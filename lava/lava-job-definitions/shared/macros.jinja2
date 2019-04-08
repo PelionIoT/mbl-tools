@@ -18,6 +18,18 @@
     {% include "shared/actions/mbl_cli_provisioning.yaml" %}
 {% endmacro %}
 
+{% macro enable_wifi() %}
+    {% include "shared/actions/enable_wifi.yaml" %}
+{% endmacro %}
+
+{% macro restart_cloud_client() %}
+    {% include "shared/actions/restart_cloud_client.yaml" %}
+{% endmacro %}
+
+{% macro delete_certificate() %}
+    {% include "shared/actions/delete_certificate.yaml" %}
+{% endmacro %}
+
 {# Reusable tests #}
 {% macro mbl_avahi_discovery_test(stage) %}
     {% include "shared/tests/mbl_avahi_discovery_test.yaml" %}
@@ -27,10 +39,10 @@
     {% include "shared/tests/mbl_component_test.yaml" %}
 {% endmacro %}
 
-{% macro enable_wifi(device_type) %}
-    {% include "shared/actions/enable-wifi.yaml" %}
+{% macro rootfs_update(test_stage, image_url, update_method) %}
+    {% include "shared/tests/rootfs_update.yaml" %}
 {% endmacro %}
 
-{% macro delete_certificate() %}
-    {% include "shared/actions/delete-certificate.yaml" %}
+{% macro build_hello_world(arm_arch) %}
+    {% include "shared/tests/build_hello_world.yaml" %}
 {% endmacro %}

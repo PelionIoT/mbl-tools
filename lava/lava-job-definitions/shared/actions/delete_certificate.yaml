@@ -9,4 +9,3 @@
         - mbl-cli delete-certificate $(pwd | cut -d"/" -f2)
   name: delete-certificate
   path: inline/delete-certificate.yaml
-

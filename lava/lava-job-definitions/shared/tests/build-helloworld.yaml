@@ -1,0 +1,9 @@
+
+- path: ci/lava/tests/lxc-build-helloworld.yaml
+  repository: https://github.com/ARMmbed/mbl-core.git
+  name: build_hello_world
+  from: git
+  history: False
+  branch: {{ mbl_branch }}
+  parameters:
+     arm_arch: {{ arm_arch }}
