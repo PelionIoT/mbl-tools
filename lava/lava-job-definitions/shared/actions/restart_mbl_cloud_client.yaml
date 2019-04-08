@@ -1,19 +1,13 @@
 # Restart the mbl-cli-cloud-client
 #
-- test:
-    timeout:
-      minutes: 50
-    namespace: target
-    definitions:
-
-    - from: inline
-      repository:
-        metadata:
-          format: Lava-Test Test Definition 1.0
-          name: mbl-cloud-client-restart
-          description: "mbl-cloud-client-restart"
-        run:
-          steps:
-            - systemctl restart mbl-cloud-client
+- from: inline
+  repository:
+    metadata:
+      format: Lava-Test Test Definition 1.0
       name: mbl-cloud-client-restart
-      path: inline/mbl-cloud-client-restart.yaml
+      description: "mbl-cloud-client-restart"
+    run:
+      steps:
+        - systemctl restart mbl-cloud-client
+  name: mbl-cloud-client-restart
+  path: inline/mbl-cloud-client-restart.yaml

@@ -18,18 +18,16 @@
 
     {{ macros.install_docker() | indent }}
 
-    - path: ci/lava/tests/lxc-build-helloworld.yaml
-      repository: https://github.com/ARMmbed/mbl-core.git
-      name: build_hello_world
-      from: git
-      history: False
-      branch: {{ mbl_branch }}
-      parameters:
-        arm_arch: armv7
+    {{ macros.build_hello_world("armv7") | indent }}
 
     {{ macros.mbl_cli_provisioning() | indent }}
 
-    {{ macros.rstart_cloud_client() | indent }}
+- test:
+    timeout:
+      minutes: 1
+    namespace: target
+    definitions:
+    {{ macros.restart_mbl_cloud_client() | indent }}
 
 - test:
     timeout:

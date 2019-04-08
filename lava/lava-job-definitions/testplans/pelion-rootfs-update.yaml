@@ -18,13 +18,18 @@
 
     {{ macros.mbl_cli_provisioning() | indent }}
 
-    {{ macros.restart_cloud_client() | indent }}
+- test:
+    timeout:
+      minutes: 1
+    namespace: target
+    definitions:
+    {{ macros.restart_mbl_cloud_client() | indent }}
 
 - test:
-   timeout:
+    timeout:
       minutes: 10
-   namespace: lxc
-   definitions:
+    namespace: lxc
+    definitions:
     {% set rootfs_test_stage = "UPDATE" %}
     {% set rootfs_update_method = "PELION" %}
     {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method) | indent }}

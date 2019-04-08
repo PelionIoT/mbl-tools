@@ -22,8 +22,8 @@
     {% include "shared/actions/enable_wifi.yaml" %}
 {% endmacro %}
 
-{% macro restart_cloud_client() %}
-    {% include "shared/actions/restart_cloud_client.yaml" %}
+{% macro restart_mbl_cloud_client() %}
+    {% include "shared/actions/restart_mbl_cloud_client.yaml" %}
 {% endmacro %}
 
 {% macro delete_certificate() %}
@@ -44,5 +44,5 @@
 {% endmacro %}
 
 {% macro build_hello_world(arm_arch) %}
-    {% include "shared/tests/build_hello_world.yaml" %}
+    {% include "shared/tests/build-helloworld.yaml" %}
 {% endmacro %}
