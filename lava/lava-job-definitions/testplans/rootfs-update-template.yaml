@@ -1,28 +1,18 @@
-{% extends "bcm2837_rpi_3_b_plus_32_base.yaml" %}
+{% extends "shared/templates/base.yaml" %}
 
 {% set job_name = "RootFS Update"%}
 {% set lxc_creation = true %}
 {% set lxc_name = "rootfs-update-lxc" %}
 
-{% block test %}
+{% block testplan %}
 - test:
     timeout:
       minutes: 30
     namespace: lxc
     definitions:
-    - path: ci/lava/tests/mbl-avahi-discovery-test.yaml
-      repository: https://github.com/ARMmbed/mbl-core.git
-      name: run_avahi_discovery_pre_rootfs_test
-      from: git
-      history: False
-      branch: {{ mbl_branch }}
+    {{ macros.mbl_avahi_discovery_test("pre") | indent }}
 
-    - path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
-      repository: https://github.com/ARMmbed/mbl-cli.git
-      name: install_mbl_cli
-      from: git
-      history: False
-      branch: {{ mbl_branch }}
+    {{ macros.install_mbl_cli() | indent }}
 
     - path: ci/lava/tests/mbl-cli-run-rootfs-test.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
@@ -61,11 +51,5 @@
          test_stage: POST_CHECK
          image_url: {{ image_url }}
 
-    - path: ci/lava/tests/mbl-avahi-discovery-test.yaml
-      repository: https://github.com/ARMmbed/mbl-core.git
-      name: run_avahi_discovery_post_rootfs_test
-      from: git
-      history: False
-      branch: {{ mbl_branch }}
-{% endblock test %}
-
+    {{ macros.mbl_avahi_discovery_test("post") | indent }}
+{% endblock testplan %}

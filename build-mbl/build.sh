@@ -866,7 +866,7 @@ while true; do
        (
        bitbake_env_setup "$machine"
        if [ -n "${build_tag:-}" ]; then
-         define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/conf/distro/mbl.conf" \
+         define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/meta-mbl-distro/conf/distro/mbl.conf" \
                      "DISTRO_VERSION" "$build_tag"
        fi
        setup_archiver "$builddir/machine-$machine/mbl-manifest/conf/local.conf" "$flag_archiver"
