@@ -34,7 +34,7 @@
       minutes: 10
     namespace: lxc
     definitions:
-    - path: ci/lava/tests/mbl-cli-pelion-upgrade-app.yaml
+    - path: ci/lava/tests/mbl-cli-pelion-update-app.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       name: pelion-app-update
       from: git
