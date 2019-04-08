@@ -38,7 +38,7 @@ RUN apt-get update && apt-get install -y \
     xterm \
     xz-utils
 
-RUN apt-get update && apt-get install gosu
+RUN apt-get update && apt-get install gosu && pip3 install dohq-artifactory && pip3 install yattag
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
@@ -59,4 +59,5 @@ RUN mkdir -p /dev/net \
 # Scripts used to build mbed-linux image
 COPY git-setup.sh ssh-setup.sh build.sh \
      README.binary_release_template \
+     license-report \
      Licensing_and_Acknowledgment.template_nxp ./

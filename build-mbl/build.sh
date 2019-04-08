@@ -396,6 +396,27 @@ create_binary_release_readme()
 
 }
 
+create_license_report()
+{
+  local build_lic_paths=${1:?Missing license-paths parameter of ${FUNCNAME[0]}}
+  local prev_build_tag="$2"
+  local api_key="$3"
+  local html_output_dir=${4:?Missing html_output_dir parameter of ${FUNCNAME[0]}}
+  local machines=${5:?Missing machines parameter of ${FUNCNAME[0]}}
+  "./license_diff_report.py" "$build_tag" \
+                             --lics-to-review "$build_lic_paths" \
+                             --lics-to-compare "$prev_build_tag" \
+                             --images "$images" \
+                             --machines "$machines" \
+                             --apikey "$api_key" \
+                             --html "$html_output_dir"
+
+  mkdir -p "$outputdir/license-reports"
+  # Copy the HTML report(s) to the artifact dir
+  # eval is to ensure wildcard expansion occurs
+  eval mv "$html_output_dir/*.manifest.html" "$outputdir/license-reports"
+}
+
 find_license_manifest_dir()
 {
   local image=${1:?Missing image parameter of ${FUNCNAME[0]}}
@@ -431,13 +452,16 @@ artifact_image_manifests()
   license_manifest_dir=$(find_license_manifest_dir "$image" "$machine")
   cp "${license_manifest_dir}/license.manifest" "${artifact_image_dir}/license.manifest"
   cp "${license_manifest_dir}/image_license.manifest" "${artifact_image_dir}/image_license.manifest"
-
+  cp "${license_manifest_dir}/image_license.manifest.json" "${artifact_image_dir}/image_license.manifest.json"
+  cp "${license_manifest_dir}/license.manifest.json" "${artifact_image_dir}/license.manifest.json"
   # Don't exit (due to "set -e") if we can't find initramfs image license
   # manifests - we may not have an initramfs image on some platforms
   local initramfs_license_manifest_dir
   if initramfs_license_manifest_dir=$(find_license_manifest_dir mbl-image-initramfs "$machine"); then
     cp "${initramfs_license_manifest_dir}/license.manifest" "${artifact_image_dir}/initramfs-license.manifest"
     cp "${initramfs_license_manifest_dir}/image_license.manifest" "${artifact_image_dir}/initramfs-image_license.manifest"
+    cp "${initramfs_license_manifest_dir}/license.manifest.json" "${artifact_image_dir}/initramfs-license.manifest.json"
+    cp "${initramfs_license_manifest_dir}/image_license.manifest.json" "${artifact_image_dir}/initramfs-image_license.manifest.json"
   fi
 }
 
@@ -551,7 +575,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,licenses-buildtag:,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -572,6 +596,10 @@ while [ $# -gt 0 ]; do
 
   --archive-source)
     flag_archiver=original
+    ;;
+
+  --artifactory-api-key)
+    opt_prev=artifactory_api_key
     ;;
 
   --binary-release)
@@ -635,6 +663,10 @@ while [ $# -gt 0 ]; do
     flag_licenses=1
     ;;
 
+  --licenses-buildtag)
+    opt_prev=lic_cmp_build_tag
+    ;;
+
   --machine)
     opt_append=machines
     ;;
@@ -666,6 +698,21 @@ done
 if [ -n "${external_manifest:-}" ] && [ -n "${manifest:-}" ]; then
   printf "error: --external-manifest and --manifest are mutually exclusive.\n" >&2
   exit 3
+fi
+
+if [ "$flag_licenses" -eq 1 ]; then
+  if [ -z "${artifactory_api_key:-}" ]; then
+    printf "error: --licenses also requires --artifactory-api-key \n" >&2
+    exit 3
+  fi
+  if [ -z "${build_tag:-}" ]; then
+      printf "error: --licenses also requires --build_tag\n" >&2
+      exit 3
+  fi
+fi
+
+if [ -z "${lic_cmp_build_tag:-}" ]; then
+  lic_cmp_build_tag=""
 fi
 
 if [ -z "${branch:-}" ]; then
@@ -996,6 +1043,22 @@ while true; do
         # ... the license information...
         write_info "save artifact licenses\n"
         tar c -C "$bbtmpdir/deploy" -f "$machinedir/licenses.tar" "licenses"
+
+        if [ "$flag_licenses" -eq 1 ]; then
+          write_info "create license report\n"
+          for image in $images; do
+            for mach in $machines; do
+              # use the license manifests we just copied to the artifact dir
+              build_lic_paths+="${outputdir}/machine/${mach}/images/${image}"
+            done
+          done
+
+          create_license_report "$build_lic_paths" \
+                                "$lic_cmp_build_tag" \
+                                "$artifactory_api_key" \
+                                "$outputdir" \
+                                "$machines"
+        fi
 
         maybe_compress "$machinedir/licenses.tar"
       done
