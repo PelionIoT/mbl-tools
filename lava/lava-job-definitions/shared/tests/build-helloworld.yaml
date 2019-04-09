@@ -1,4 +1,3 @@
-
 - path: ci/lava/tests/lxc-build-helloworld.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
   name: build_hello_world
