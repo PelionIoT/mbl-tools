@@ -1,0 +1,87 @@
+# lava_ip and lava_dir are used by the ramdisk to construct sdcard image URL
+# We cannot directly pass the path of the test image to the initial ramdisk.
+# We work around this by passing the path of the ramdisk because
+# this is known to be uploaded to the same directory.
+context:
+  extra_kernel_args: "dwc_otg.lpm_enable=0 dwc_otg.fiq_enable=0 dwc_otg.fiq_fsm_enable=0 dwc_otg.nak_holdoff=0 8250.nr_uarts=1 lava_ip={SERVER_IP} lava_dir={PRESEED_CONFIG}"
+  extra_nfsroot_args: ",vers=3"
+  console_device: "ttyS0"
+
+actions:
+- deploy:
+    namespace: target
+    timeout:
+      minutes: 5
+    to: tftp
+    kernel:
+      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/zImage
+      type: zimage
+    nfsrootfs:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/mbl/linaro-pyro-pinned/raspberrypi3/31/rpb/rpb-console-image-raspberrypi3-20171109202053-31.rootfs.tar.xz
+      compression: xz
+    os: oe
+    dtb:
+      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/{{ dtb_filename }}
+    preseed:
+      url: {{ image_url }}
+
+- boot:
+    namespace: target
+    method: u-boot
+    # We firstly boot on the NFS
+    commands: nfs
+    failure_retry: 3
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - 'root@raspberrypi3:~#'
+    timeout:
+      minutes: 5
+
+- test:
+    namespace: target
+    timeout:
+      minutes: 10
+    definitions:
+    - from: inline
+      name: mmcblk0-write
+      path: inline/mmcblk0-write.yaml
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: mmcblk0-write
+          description: "Flash RPi3 SDCARD"
+          os:
+          - oe
+          scope:
+          - functional
+        run:
+          steps:
+          - part=/dev/mmcblk0
+          - ip=$(cat /proc/cmdline | awk -F"lava_ip=" '{print $2}' |awk -F" lava_dir=" '{ print $1 }')
+          - ifconfig
+          - ifconfig eth0 up
+          - dir=$(cat /proc/cmdline | awk -F"lava_dir=" '{ print $2 }' | cut -d"/" -f1,2)
+          - addr=http://${ip}/tftp/${dir}/preseed/mbl-image-development-raspberrypi3-mbl.wic.gz
+          - wget -O- ${addr} | gunzip -c > /dev/mmcblk0
+          - sync
+
+# Reboot on (just flashed) SDCARD, nothing to do (minimal method)
+- boot:
+    namespace: target
+    connection-namespace: target
+    failure_retry: 3
+    method: minimal
+    # We use transfer_overlay to download and uncompress test tarball
+    # This is required since LAVA can not apply test overlay to the SDCARD/rootfs image.
+    transfer_overlay:
+      download_command:  sleep 10 ; ifconfig ; wget
+      unpack_command: tar -C / -xzf
+    auto_login:
+      login_prompt: "mbed-linux-os-(.*) login:"
+      username: "root"
+    prompts:
+      - "root@mbed-linux-os(.*):~#"
+    timeout:
+      minutes: 5
