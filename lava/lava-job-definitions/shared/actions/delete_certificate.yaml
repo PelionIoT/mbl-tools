@@ -1,0 +1,11 @@
+- from: inline
+  repository:
+    metadata:
+      format: Lava-Test Test Definition 1.0
+      name: delete-certificate
+      description: "delete-certificate"
+    run:
+      steps:
+        - mbl-cli delete-certificate $(pwd | cut -d"/" -f2)
+  name: delete-certificate
+  path: inline/delete-certificate.yaml

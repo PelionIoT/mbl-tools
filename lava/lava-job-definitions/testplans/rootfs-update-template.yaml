@@ -14,15 +14,9 @@
 
     {{ macros.install_mbl_cli() | indent }}
 
-    - path: ci/lava/tests/mbl-cli-run-rootfs-test.yaml
-      repository: https://github.com/ARMmbed/mbl-core.git
-      name: run_rootfs_test_update
-      from: git
-      history: False
-      branch: {{ mbl_branch }}
-      parameters:
-         test_stage: UPDATE
-         image_url: {{ image_url }}
+    {% set rootfs_test_stage = "UPDATE" %}
+    {% set rootfs_update_method = "MBL_CLI" %}
+    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method) | indent }}
 
 - boot:
     namespace: target
@@ -41,15 +35,10 @@
       minutes: 5
    namespace: lxc
    definitions:
-    - path: ci/lava/tests/mbl-cli-run-rootfs-test.yaml
-      repository: https://github.com/ARMmbed/mbl-core.git
-      name: run_rootfs_test_post_check
-      from: git
-      history: False
-      branch: {{ mbl_branch }}
-      parameters:
-         test_stage: POST_CHECK
-         image_url: {{ image_url }}
+
+    {% set rootfs_test_stage = "POST_CHECK" %}
+    {% set rootfs_update_method = "MBL_CLI" %}
+    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method) | indent }}
 
     {{ macros.mbl_avahi_discovery_test("post") | indent }}
 {% endblock testplan %}
