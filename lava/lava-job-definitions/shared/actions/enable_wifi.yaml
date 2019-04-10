@@ -1,0 +1,8 @@
+- path: ci/lava/dependencies/enable-wifi.yaml
+  repository: https://github.com/ARMmbed/mbl-core.git
+  name: enable-wifi
+  from: git
+  history: False
+  branch: {{ mbl_branch }}
+  parameters:
+      device_type: "{{ device_type }}"
