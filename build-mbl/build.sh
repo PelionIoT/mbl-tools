@@ -385,6 +385,16 @@ create_binary_release_readme()
     -e "s|__REPLACE_ME_WITH_MACHINE__|$machine|g" \
     -e "s|__REPLACE_ME_WITH_COMPRESS_EXTENSION__|$(compress_extension)|g" \
     "${execdir}/README.binary_release_template" > "${artifact_image_dir}/README"
+
+  cat "${execdir}/Licensing_and_Acknowledgment.template_all" >> "${artifact_image_dir}/README"
+
+  case "$machine" in
+    imx7d-pico-mbl)
+      cat "${execdir}/Licensing_and_Acknowledgment.template_pico7" >> "${artifact_image_dir}/README"
+      ;;
+    *)
+      ;;
+  esac
 }
 
 find_license_manifest_dir()
