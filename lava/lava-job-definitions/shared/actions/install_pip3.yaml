@@ -7,7 +7,7 @@
     run:
       steps:
         # Install the prerequsite package
-        - apt-get install -q -q --yes curl
+        - apt-get install -q -q --yes curl ca-certificates
 
         # Install pip3
         - curl https://bootstrap.pypa.io/get-pip.py | python3
