@@ -1,18 +1,17 @@
-# Copyright (c) 2019, Arm Limited and Contributors. All rights reserved.
-#
-# SPDX-License-Identifier: BSD-3-Clause
-
-metadata:
-    format: "Lava-Test Test Definition 1.0"
-    name: Install pip3 into a LXC Container
-    description: "pip3 Installation"
-
-run:
-    steps:
+- from: inline
+  repository:
+    metadata:
+      format: Lava-Test Test Definition 1.0
+      name: install-pip3
+      description: "install-pip3"
+    run:
+      steps:
         # Install the prerequsite package
         - apt-get install -q -q --yes curl
 
         # Install pip3
         - curl https://bootstrap.pypa.io/get-pip.py | python3
+  name: install-pip3
+  path: inline/install-pip3.yaml
 
 
