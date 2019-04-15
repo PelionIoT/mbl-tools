@@ -12,6 +12,8 @@
     definitions:
     {{ macros.mbl_avahi_discovery_test() | indent }}
 
+    {{ macros.install_pip3() | indent }}
+
     {{ macros.install_mbl_cli() | indent }}
 
     {{ macros.install_docker() | indent }}
