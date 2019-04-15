@@ -354,6 +354,18 @@ create_binary_release()
     lic_manifest_files+=(initramfs-image_license.manifest)
   fi
 
+  # Because of license requirements from meta-fsl-bsp-release we need to add the license
+  # manifest refering to the NXP EULA even if we are not installing any package which
+  # uses this EULA
+  case "$machine" in
+    imx7d-pico-mbl)
+      cp "$execdir/meta-fsl-bsp-release_license.manifest" "$artifact_image_dir"
+      lic_manifest_files+=(meta-fsl-bsp-release_license.manifest)
+      ;;
+    *)
+      ;;
+  esac
+
   local release_archive_name="${build_tag:-mbl-os}-${machine}-release.tar"
 
   # If you add files to the binary release archive, please update
@@ -390,7 +402,7 @@ create_binary_release_readme()
 
   case "$machine" in
     imx7d-pico-mbl)
-      cat "${execdir}/Licensing_and_Acknowledgment.template_pico7" >> "${artifact_image_dir}/README"
+      cat "${execdir}/Licensing_and_Acknowledgment.template_nxp" >> "${artifact_image_dir}/README"
       ;;
     *)
       ;;
@@ -996,6 +1008,20 @@ while true; do
 
         # ... the license information...
         write_info "save artifact licenses\n"
+
+        # Because of license requirements from meta-fsl-bsp-release we need to add the NXP EULA
+        # in the license archive even if we are not installing any package which uses this EULA
+        licdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc/deploy/licenses"
+        case "$machine" in
+          imx7d-pico-mbl)
+          mkdir -p "$licdir/meta-fsl-bsp-release"
+          cp "$execdir/generic_Proprietary" "$licdir/meta-fsl-bsp-release"
+          cp "$builddir/machine-$machine/mbl-manifest/layers/meta-fsl-bsp-release/imx/EULA.txt" "$licdir/meta-fsl-bsp-release"
+          ;;
+        *)
+          ;;
+        esac
+
         tar c -C "$bbtmpdir/deploy" -f "$machinedir/licenses.tar" "licenses"
 
         maybe_compress "$machinedir/licenses.tar"

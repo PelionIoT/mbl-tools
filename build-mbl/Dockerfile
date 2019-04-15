@@ -58,6 +58,8 @@ RUN mkdir -p /dev/net \
 
 # Scripts used to build mbed-linux image
 COPY git-setup.sh ssh-setup.sh build.sh \
-    README.binary_release_template \
-    Licensing_and_Acknowledgment.template_all \
-    Licensing_and_Acknowledgment.template_pico7 ./
+    files/README.binary_release_template \
+    files/Licensing_and_Acknowledgment.template_all \
+    files/Licensing_and_Acknowledgment.template_nxp \
+    files/generic_Proprietary \
+    files/meta-fsl-bsp-release_license.manifest ./
