@@ -6,6 +6,10 @@
     {% include "shared/actions/install_docker.yaml" %}
 {% endmacro %}
 
+{% macro install_pip3() %}
+    {% include "shared/actions/install_pip3.yaml" %}
+{% endmacro %}
+
 {% macro install_mbl_cli() %}
     {% include "shared/actions/install_mbl_cli.yaml" %}
 {% endmacro %}
