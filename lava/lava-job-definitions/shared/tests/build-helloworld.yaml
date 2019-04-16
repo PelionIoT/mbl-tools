@@ -5,4 +5,4 @@
   history: False
   branch: {{ mbl_branch }}
   parameters:
-     arm_arch: {{ device_type }}
+     arm_arch: armv7
