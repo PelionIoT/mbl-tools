@@ -9,5 +9,7 @@
     run:
       steps:
         - systemctl restart mbl-cloud-client
+        # Let's give some time to the cloud client to connect
+        - sleep 30
   name: mbl-cloud-client-restart
   path: inline/mbl-cloud-client-restart.yaml
