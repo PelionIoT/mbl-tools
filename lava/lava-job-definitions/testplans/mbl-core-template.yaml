@@ -11,12 +11,16 @@
     definitions:
     {{ macros.mbl_test_dependency() | indent }}
 
+    {# This test is disabled because it crashes RPi3 device types:
+       See IOTMBL-1765 and IOTMBL-1766 #}
+    {% if device_type not in ["bcm2837-rpi-3-b-32", "bcm2837-rpi-3-b-plus-32"] %}
     - path: automated/linux/optee/optee-xtest.yaml
       repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
       history: false
       name: optee-xtest
       from: git
       branch: linaro-mbl
+    {% endif %}
 
     - path: automated/linux/mbl/mbl_auto.yaml
       repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
