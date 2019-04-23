@@ -1,8 +1,9 @@
 # Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
+{% import "shared/macros.jinja2" as macros with context %}
 
-device_type: imx7s-warp-mbl
+device_type: {{ device_type }}
 
 job_name: {{ build_tag }} - {{ job_name }}
 
@@ -31,30 +32,12 @@ protocols:
     verbose: true
 {% endif %}
 
-actions:
-- deploy:
-    namespace: target
-    to: u-boot-ums
-    os: oe
-    image:
-      url: {{ image_url }}
-      compression: gz
-      root_partition: 2
-
-- boot:
-    namespace: target
-    method: u-boot
-    commands: ums
-    failure_retry: 3
-    auto_login:
-      login_prompt: "mbed-linux-os-(.*) login:"
-      username: "root"
-    prompts:
-      - "root@mbed-linux-os(.*):~#"
-    timeout:
-      minutes: 10
+# Deploy and boot the target
+{% include "shared/templates/" + device_type + "_deploy_boot.yaml" with context %}
 
 {% if lxc_creation %}
+
+# Deploy and boot the LXC container
 - deploy:
     namespace: lxc
     timeout:
@@ -76,12 +59,13 @@ actions:
       - "root@{{ lxc_name }}-(.*):/#"
 {% endif %}
 
-{% block test %}
+# Run the testplan
+{% block testplan %}
 {# This block should contain LAVA test definitions. Those are defined in the
    templates that are extending this file. #}
-{% endblock test %}
+{% endblock testplan %}
 
-{% if notify_user or notify_emails -%}
+{% if notify_user or notify_emails %}
 notify:
     recipients:
     {% if notify_user %}

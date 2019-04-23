@@ -1,0 +1,29 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "Hello World" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "hello-world-lxc" %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+    {{ macros.mbl_avahi_discovery_test() | indent }}
+
+    {{ macros.install_pip3() | indent }}
+
+    {{ macros.install_mbl_cli() | indent }}
+
+    {{ macros.install_docker() | indent }}
+
+    {{ macros.build_hello_world() | indent }}
+
+    - path: ci/lava/tests/mbl-cli-run-helloworld.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: run_hello_world
+      from: git
+      history: False
+      branch: {{ mbl_branch }}
+{% endblock testplan %}

@@ -1,0 +1,6 @@
+- path: ci/lava/dependencies/install_docker.yaml
+  repository: https://github.com/ARMmbed/mbl-core.git
+  name: install_docker
+  from: git
+  history: False
+  branch: {{ mbl_branch }}

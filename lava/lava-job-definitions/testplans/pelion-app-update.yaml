@@ -1,0 +1,48 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "Pelion App Update" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "pelion-app-update-lxc" %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+    {{ macros.mbl_avahi_discovery_test() | indent }}
+
+    {{ macros.install_pip3() | indent }}
+
+    {{ macros.install_mbl_cli() | indent }}
+
+    {{ macros.enable_wifi() | indent }}
+
+    {{ macros.install_docker() | indent }}
+
+    {{ macros.build_hello_world() | indent }}
+
+    {{ macros.mbl_cli_provisioning() | indent }}
+
+- test:
+    timeout:
+      minutes: 1
+    namespace: target
+    definitions:
+    {{ macros.restart_mbl_cloud_client() | indent }}
+
+- test:
+    timeout:
+      minutes: 10
+    namespace: lxc
+    definitions:
+    - path: ci/lava/tests/mbl-cli-pelion-app-update.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: pelion-app-update
+      from: git
+      history: False
+      branch: {{ mbl_branch }}
+
+    {{ macros.delete_certificate() | indent }}
+
+{% endblock testplan %}

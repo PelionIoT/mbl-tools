@@ -1,0 +1,6 @@
+- path: ci/lava/dependencies/mbl-install-mbl-cli.yaml
+  repository: https://github.com/ARMmbed/mbl-cli.git
+  name: install_mbl_cli
+  from: git
+  history: False
+  branch: {{ mbl_branch }}
