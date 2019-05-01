@@ -10,11 +10,12 @@
       minutes: 50
     namespace: lxc
     definitions:
+    {% set venv_name = "/tmp/hello-world-lxc" %}
+    {% set venv_path = "/tmp/hello-world-lxc/bin" %}
+
     {{ macros.mbl_avahi_discovery_test() | indent }}
 
-    {{ macros.install_pip3() | indent }}
-
-    {{ macros.install_mbl_cli() | indent }}
+    {{ macros.install_mbl_cli(venv_name, venv_path) | indent }}
 
     {{ macros.install_docker() | indent }}
 
@@ -22,6 +23,8 @@
 
     - path: ci/lava/tests/mbl-cli-run-helloworld.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
+      parameters:
+          virtual_env_path: {{ venv_path }}
       name: run_hello_world
       from: git
       history: False

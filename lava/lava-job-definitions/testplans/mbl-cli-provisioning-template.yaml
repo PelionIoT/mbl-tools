@@ -10,13 +10,14 @@
       minutes: 50
     namespace: lxc
     definitions:
+    {% set venv_name = "/tmp/mbl-cli-provisioning-lxc" %}
+    {% set venv_path = "/tmp/mbl-cli-provisioning-lxc/bin" %}
+
     {{ macros.mbl_avahi_discovery_test() | indent }}
 
-    {{ macros.install_pip3() | indent }}
+    {{ macros.install_mbl_cli(venv_name, venv_path) | indent }}
 
-    {{ macros.install_mbl_cli() | indent }}
+    {{ macros.mbl_cli_provisioning(venv_path) | indent }}
 
-    {{ macros.mbl_cli_provisioning() | indent }}
-
-    {{ macros.delete_certificate() | indent }}
+    {{ macros.delete_certificate(venv_path) | indent }}
 {% endblock testplan %}

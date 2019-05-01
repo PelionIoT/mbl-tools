@@ -10,15 +10,16 @@
       minutes: 30
     namespace: lxc
     definitions:
+    {% set venv_name = "/tmp/mbl-cli-provisioning-lxc" %}
+    {% set venv_path = "/tmp/mbl-cli-provisioning-lxc/bin" %}
+
     {{ macros.mbl_avahi_discovery_test("pre") | indent }}
 
-    {{ macros.install_pip3() | indent }}
-
-    {{ macros.install_mbl_cli() | indent }}
+    {{ macros.install_mbl_cli(venv_name, venv_path) | indent }}
 
     {% set rootfs_test_stage = "UPDATE" %}
     {% set rootfs_update_method = "MBL_CLI" %}
-    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method) | indent }}
+    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method, venv_path) | indent }}
 
 - boot:
     namespace: target
@@ -40,7 +41,7 @@
 
     {% set rootfs_test_stage = "POST_CHECK" %}
     {% set rootfs_update_method = "MBL_CLI" %}
-    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method) | indent }}
+    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method, venv_path) | indent }}
 
     {{ macros.mbl_avahi_discovery_test("post") | indent }}
 {% endblock testplan %}

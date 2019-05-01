@@ -46,6 +46,7 @@ protocols:
     os: ubuntu
     packages:
     - avahi-utils
+    - python3-venv
     prompts:
       - "root@{{ lxc_name }}-(.*):/#"
 
