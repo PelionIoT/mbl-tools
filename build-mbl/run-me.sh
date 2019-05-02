@@ -11,6 +11,7 @@ execdir="$(readlink -e "$(dirname "$0")")"
 
 default_imagename="mbl-manifest-env"
 default_containername="mbl-tools-container.$$"
+default_project="mbl"
 
 trap cleanup 0
 
@@ -21,6 +22,54 @@ cleanup() {
     if [ ! -z "$running_container" ]; then
         docker kill "$default_containername"
     fi
+}
+
+build_script_for_project() {
+    project=${1:?}
+    case "$1" in
+        mbl)
+            printf "%s\n" "build.sh"
+            ;;
+        pelion-os-edge)
+            printf "%s\n" "build-pelion-os-edge.py"
+            ;;
+        *)
+            printf "Unrecognized project \"%s\"" "$project" >&2
+            exit 5
+            ;;
+    esac
+}
+
+dockerfile_for_project() {
+    project=${1:?}
+    case "$1" in
+        mbl)
+            printf "%s\n" "Dockerfile.mbl"
+            ;;
+        pelion-os-edge)
+            printf "%s\n" "Dockerfile.pelion-os-edge"
+            ;;
+        *)
+            printf "Unrecognized project \"%s\"" "$project" >&2
+            exit 5
+            ;;
+    esac
+}
+
+privileged_arg_for_project() {
+    project=${1:?}
+    case "$1" in
+        mbl)
+            printf "\n"
+            ;;
+        pelion-os-edge)
+            printf "%s\n" "--privileged=true"
+            ;;
+        *)
+            printf "Unrecognized project \"%s\"" "$project" >&2
+            exit 5
+            ;;
+    esac
 }
 
 usage()
@@ -53,18 +102,21 @@ OPTIONAL parameters:
   --tty                 Enable tty creation (default).
   --no-tty              Disable tty creation.
   -x                    Enable shell debugging in this script.
+  --project STRING
+                        The project to build. Default ${default_project}.
 
 EOF
 }
 
 imagename="$default_imagename"
+project="$default_project"
 flag_tty="-t"
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+ho:x -l builddir:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,mbl-tools-version:,outputdir:,tty,no-tty -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+ho:x -l builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,mbl-tools-version:,outputdir:,tty,no-tty -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -81,6 +133,10 @@ while [ $# -gt 0 ]; do
   case $1 in
   --builddir)
     opt_prev=builddir
+    ;;
+
+  --project)
+    opt_prev=project
     ;;
 
   --downloaddir)
@@ -168,6 +224,10 @@ if [ -n "${inject_mcc_files:-}" ]; then
   done
 fi
 
+build_script=$(build_script_for_project "$project")
+dockerfile=$(dockerfile_for_project "$project")
+privileged_arg=$(privileged_arg_for_project "$project")
+
 # If we didn't get an mbl-tools version on the command line, try to determine
 # it using git. This isn't important in most cases and won't work in all
 # environments so don't fail the build if it doesn't work.
@@ -190,7 +250,7 @@ if [ -z "${SSH_AUTH_SOCK+false}" ]; then
   exit 4
 fi
 
-docker build -t "$imagename" "$execdir"
+docker build -f "$dockerfile" -t "$imagename" "$execdir"
 
 if [ -n "${external_manifest:-}" ]; then
   name="$(basename "$external_manifest")"
@@ -210,8 +270,9 @@ docker run --rm -i $flag_tty \
        ${outputdir:+-v "$outputdir":"$outputdir"} \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
        -v "$builddir":"$builddir" \
+       ${privileged_arg} \
        "$imagename" \
-       ./build.sh --builddir "$builddir" \
+       ./${build_script} --builddir "$builddir" \
          ${build_args:-} \
          ${downloaddir:+--downloaddir "$downloaddir"} \
          ${outputdir:+--outputdir "$outputdir"} \

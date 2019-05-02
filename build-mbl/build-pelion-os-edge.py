@@ -21,6 +21,8 @@ import subprocess
 
 import file_util
 
+SCRIPTS_DIR = os.path.dirname(os.path.realpath(__file__))
+
 DEFAULT_MANIFEST_REPO = (
     "ssh://git@github.com/armPelionEdge/manifest-pelion-os-edge"
 )
@@ -38,31 +40,26 @@ def _create_workarea(workdir, manifest_repo, branch):
 def _build(workdir):
     """
     Kick off a build of the workarea.
-
-    This uses pelion-os-edge's helper Makefile to create a build container and
-    start the build in that container.
     """
     subprocess.run(
-        ["make"], cwd=os.path.join(workdir, "build-env"), check=True
+        [os.path.join(SCRIPTS_DIR, "pelion-os-edge-bitbake-wrapper.sh"), workdir, "console-image"],
+        check=True
     )
 
 
 def _inject_mcc(workdir, path):
     """Add Mbed Cloud Client credentials into the build."""
-    shutil.copy(path, os.path.join(workdir, "build-env"))
+    shutil.copy(path, os.path.join(workdir, "poky", "meta-pelion-os-edge", "recipes-wigwag", "mbed-edge-core", "files"))
 
 
-def _set_up_ssh(workdir):
-    """Add support for using ssh-agent to access SSH keys during the build."""
-    # This commit is to pass the SSH_AUTH_SOCK env var into the build container
-    # and to mount the actual socket specified by SSH_AUTH_SOCK in the
-    # container
-    subprocess.run(
-        ["git", "cherry-pick", "1245e2464424ed5baafe04a43ba03d97d7196e68"],
-        cwd=os.path.join(workdir, "build-env"),
-        check=True,
-    )
+def _set_up_git():
+    subprocess.run([os.path.join(SCRIPTS_DIR, "git-setup.sh")], check=True)
 
+
+def _set_up_container_ssh():
+    subprocess.run(os.path.join(SCRIPTS_DIR, "ssh-setup.sh"), check=True)
+
+def _set_up_bitbake_ssh(workdir):
     localconf_path = os.path.join(
         workdir, "poky", "meta-pelion-os-edge", "conf", "local.conf.sample"
     )
@@ -75,6 +72,12 @@ def _set_up_ssh(workdir):
         localconf.write('BB_HASHBASE_WHITELIST_append = " SSH_AUTH_SOCK"\n')
         localconf.write('BB_HASHCONFIG_WHITELIST_append = " SSH_AUTH_SOCK"\n')
 
+def _set_up_download_dir(download_dir):
+
+    if not download_dir:
+        return
+
+    os.environ['DL_DIR'] = os.path.realpath(download_dir)
 
 def _parse_args():
     parser = argparse.ArgumentParser()
@@ -106,6 +109,33 @@ def _parse_args():
         default=[],
         action="append",
     )
+    parser.add_argument(
+        "--downloaddir",
+        metavar="PATH",
+        help="path to directory used for BitBake's download cache (currently ignored)",
+        required=False,
+    )
+    parser.add_argument(
+        "--outputdir",
+        metavar="PATH",
+        help="directory in which to place build artifacts",
+        required=False,
+    )
+    parser.add_argument(
+        "--parent-command-line",
+        metavar="STRING",
+        help=(
+            "Specify the command line that was used to invoke the"
+            "script that invokes build.sh."
+        ),
+        required=False,
+    )
+    parser.add_argument(
+        "--mbl-tools-version",
+        metavar="STRING",
+        help="Specify the version of mbl-tools that this script came from.",
+        required=False,
+    )
 
     args = parser.parse_args()
 
@@ -120,6 +150,9 @@ def _parse_args():
 def main():
     """Script entry point."""
     args = _parse_args()
+    _set_up_container_ssh()
+    _set_up_git()
+    _set_up_download_dir(args.downloaddir)
 
     _create_workarea(
         workdir=args.builddir,
@@ -130,8 +163,7 @@ def main():
     for path in args.inject_mcc:
         _inject_mcc(args.builddir, path)
 
-    _set_up_ssh(args.builddir)
+    _set_up_bitbake_ssh(args.builddir)
     _build(args.builddir)
-
 
 main()
