@@ -6,7 +6,7 @@
     {% include "shared/actions/install_docker.yaml" %}
 {% endmacro %}
 
-{% macro install_mbl_cli(venv_name, venv_path) %}
+{% macro install_mbl_cli(venv_name) %}
     {% include "shared/actions/install_mbl_cli.yaml" %}
 {% endmacro %}
 
@@ -14,11 +14,11 @@
     {% include "shared/actions/mbl_test_dependency.yaml" %}
 {% endmacro %}
 
-{% macro mbl_cli_provisioning(venv_path) %}
+{% macro mbl_cli_provisioning(venv_name) %}
     {% include "shared/actions/mbl_cli_provisioning.yaml" %}
 {% endmacro %}
 
-{% macro enable_wifi(venv_path) %}
+{% macro enable_wifi(venv_name) %}
     {% include "shared/actions/enable_wifi.yaml" %}
 {% endmacro %}
 
@@ -26,7 +26,7 @@
     {% include "shared/actions/restart_mbl_cloud_client.yaml" %}
 {% endmacro %}
 
-{% macro delete_certificate(venv_path) %}
+{% macro delete_certificate(venv_name) %}
     {% include "shared/actions/delete_certificate.yaml" %}
 {% endmacro %}
 
@@ -39,7 +39,7 @@
     {% include "shared/tests/mbl_component_test.yaml" %}
 {% endmacro %}
 
-{% macro rootfs_update(test_stage, image_url, update_method, venv_path) %}
+{% macro rootfs_update(test_stage, image_url, update_method, venv_name) %}
     {% include "shared/tests/rootfs_update.yaml" %}
 {% endmacro %}
 

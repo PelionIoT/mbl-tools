@@ -10,20 +10,18 @@
       minutes: 50
     namespace: lxc
     definitions:
-    {% set venv_name = "/tmp/pelion-app-update-lxc" %}
-    {% set venv_path = "/tmp/pelion-app-update-lxc/bin" %}
 
     {{ macros.mbl_avahi_discovery_test() | indent }}
 
-    {{ macros.install_mbl_cli(venv_name, venv_path) | indent }}
+    {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {{ macros.enable_wifi(venv_path) | indent }}
+    {{ macros.enable_wifi(venv_name) | indent }}
 
     {{ macros.install_docker() | indent }}
 
     {{ macros.build_hello_world() | indent }}
 
-    {{ macros.mbl_cli_provisioning(venv_path) | indent }}
+    {{ macros.mbl_cli_provisioning(venv_name) | indent }}
 
 - test:
     timeout:
@@ -40,12 +38,12 @@
     - path: ci/lava/tests/mbl-cli-pelion-app-update.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       parameters:
-          virtual_env_path: {{ venv_path }}
+          virtual_env: {{ venv_name }}
       name: pelion-app-update
       from: git
       history: False
       branch: {{ mbl_branch }}
 
-    {{ macros.delete_certificate(venv_path) | indent }}
+    {{ macros.delete_certificate(venv_name) | indent }}
 
 {% endblock testplan %}

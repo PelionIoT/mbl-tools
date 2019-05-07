@@ -6,6 +6,6 @@
       description: "delete-certificate"
     run:
       steps:
-        - {{ venv_path }}/mbl-cli delete-certificate $(pwd | cut -d"/" -f2)
+        - {{ venv_name }}/bin/mbl-cli delete-certificate $(pwd | cut -d"/" -f2)
   name: delete-certificate
   path: inline/delete-certificate.yaml

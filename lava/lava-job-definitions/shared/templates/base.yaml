@@ -7,6 +7,8 @@ device_type: {{ device_type }}
 
 job_name: {{ build_tag }} - {{ job_name }}
 
+{% set venv_name = "/tmp/venv" %}
+
 metadata:
     build-url: "{{ build_url }}"
     build-tag: "{{ build_tag }}"
