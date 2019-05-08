@@ -4,3 +4,5 @@
   from: git
   history: False
   branch: {{ mbl_branch }}
+  parameters:
+      virtual_env: {{ venv_name }}
