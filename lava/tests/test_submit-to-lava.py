@@ -87,6 +87,7 @@ class TestLAVATemplates(object):
             "build_tag",
             "build_url",
             "mbl_branch",
+            {"mbl-core": "12345"},
             "notify_user",
             ["notify_emails"],
             "imx7s-warp-mbl",
@@ -98,6 +99,7 @@ class TestLAVATemplates(object):
             build_tag="build_tag",
             build_url="build_url",
             mbl_branch="mbl_branch",
+            mbl_revisions={"mbl-core": "12345"},
             image_url="img_url",
             notify_user="notify_user",
             notify_emails=["notify_emails"],
@@ -332,6 +334,9 @@ class TestParseArguments(object):
         cli_args.extend(["--lava-username", "lava_username"])
         cli_args.extend(["--lava-token", "lava_token"])
         cli_args.extend(["--device-type", "imx7s-warp-mbl"])
+        cli_args.extend(["--mbl-branch", "master"])
+        cli_args.extend(["--mbl-revisions", "mbl-core:12345"])
+        cli_args.extend(["--template-names", "helloworld-template.yaml"])
         cli_args.extend(["--image-url", "http://image.url/image.wic.gz"])
 
         # Call the method under test
@@ -343,13 +348,15 @@ class TestParseArguments(object):
         assert args.lava_username == "lava_username"
         assert args.lava_token == "lava_token"
         assert args.device_type == "imx7s-warp-mbl"
+        assert args.mbl_branch == "master"
+        assert args.template_names == ["helloworld-template.yaml"]
         assert args.image_url == "http://image.url/image.wic.gz"
 
         # Optional args
+        assert args.mbl_revisions == {"mbl-core": "12345"}
         assert args.build_tag is None
         assert args.build_url is None
         assert args.template_path == "lava-job-definitions"
-        assert args.template_names == ["mbl-core-template.yaml"]
         assert args.notify_user is False
         assert args.notify_emails == []
         assert args.debug is False
@@ -375,6 +382,24 @@ class TestParseArguments(object):
         assert args.build_tag == "lava_username build"
         assert args.build_url == "-"
         assert args.notify_user == "lava_username"
+
+
+def test_repo_revision_list():
+    """ Test repo_revision_list() function.
+
+    This is used as type in argparse in order to convert a string with format
+    "name1:sha1,name2:tag" into a dictionary"
+    """
+    revisions_argument = (
+        "mbl-core:a7f9b77c16a3aa80daa4e378659226f628326a95,"
+        "mbl-cli:mbl-os-0.6.1",
+    )
+    expected_result = {
+        "mbl-core": "a7f9b77c16a3aa80daa4e378659226f628326a95",
+        "mbl-cli": "mbl-os-0.6.1",
+    }
+    result = repo_revision_list(revisions_argument)
+    assert result == expected_result
 
 
 def test__enable_debug_logging(monkeypatch):
@@ -403,6 +428,9 @@ def test__main(monkeypatch):
     cli_args.extend(["--lava-username", "lava_username"])
     cli_args.extend(["--lava-token", "lava_token"])
     cli_args.extend(["--device-type", "imx7s-warp-mbl"])
+    cli_args.extend(["--mbl-branch", "master"])
+    cli_args.extend(["--mbl-revisions", "mbl-core:12345"])
+    cli_args.extend(["--template-names", "helloworld-template.yaml"])
     cli_args.extend(["--image-url", "http://image.url/image.wic.gz"])
 
     mock_process = MagicMock(return_value=["job1", "job2"])
@@ -422,6 +450,7 @@ def test__main(monkeypatch):
         "lava_username build",
         "-",
         "master",
+        {"mbl-core": "12345"},
         False,
         [],
         "imx7s-warp-mbl",
