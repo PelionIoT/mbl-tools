@@ -5,7 +5,6 @@
 {% set lxc_name = "mbl-cli-lxc" %}
 
 {% block testplan %}
-
 - test:
     timeout:
       minutes: 50
