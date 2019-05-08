@@ -6,3 +6,4 @@
   branch: {{ mbl_branch }}
   parameters:
       device_type: "{{ device_type }}"
+      virtual_env: {{ venv_name }}
