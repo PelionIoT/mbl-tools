@@ -4,6 +4,9 @@
   from: git
   history: False
   branch: {{ mbl_branch }}
+  {% if "mbl-core" in mbl_revisions %}
+  revision: {{ mbl_revisions["mbl-core"] }}
+  {% endif %}
   parameters:
       device_type: "{{ device_type }}"
       virtual_env: {{ venv_name }}

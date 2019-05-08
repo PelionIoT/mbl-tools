@@ -20,8 +20,6 @@ import jinja2
 
 
 default_template_base_path = "lava-job-definitions"
-default_template_name = "mbl-core-template.yaml"
-default_mbl_branch = "master"
 
 valid_device_types = (
     "bcm2837-rpi-3-b-32",
@@ -54,6 +52,7 @@ class LAVATemplates(object):
         build_tag,
         build_url,
         mbl_branch,
+        mbl_revisions,
         notify_user,
         notify_emails,
         device_type,
@@ -67,6 +66,7 @@ class LAVATemplates(object):
                 build_tag=build_tag,
                 build_url=build_url,
                 mbl_branch=mbl_branch,
+                mbl_revisions=mbl_revisions,
                 notify_user=notify_user,
                 notify_emails=notify_emails,
                 device_type=device_type,
@@ -187,9 +187,26 @@ class LAVAServer(object):
         return job_info_url
 
 
+def repo_revision_list(string):
+    """Parse the string to create a dictionary of repos and revisions."""
+    value = {}
+    # The format shoudl be: repo1-name:sha1,repo2-name:tagname
+    # There is no need to wrap it in a try-except block as argparse will take
+    # care of it in case of Exception
+    for data in string.split(","):
+        repo_name, repo_revision = data.split(":")
+        if not repo_revision:
+            msg = "revision for {} is empty".format(repo_name)
+            raise argparse.ArgumentTypeError(msg)
+        value[repo_name] = repo_revision
+    return value
+
+
 def _parse_arguments(cli_args):
     """Parse arguments."""
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument(
         "--lava-server",
         help="LAVA server URL",
@@ -221,26 +238,34 @@ def _parse_arguments(cli_args):
         dest="image_url",
         required=True,
     )
-    parser.add_argument("--build-tag", help="Build tag", dest="build_tag")
-    parser.add_argument("--build-url", help="Build url", dest="build_url")
+    parser.add_argument(
+        "--template-names",
+        help="List of the templates to submit for testing",
+        dest="template_names",
+        nargs="+",
+        required=True,
+    )
     parser.add_argument(
         "--mbl-branch",
         help="Branch of MBL repositories",
         dest="mbl_branch",
-        default=default_mbl_branch,
+        required=True,
     )
+    # Optional arguments
+    parser.add_argument(
+        "--mbl-revisions",
+        help="Revisions (SHA1 or tag) of MBL repositories\n(E.g.: mbl-core:"
+        "39e05108fd70fc2c207e6673cbebb8b088d6b5f0,mbl-cli:mbl-os-0.6.0)",
+        type=repo_revision_list,
+        dest="mbl_revisions",
+    )
+    parser.add_argument("--build-tag", help="Build tag", dest="build_tag")
+    parser.add_argument("--build-url", help="Build url", dest="build_url")
     parser.add_argument(
         "--template-path",
         help="Path to LAVA job templates",
         dest="template_path",
         default=default_template_base_path,
-    )
-    parser.add_argument(
-        "--template-names",
-        help="list of the templates to submit for testing",
-        dest="template_names",
-        nargs="+",
-        default=[default_template_name],
     )
     parser.add_argument(
         "--notify-user",
@@ -265,8 +290,8 @@ def _parse_arguments(cli_args):
     )
     parser.add_argument(
         "--dry-run",
-        help="""Prepare and write templates to tmp/.
-                        Don"t submit to actual servers.""",
+        help="Prepare and write templates to tmp/.\n"
+        "Don't submit to actual servers.",
         action="store_true",
         dest="dry_run",
     )
@@ -326,6 +351,7 @@ def _main(args):
             args.build_tag,
             args.build_url,
             args.mbl_branch,
+            args.mbl_revisions,
             args.notify_user,
             args.notify_emails,
             args.device_type,
