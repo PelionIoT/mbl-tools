@@ -258,6 +258,7 @@ def _parse_arguments(cli_args):
         "39e05108fd70fc2c207e6673cbebb8b088d6b5f0,mbl-cli:mbl-os-0.6.0)",
         type=repo_revision_list,
         dest="mbl_revisions",
+        default={},
     )
     parser.add_argument("--build-tag", help="Build tag", dest="build_tag")
     parser.add_argument("--build-url", help="Build url", dest="build_url")
