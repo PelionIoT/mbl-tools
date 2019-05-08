@@ -4,5 +4,8 @@
   from: git
   history: False
   branch: {{ mbl_branch }}
+  {% if "mbl-cli" in mbl_revisions %}
+  revision: {{ mbl_revisions["mbl-cli"] }}
+  {% endif %}
   parameters:
       virtual_env: {{ venv_name }}

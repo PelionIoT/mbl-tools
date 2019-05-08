@@ -4,6 +4,9 @@
   from: git
   history: False
   branch: {{ mbl_branch }}
+  {% if "mbl-core" in mbl_revisions %}
+  revision: {{ mbl_revisions["mbl-core"] }}
+  {% endif %}
   parameters:
       test_stage: {{ test_stage }}
       image_url: {{ image_url }}
