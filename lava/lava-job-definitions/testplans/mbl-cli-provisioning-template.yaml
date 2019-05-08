@@ -10,13 +10,13 @@
       minutes: 50
     namespace: lxc
     definitions:
+
+
     {{ macros.mbl_avahi_discovery_test() | indent }}
 
-    {{ macros.install_pip3() | indent }}
+    {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {{ macros.install_mbl_cli() | indent }}
+    {{ macros.mbl_cli_provisioning(venv_name) | indent }}
 
-    {{ macros.mbl_cli_provisioning() | indent }}
-
-    {{ macros.delete_certificate() | indent }}
+    {{ macros.delete_certificate(venv_name) | indent }}
 {% endblock testplan %}
