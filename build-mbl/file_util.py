@@ -8,6 +8,7 @@
 import contextlib
 import datetime
 import os
+import pathlib
 import shutil
 import tempfile
 
@@ -26,9 +27,9 @@ class UnexpectedSectionMarkerError(SectionMarkerError):
         Initialize an object of this class.
 
         Args:
-        * marker (string): the marker that was unexpected.
+        * marker (str): the marker that was unexpected.
         * line (int): the line of the file at which the error occurred.
-        * path (string): file in which the error occurred.
+        * path (PathLike): file in which the error occurred.
         """
         super().__init__(
             'Unexpected marker "{}" found at line {} of file "{}"'.format(
@@ -45,8 +46,8 @@ class UnexpectedEofInSectionError(SectionMarkerError):
         Initialize an object of this class.
 
         Args:
-        * marker (string): the marker that was expected before EOF.
-        * path (string): file in which the error occurred.
+        * marker (str): the marker that was expected before EOF.
+        * path (PathLike): file in which the error occurred.
         """
         super().__init__(
             'Unexpected EOF before marker "{}" in file "{}"'.format(
@@ -71,14 +72,14 @@ def atomic_read_modify_write_file(
     * Atomically replaces the original file with the temporary file.
 
     Mandatory args:
-    * path (string): path to the file to modify.
+    * path (PathLike): path to the file to modify.
 
     Optional args:
-    * tmpdir (string): path to a directory in which to create temporary files.
-      Note that this directory must be on the same file system as the file
-      being modified to ensure that replacing the original file with the
-      temporary file is atomic. Default value is os.path.dirname(path).
-    * tmpdir_prefix (string): string with which to prefix temporary file names.
+    * tmpdir (PathLike): path to a directory in which to create temporary
+      files. Note that this directory must be on the same file system as the
+      file being modified to ensure that replacing the original file with the
+      temporary file is atomic. Default value is Path(path).parent.
+    * tmpdir_prefix (str): string with which to prefix temporary file names.
     * binary_mode (bool): Open files in binary mode? Default: False.
 
     Example:
@@ -90,8 +91,8 @@ def atomic_read_modify_write_file(
             writer.write(modify_line(line))
     ---------------------------------------------------------------------------
     """
-    dirname, filename = os.path.split(path)
-    tmpdir = tmpdir or dirname
+    path = pathlib.Path(path)
+    tmpdir = tmpdir or path.parent
 
     if binary_mode:
         read_mode = "rb"
@@ -113,11 +114,12 @@ def atomic_read_modify_write_file(
     with tempfile.TemporaryDirectory(
         dir=tmpdir, prefix=tmpdir_prefix
     ) as tmp_dir_path:
-        tmp_file_path = os.path.join(
-            tmp_dir_path, "{}{}.tmp".format(tmpdir_prefix, filename)
-        )
-        with open(path, mode=read_mode) as orig_file:
-            with open(tmp_file_path, mode=write_mode) as tmp_file:
+        tmp_dir_path = pathlib.Path(tmp_dir_path)
+        tmp_file_name = "{}{}.tmp".format(tmpdir_prefix, path.name)
+        tmp_file_path = tmp_dir_path / tmp_file_name
+
+        with path.open(mode=read_mode) as orig_file:
+            with tmp_file_path.open(mode=write_mode) as tmp_file:
                 yield (orig_file, tmp_file)
         # Make sure the temporary file has the same owner, permissions, etc. as
         # the original before we do the replacement.
@@ -152,16 +154,16 @@ def replace_section_in_file(
     * Atomically replaces the original file with the temporary file.
 
     Mandatory args:
-    * path (string): path to the file to modify.
-    * section_name (string): a string added to marker comments to distinguish
+    * path (PathLike): path to the file to modify.
+    * section_name (str): a string added to marker comments to distinguish
       between different sections.
 
     Optional args:
-    * tmpdir (string): the path to a directory in which to create temporary
+    * tmpdir (PathLike): the path to a directory in which to create temporary
       files. This directory must be on the same file system as the file to
-      modify. The default value, None, means "os.path.dirname(path)" in order
-      to ensure that the directory is on the right file system.
-    * comment_leader (string): A string that starts line comments in the file
+      modify. The default value, None, means "pathlib.Path(path).parent" in
+      order to ensure that the directory is on the right file system.
+    * comment_leader (str): A string that starts line comments in the file
       to modify. All lines automatically added by this context manager will
       start with comment_leader.
 
@@ -242,10 +244,14 @@ def ensure_is_regular_file(path):
     Check that a file exists and is a regular file.
 
     Raises an exception on failure and does nothing on success
+
+    Args:
+    * path (PathLike): path to check.
     """
-    if not os.path.exists(path):
+    path = pathlib.Path(path)
+    if not path.exists():
         raise ValueError('"{}" does not exist'.format(path))
-    if not os.path.isfile(path):
+    if not path.is_file():
         raise ValueError('"{}" is not a regular file'.format(path))
 
 
@@ -254,10 +260,14 @@ def ensure_is_directory(path):
     Check that a file exists and is a directory.
 
     Raises an exception on failure and does nothing on success
+
+    Args:
+    * path (PathLike): path to check.
     """
-    if not os.path.exists(path):
+    path = pathlib.Path(path)
+    if not path.exists():
         raise ValueError('"{}" does not exist'.format(path))
-    if not os.path.isdir(path):
+    if not path.is_dir():
         raise ValueError('"{}" is not a directory'.format(path))
 
 

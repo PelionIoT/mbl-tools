@@ -22,13 +22,14 @@ Makefile, we'll run BitBake directly.
 
 import argparse
 import os
+import pathlib
 import shutil
 import subprocess
 import sys
 
 import file_util
 
-SCRIPTS_DIR = os.path.dirname(os.path.realpath(__file__))
+SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent
 
 DEFAULT_MANIFEST_REPO = (
     "ssh://git@github.com/armPelionEdge/manifest-pelion-os-edge"
@@ -36,7 +37,14 @@ DEFAULT_MANIFEST_REPO = (
 
 
 def _create_workarea(workdir, manifest_repo, branch):
-    """Download repos required for pelion-os-edge build."""
+    """
+    Download repos required for pelion-os-edge build.
+
+    Args:
+    * workdir (Path): top level of work area.
+    * manfiest_repo (str): URI of repo containing the project manifest.
+    * branch (str): branch of repo containing the project manifest.
+    """
     subprocess.run(
         ["repo", "init", "-u", manifest_repo, "-b", branch],
         cwd=workdir,
@@ -46,10 +54,15 @@ def _create_workarea(workdir, manifest_repo, branch):
 
 
 def _build(workdir):
-    """Kick off a build of the workarea."""
+    """
+    Kick off a build of the workarea.
+
+    Args:
+    * workdir (Path): top level of work area.
+    """
     subprocess.run(
         [
-            os.path.join(SCRIPTS_DIR, "pelion-os-edge-bitbake-wrapper.sh"),
+            SCRIPTS_DIR / "pelion-os-edge-bitbake-wrapper.sh",
             workdir,
             "console-image",
         ],
@@ -58,34 +71,44 @@ def _build(workdir):
 
 
 def _inject_mcc(workdir, path):
-    """Add Mbed Cloud Client credentials into the build."""
+    """
+    Add Mbed Cloud Client credentials into the build.
+
+    Args:
+    * workdir (Path): top level of work area.
+    * path (Path): path to file to inject into build.
+
+    """
     shutil.copy(
         path,
-        os.path.join(
-            workdir,
-            "poky",
-            "meta-pelion-os-edge",
-            "recipes-wigwag",
-            "mbed-edge-core",
-            "files",
-        ),
+        workdir
+        / "poky"
+        / "meta-pelion-os-edge"
+        / "recipes-wigwag"
+        / "mbed-edge-core"
+        / "files",
     )
 
 
 def _set_up_git():
     """Initialize a sane git setup."""
-    subprocess.run([os.path.join(SCRIPTS_DIR, "git-setup.sh")], check=True)
+    subprocess.run([SCRIPTS_DIR / "git-setup.sh"], check=True)
 
 
 def _set_up_container_ssh():
     """Initialize a sane SSH setup."""
-    subprocess.run(os.path.join(SCRIPTS_DIR, "ssh-setup.sh"), check=True)
+    subprocess.run([SCRIPTS_DIR / "ssh-setup.sh"], check=True)
 
 
 def _set_up_bitbake_ssh(workdir):
-    """Configure BitBake to allow use of ssh-agent."""
-    localconf_path = os.path.join(
-        workdir, "poky", "meta-pelion-os-edge", "conf", "local.conf.sample"
+    """
+    Configure BitBake to allow use of ssh-agent.
+
+    Args:
+    * workdir (Path): top level of work area.
+    """
+    localconf_path = (
+        workdir / "poky" / "meta-pelion-os-edge" / "conf" / "local.conf.sample"
     )
 
     # Add some BitBake config to allow BitBake tasks to read the SSH_AUTH_SOCK
@@ -98,11 +121,26 @@ def _set_up_bitbake_ssh(workdir):
 
 
 def _set_up_download_dir(download_dir):
-    """Set the dir used for BitBake's downloads."""
+    """
+    Set the directory used for BitBake's downloads.
+
+    Args:
+    * download_dir (Path): directory to use for BitBake's downloads.
+    """
     if not download_dir:
         return
 
-    os.environ["DL_DIR"] = os.path.realpath(download_dir)
+    os.environ["DL_DIR"] = str(pathlib.Path(download_dir).resolve())
+
+
+def _str_to_resolved_path(path_str):
+    """
+    Convert a string to a resolved Path object.
+
+    Args:
+    * path_str (str): string to convert to a Path object.
+    """
+    return pathlib.Path(path_str).resolve(strict=False)
 
 
 def _parse_args():
@@ -110,6 +148,7 @@ def _parse_args():
     parser.add_argument(
         "--builddir",
         metavar="DIR",
+        type=_str_to_resolved_path,
         help="directory in which to build",
         required=True,
     )
@@ -131,6 +170,7 @@ def _parse_args():
     parser.add_argument(
         "--inject-mcc",
         metavar="FILE",
+        type=_str_to_resolved_path,
         help="add a cloud client credentials file to the build",
         default=[],
         action="append",
@@ -138,12 +178,14 @@ def _parse_args():
     parser.add_argument(
         "--downloaddir",
         metavar="PATH",
+        type=_str_to_resolved_path,
         help="directory used for BitBake's download cache (currently ignored)",
         required=False,
     )
     parser.add_argument(
         "--outputdir",
         metavar="PATH",
+        type=_str_to_resolved_path,
         help="directory in which to place build artifacts",
         required=False,
     )
