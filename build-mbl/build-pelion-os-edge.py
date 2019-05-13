@@ -35,6 +35,7 @@ DEFAULT_MANIFEST_REPO = (
 
 
 def _create_workarea(workdir, manifest_repo, branch):
+    """Download repos required for pelion-os-edge build."""
     subprocess.run(
         ["repo", "init", "-u", manifest_repo, "-b", branch],
         cwd=workdir,
@@ -44,28 +45,44 @@ def _create_workarea(workdir, manifest_repo, branch):
 
 
 def _build(workdir):
-    """
-    Kick off a build of the workarea.
-    """
+    """Kick off a build of the workarea."""
     subprocess.run(
-        [os.path.join(SCRIPTS_DIR, "pelion-os-edge-bitbake-wrapper.sh"), workdir, "console-image"],
-        check=True
+        [
+            os.path.join(SCRIPTS_DIR, "pelion-os-edge-bitbake-wrapper.sh"),
+            workdir,
+            "console-image",
+        ],
+        check=True,
     )
 
 
 def _inject_mcc(workdir, path):
     """Add Mbed Cloud Client credentials into the build."""
-    shutil.copy(path, os.path.join(workdir, "poky", "meta-pelion-os-edge", "recipes-wigwag", "mbed-edge-core", "files"))
+    shutil.copy(
+        path,
+        os.path.join(
+            workdir,
+            "poky",
+            "meta-pelion-os-edge",
+            "recipes-wigwag",
+            "mbed-edge-core",
+            "files",
+        ),
+    )
 
 
 def _set_up_git():
+    """Initialize a sane git setup."""
     subprocess.run([os.path.join(SCRIPTS_DIR, "git-setup.sh")], check=True)
 
 
 def _set_up_container_ssh():
+    """Initialize a sane SSH setup."""
     subprocess.run(os.path.join(SCRIPTS_DIR, "ssh-setup.sh"), check=True)
 
+
 def _set_up_bitbake_ssh(workdir):
+    """Configure BitBake to allow use of ssh-agent."""
     localconf_path = os.path.join(
         workdir, "poky", "meta-pelion-os-edge", "conf", "local.conf.sample"
     )
@@ -78,12 +95,14 @@ def _set_up_bitbake_ssh(workdir):
         localconf.write('BB_HASHBASE_WHITELIST_append = " SSH_AUTH_SOCK"\n')
         localconf.write('BB_HASHCONFIG_WHITELIST_append = " SSH_AUTH_SOCK"\n')
 
-def _set_up_download_dir(download_dir):
 
+def _set_up_download_dir(download_dir):
+    """Set the dir used for BitBake's downloads."""
     if not download_dir:
         return
 
-    os.environ['DL_DIR'] = os.path.realpath(download_dir)
+    os.environ["DL_DIR"] = os.path.realpath(download_dir)
+
 
 def _parse_args():
     parser = argparse.ArgumentParser()
@@ -118,7 +137,7 @@ def _parse_args():
     parser.add_argument(
         "--downloaddir",
         metavar="PATH",
-        help="path to directory used for BitBake's download cache (currently ignored)",
+        help="directory used for BitBake's download cache (currently ignored)",
         required=False,
     )
     parser.add_argument(
@@ -171,6 +190,7 @@ def main():
 
     _set_up_bitbake_ssh(args.builddir)
     _build(args.builddir)
+
 
 if __name__ == "__main__":
     sys.exit(main())
