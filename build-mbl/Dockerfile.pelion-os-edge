@@ -102,6 +102,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		lockfile-progs \
 		software-properties-common
 
+COPY ./dash.selections.pelion-os-edge /tmp/dash.selections
+RUN debconf-set-selections /tmp/dash.selections \
+&& dpkg-reconfigure -fnoninteractive dash
+
 # install i386 deps for the nodejs build
 
 RUN dpkg --add-architecture i386 \
