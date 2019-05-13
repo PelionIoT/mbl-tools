@@ -5,13 +5,19 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """
-Script to create and build a pelion-os-edge workarea.
+Script to create and build a pelion-os-edge workarea inside a container.
+
+This script:
+    * Sets up SSH and Git in the container.
+    * Creates and initializes a pelion-os-edge workarea.
+    * Adds Pelion Device Management credentials to the workarea.
+    * Makes some configuration tweaks.
+    * Builds a pelion-os-edge image.
 
 The pelion-os-edge project already contains a Makefile that creates and runs a
-container to build the workarea. Therefore, this script:
-    * Creates and initializes a pelion-os-edge workarea.
-    * Makes some configuration tweaks.
-    * Runs the provided Makefile to kick off a build.
+container to build the workarea. This script is already running in a container
+though, so to avoid having nested containers, we won't use pelion-os-edge's
+Makefile, we'll run BitBake directly.
 """
 
 import argparse
@@ -166,4 +172,5 @@ def main():
     _set_up_bitbake_ssh(args.builddir)
     _build(args.builddir)
 
-main()
+if __name__ == "__main__":
+    sys.exit(main())
