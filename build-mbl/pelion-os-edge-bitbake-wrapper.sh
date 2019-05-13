@@ -9,5 +9,11 @@ set -u
 
 WORKAREA="$1"; shift;
 cd "${WORKAREA}/poky"
+
+set +u
+set +e
 TEMPLATECONF=meta-pelion-os-edge/conf source oe-init-build-env
+set -e
+set -u
+
 bitbake "$@"
