@@ -250,7 +250,7 @@ if [ -z "${SSH_AUTH_SOCK+false}" ]; then
   exit 4
 fi
 
-docker build -f "$dockerfile" -t "$imagename" "$execdir"
+docker build -f "$execdir/$dockerfile" -t "$imagename" "$execdir"
 
 if [ -n "${external_manifest:-}" ]; then
   name="$(basename "$external_manifest")"
