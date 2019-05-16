@@ -83,7 +83,7 @@ def _inject_mcc(workdir, path):
         path,
         workdir
         / "poky"
-        / "meta-pelion-os-edge"
+        / "meta-pelion-edge"
         / "recipes-wigwag"
         / "mbed-edge-core"
         / "files",
@@ -108,7 +108,7 @@ def _set_up_bitbake_ssh(workdir):
     * workdir (Path): top level of work area.
     """
     localconf_path = (
-        workdir / "poky" / "meta-pelion-os-edge" / "conf" / "local.conf.sample"
+        workdir / "poky" / "meta-pelion-edge" / "conf" / "local.conf.sample"
     )
 
     # Add some BitBake config to allow BitBake tasks to read the SSH_AUTH_SOCK
