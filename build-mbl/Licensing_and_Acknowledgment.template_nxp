@@ -8,5 +8,4 @@
     in the supplied disk image;
   build.txt & pinned-manifest.xml - contains the environment and build
     command to recreate the content.
-  environment and build commands to recreate the content.
 
