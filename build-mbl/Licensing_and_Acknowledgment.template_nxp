@@ -4,6 +4,8 @@
   agree to this license. The Software Content Register, as required by the
   NXP EULA, is covered by the following files in this archive:
   *.manifest - all these files list the software and respective licenses
-  in the supplied disk image build.txt & pinned-manifest.xml - contains the
+    in the supplied disk image;
+  build.txt & pinned-manifest.xml - contains the environment and build
+    command to recreate the content.
   environment and build commands to recreate the content.
 
