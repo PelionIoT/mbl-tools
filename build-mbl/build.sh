@@ -385,6 +385,15 @@ create_binary_release_readme()
     -e "s|__REPLACE_ME_WITH_MACHINE__|$machine|g" \
     -e "s|__REPLACE_ME_WITH_COMPRESS_EXTENSION__|$(compress_extension)|g" \
     "${execdir}/README.binary_release_template" > "${artifact_image_dir}/README"
+
+  case "$machine" in
+    imx8mmevk-mbl)
+      cat "${execdir}/Licensing_and_Acknowledgment.template_nxp" >> "${artifact_image_dir}/README"
+      ;;
+    *)
+      ;;
+  esac
+
 }
 
 find_license_manifest_dir()
