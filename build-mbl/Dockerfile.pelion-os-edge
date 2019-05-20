@@ -1,0 +1,162 @@
+FROM ubuntu:18.04
+
+# if running as a jenkins slave:
+# 1. docker build --tag jenkins/ww-build-env:latest --build-arg mode=jenkins .
+# 2. docker run with the following options:
+#	-d # daemonize
+#	-u root:root # run as root for permission to start sshd in the container
+#	-p 2222:22 # map host port 2222 to container port 22 for sshd
+#	--privileged=true # needed for mount/umount operations inside Jenkins jobs
+#	--device /dev/loop0:/dev/loop0 # Map loopback devices so they can be
+#	--device /dev/loop1:/dev/loop1 # used by jobs (e.g. the build diff job)
+#	--device /dev/loop2:/dev/loop2 # to mount partitions in image files.
+#	--device /dev/loop3:/dev/loop3 # We mount as many as we can because
+#	--device /dev/loop4:/dev/loop4 # they are shared across the entire host
+#	--device /dev/loop5:/dev/loop5 # so this maximizes the chances to find
+#	--device /dev/loop6:/dev/loop6 # a free loopback device even when there
+#	--device /dev/loop7:/dev/loop7 # are other builds/jobs running.
+#	-v jenkins-data:/home/jenkins # persistent jenkins storage on the host is mapped to $HOME
+#	 <image-name>:latest # the name of the image produced by this Dockerfile
+#	 /usr/sbin/sshd -D # start sshd
+#    A note about the persistent storage: The left-hand argument is specified
+#    from the perspective of the host running the docker daemon, i.e., the
+#    original owner of /var/run/docker.sock, not the perspective of any
+#    intermediate docker container.  For example, if we are trying to share
+#    the jenkins home directory between a Jenkins master and a Jenkins slave
+#    (this Dockerfile) running on the same host, and we docker-exec into the
+#    Jenkins master container, we see that jenkins $HOME is /var/jenkins_home/
+#    and that it is full of files and folders.  However, it would be incorrect
+#    for us to specify /var/jenkins_home as the left-hand argument to this
+#    container here because /var/jenkins_home may not exist on the host, or
+#    may be empty.  In other words, the folder /var/jenkins_home in the
+#    master container could be mapped from somewhere else on the host.  To find
+#    out for sure, we need to docker-inspect the Jenkins master container
+#    and look at its Volumes and Mounts.
+# 3. add the master's public ssh key to the slave's authorized_keys
+#    docker exec -it <slave-container> /bin/bash
+#	note: on the current jenkins master, the pubkey is
+#		/var/jenkins_home/.ssh/id_rsa.pub
+# 	paste the master's jenkins user pubkey into
+#		/home/jenkins/.ssh/authorized_keys
+#	exit
+# 4. add the slave's sshd server key to the master's known_hosts file
+#	on the master:
+#	su - jenkins
+#	ssh -p 2222 <IP of host running jenkins slave>
+#		The authenticity of host '[172.17.0.1]:2222 ([172.17.0.1]:2222)' can't be established.
+#		ECDSA key fingerprint is SHA256:xqVNaUF5TUniMjSV9PJkhB9gG5N6bI3vBu1Qmn4F5v8.
+#		Are you sure you want to continue connecting (yes/no)? yes
+#		Warning: Permanently added '[172.17.0.1]:2222' (ECDSA) to the list of known hosts.
+
+RUN apt-get update && apt-get install locales \
+    && dpkg-reconfigure locales \
+    && locale-gen en_US.UTF-8 \
+    && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+		screen \
+		sudo \
+		emacs-nox \
+		ssh \
+		git \
+		vim \
+		curl \
+		net-tools \
+		debconf-utils \
+		lsb-release \
+		lockfile-progs \
+		pxz \
+		rsync \
+		file
+
+# install dependencies from Travis
+RUN apt-get update && apt-get install -y --no-install-recommends \
+		build-essential \
+		chrpath \
+		cpio \
+		diffstat \
+		debianutils \
+		gawk \
+		g++-multilib \
+		gcc-multilib \
+		git \
+		git-core \
+		libcap-dev \
+		libcrypto++-dev \
+		libncursesw5-dev \
+		libssl-dev \
+		libsdl1.2-dev \
+		python \
+		python3 \
+		python3-pip \
+		python3-pexpect \
+		python-pip \
+		python-virtualenv \
+		socat \
+		texinfo \
+		unzip \
+		wget \
+		xterm \
+		zlib1g-dev \
+		cron \
+		lockfile-progs \
+		software-properties-common
+
+COPY ./dash.selections.pelion-os-edge /tmp/dash.selections
+RUN debconf-set-selections /tmp/dash.selections \
+&& dpkg-reconfigure -fnoninteractive dash
+
+# install i386 deps for the nodejs build
+
+RUN dpkg --add-architecture i386 \
+&& apt-get update && apt-get install -y --no-install-recommends \
+		g++-multilib \
+		libssl-dev:i386 \
+		libcrypto++-dev:i386 \
+		zlib1g-dev:i386
+
+# additional build utilities
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        u-boot-tools
+
+# additional packages required by the upgrade diff tool
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        coreutils \
+        grep \
+        gzip \
+        mount \
+        openssl \
+        tar \
+        util-linux \
+        xz-utils
+
+# if we're building a jenkins agent, we must also install openjdk
+# and an ssh server so the master can log in
+ARG mode
+RUN if [ "$mode" = "jenkins" ]; then \
+	apt-get update && apt-get install -y --no-install-recommends \
+		gpg-agent \
+		openjdk-8-jdk \
+		openjdk-8-jre \
+		openssh-server; \
+	mkdir -p /var/run/sshd; \
+	sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd; \
+fi
+
+# Get Google's repo tool
+RUN mkdir -p /usr/local/bin \
+    && curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo \
+    && chmod a+x "/usr/local/bin/repo"
+
+# Packages required for Google's repo tool
+RUN apt-get update && apt-get install -y gpg-agent
+
+ENV LANG en_US.UTF-8
+
+# Scripts used to build pelion-os-edge image
+COPY build-pelion-os-edge.py file_util.py pelion-os-edge-bitbake-wrapper.sh git-setup.sh ssh-setup.sh ./
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Use the 'exec' form of ENTRYPOINT to ensure that docker run
+# invocation arguments are appended to the command line.
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
