@@ -49,15 +49,12 @@ protocols:
     packages:
     - avahi-utils
     - python3-venv
-    prompts:
-      - "root@{{ lxc_name }}-(.*):/#"
 
 - boot:
     namespace: lxc
     method: lxc
     timeout:
       minutes: 5
-    failure-retry: 3
     prompts:
       - "root@{{ lxc_name }}-(.*):/#"
 {% endif %}
