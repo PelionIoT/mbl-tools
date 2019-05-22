@@ -22,6 +22,8 @@
 - boot:
     namespace: target
     method: minimal
+    # We don't power cycle because the rootfs update has rebooted the DUT
+    reset: false
     auto_login:
         login_prompt: 'lava-mbed-linux-os-(.*) login:'
         username: 'root'
