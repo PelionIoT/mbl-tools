@@ -38,7 +38,8 @@ RUN apt-get update && apt-get install -y \
     xterm \
     xz-utils
 
-RUN apt-get update && apt-get install gosu && pip3 install dohq-artifactory && pip3 install yattag
+RUN apt-get update && apt-get install gosu
+RUN pip3 install dohq-artifactory && pip3 install yattag
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
