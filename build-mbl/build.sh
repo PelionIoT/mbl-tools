@@ -97,24 +97,6 @@ default_distro="mbl"
 default_images="mbl-image-development"
 default_accept_eula_machines=""
 default_lic_cmp_build_tag=""
-# Set of license package name (PN) exceptions
-# This hash array uses a key (PN) created from reading the recipeinfo
-# Then the key is replaced with a value found in this array so that the bitbake
-# environment display command will find the right package
-declare -A license_package_exceptions
-license_package_exceptions=(
-  ["binutils-cross-arm"]="binutils-cross"
-  ["docker"]="docker/docker"
-  ["gcc-cross-arm"]="gcc-cross"
-  ["gcc-cross-initial-arm"]="gcc-cross-initial"
-  ["gnu-config"]="gnu-config_git"
-  ["go-cross-arm"]="go-cross"
-  ["kmod"]="kmod_git"
-  ["libtool"]="libtool-native"
-  ["mbl-image-production"]="mbl-image-production.bb"
-  ["ncurses"]="ncurses/ncurses"
-  ["packagegroup-mbl"]="packagegroup-mbl.bb")
-
 # Test if a machine name appears in the all_machines list.
 #
 
