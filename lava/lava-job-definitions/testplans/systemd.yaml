@@ -1,0 +1,20 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "systemd tests" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "systemd-lxc" %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+
+    {{ macros.mbl_avahi_discovery_test() | indent }}
+
+    {{ macros.install_mbl_cli(venv_name) | indent }}
+
+    {{ macros.systemd_tests(venv_name) | indent }}
+
+{% endblock testplan %}

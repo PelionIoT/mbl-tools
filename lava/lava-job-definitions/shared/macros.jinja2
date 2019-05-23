@@ -46,3 +46,7 @@
 {% macro build_hello_world() %}
     {% include "shared/tests/build-helloworld.yaml" %}
 {% endmacro %}
+
+{% macro systemd_tests(venv_name) %}
+   {%include "shared/tests/systemd_tests.yaml" %}
+{% endmacro %}
