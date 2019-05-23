@@ -24,7 +24,6 @@ and updated licenses flagged.
 
 
 import argparse
-import html
 import json
 import os
 import pathlib
