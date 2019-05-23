@@ -4,7 +4,7 @@
 <head>
 
 <title>
-__TITLE__
+    {{title}}
 </title>
 
 <style>
@@ -45,3 +45,25 @@ __TITLE__
 }
 </style>
 </head>
+<body>
+    <table id=rlist>
+        <tr>
+        {% for header in license_headers %}
+            <th>{{header}}</th>
+        {% endfor %}
+            {% for item in licenses %}
+                <tr>
+                {% for header in license_headers %}
+                    {% if licenses[item][header]["LICENSE STATUS"] == "NEW" %}
+                        <td class=new>{{licenses[item][header]}}</td>
+                    {% elif licenses[item][header]["LICENSE STATUS"] == "UPDATED" %}
+                        <td class=update>{{licenses[item][header]}}</td>
+                    {% else %}
+                        <td>{{licenses[item][header]}}</td>
+                    {% endif %}
+                {% endfor %}
+                </tr>
+            {% endfor %}
+        </tr>
+    </table>
+</body>

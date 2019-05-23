@@ -35,11 +35,10 @@ import tempfile
 from collections import OrderedDict
 
 import artifactory
-import yattag
+import jinja2
 
 
 EXECDIR = pathlib.Path(__file__).resolve().parent
-
 
 ARTIFACTORY_PREFIX = (
     "https://artifactory.mbed.com/artifactory/isg-mbed-linux/mbed-linux/"
@@ -65,14 +64,19 @@ def make_html(data, image_name, machines, output_dir):
             name = "{}_{}_{}.html".format(
                 image_name, "_".join(machines), manifest.split(".json")[0]
             )
-            html_page = LicenseReportHTML(
-                os.path.join(*output_dir, name), name
+            env = jinja2.Environment(
+                loader=jinja2.FileSystemLoader(str(EXECDIR)),
+                autoescape=jinja2.select_autoescape(["html"]),
             )
-            html_page.add_table(
-                data[manifest][pkg_name].keys(), data[manifest]
+            template = env.get_template("template.html")
+            html_str = template.render(
+                title=name,
+                license_headers=list(data[manifest][pkg_name].keys()),
+                licenses=data[manifest],
             )
-            html_page.save()
-            break
+            with open(str(pathlib.Path(output_dir, name)), "w") as html_file:
+                html_file.write(html_str)
+                break
 
 
 def get_or_download_lics(lic_src, machines, img, apikey=None):
@@ -169,63 +173,6 @@ def get_latest_artifactory_build_tag(build_name, current_build_tag, api_key):
         if last_build_tag != current_build_tag
         else penultimate_tag
     ]
-
-
-class LicenseReportHTML:
-    """An HTML page containing a table of licenses."""
-
-    def __init__(self, fname, page_title):
-        """Initialise the HTML page with a template."""
-        self.file_name = fname
-        self.doc, self.tag, self.text, self.line = yattag.Doc().ttl()
-        self._init_template(page_title)
-
-    def add_table(self, headers, body):
-        """Add a table to the HTML page."""
-        with self.tag("body"):
-            with self.tag("table", id="rlist"):
-                with self.tag("tr"):
-                    for hdr in headers:
-                        self.line("th", hdr)
-                    for item in body:
-                        with self.tag("tr"):
-                            for hdr in headers:
-                                self._add_line(
-                                    body[item][hdr],
-                                    body[item]["LICENSE STATUS"],
-                                )
-
-    def to_string(self):
-        """Dump out the HTML object as a formatted string."""
-        return yattag.indent(
-            self.doc.getvalue(),
-            indentation="    ",
-            newline="\r\n",
-            indent_text=True,
-        )
-
-    def save(self):
-        """Save the HTML to a file on disk."""
-        tgt_path = pathlib.Path(self.file_name)
-        tgt_path.parent.mkdir(exist_ok=True, parents=True)
-        with open(str(tgt_path), "w") as f:
-            f.write(self.to_string())
-
-    def _init_template(self, page_title):
-        """Initialise the template which dictates the page style."""
-        with open(os.path.join(str(EXECDIR), "template.html")) as t:
-            raw_html = html.unescape(t.read())
-            raw_html = raw_html.replace("__TITLE__", page_title)
-            self.doc.asis(raw_html)
-
-    def _add_line(self, txt, status):
-        """Add a row to the table; set the HTML class flags."""
-        if status == "NEW":
-            self.line("td", txt, klass="new")
-        elif status == "UPDATED":
-            self.line("td", txt, klass="update")
-        else:
-            self.line("td", txt)
 
 
 class ArtifactoryError(Exception):
@@ -349,18 +296,53 @@ def _make_manifest_dicts(lic_paths, manifests):
 def _parse_args():
     """Parse command line."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("build_tag")
-    parser.add_argument("--lics-to-review", nargs="+", required=True)
-    parser.add_argument("--lics-to-compare", nargs="+")
-    parser.add_argument("--images", nargs="+")
-    parser.add_argument("--apikey")
-    parser.add_argument("--html", nargs=1)
+    parser.add_argument(
+        "build_tag",
+        help=(
+            "Build tag of the current build. "
+            "Used in the title of the report and used to verify "
+            "Artifactory downloads."
+        ),
+    )
+    parser.add_argument(
+        "--lics-to-review",
+        nargs="+",
+        required=True,
+        help=(
+            "Licenses to review. "
+            "Can either be a list of filepaths or an Artifactory build tag."
+        ),
+    )
+    parser.add_argument(
+        "--lics-to-compare",
+        nargs="+",
+        help=(
+            "Licenses to compare against. "
+            "This can either be a list of filepaths or an Artifactory build "
+            "tag."
+            "If this option is not given look for the 'last' build in "
+            "Artifactory."
+        ),
+    )
+    parser.add_argument(
+        "--images",
+        nargs="+",
+        help=(
+            "Images to check licenses for. For example: mbl-image-development."
+        ),
+    )
+    parser.add_argument("--apikey", help="Artifactory API key.")
+    parser.add_argument(
+        "--html",
+        metavar="OUTPUT_DIR",
+        help="Output an HTML report at the specified location.",
+    )
     parser.add_argument("--machines", nargs="+")
     parser.add_argument(
         "--build-context",
         help=(
             "The build context, e.g. isg-mbed-linux or "
-            "isg-mbed-linux-release"
+            "isg-mbed-linux-release."
         ),
         default="isg-mbed-linux",
         type=_set_artifactory_prefix,
