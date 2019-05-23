@@ -9,18 +9,13 @@
       minutes: 20
     namespace: target
     definitions:
-    {{ macros.mbl_test_dependency() | indent }}
 
-    {# This test is disabled because it crashes RPi3 device types:
-       See IOTMBL-1765 and IOTMBL-1766 #}
-    {% if device_type not in ["bcm2837-rpi-3-b-32", "bcm2837-rpi-3-b-plus-32"] %}
     - path: automated/linux/optee/optee-xtest.yaml
       repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
       history: false
       name: optee-xtest
       from: git
       branch: linaro-mbl
-    {% endif %}
 
     - path: automated/linux/mbl/mbl_auto.yaml
       repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
@@ -43,19 +38,4 @@
       from: git
       branch: linaro-mbl
 
-    {{ macros.mbl_component_test("application-framework") | indent }}
-
-    {{ macros.mbl_component_test("cloud-services") | indent }}
-
-    {% set fm_setup = "python3 firmware-management/mbl-app-manager/tests/native/test_case_generator_mbl-app-manager.py -o /home/app -v" %}
-    {% set fm_teardown = "/bin/rm -rf /home/app/*" %}
-    {{ macros.mbl_component_test("firmware-management", fm_setup, fm_teardown) | indent }}
-
-    {{ macros.mbl_component_test("management-agents") | indent }}
-
-    {{ macros.mbl_component_test("mbl-core") | indent }}
-
-    {{ macros.mbl_component_test("platform-services") | indent }}
-
-    {{ macros.mbl_component_test("secure-services") | indent }}
 {% endblock testplan %}
