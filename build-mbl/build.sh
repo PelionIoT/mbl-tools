@@ -96,7 +96,7 @@ default_url="git@github.com:ARMmbed/mbl-manifest.git"
 default_distro="mbl"
 default_images="mbl-image-development"
 default_accept_eula_machines=""
-
+default_lic_cmp_build_tag=""
 # Set of license package name (PN) exceptions
 # This hash array uses a key (PN) created from reading the recipeinfo
 # Then the key is replaced with a value found in this array so that the bitbake
@@ -644,7 +644,7 @@ if [ "$flag_licenses" -eq 1 ]; then
 fi
 
 if [ -z "${lic_cmp_build_tag:-}" ]; then
-  lic_cmp_build_tag=""
+  lic_cmp_build_tag="$default_lic_cmp_build_tag"
 fi
 
 if [ -z "${branch:-}" ]; then
