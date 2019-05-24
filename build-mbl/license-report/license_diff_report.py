@@ -382,7 +382,7 @@ def _main():
             # Create output files if required
             if diffs:
                 diff_path = pathlib.Path(
-                    args.html[0],
+                    args.html,
                     image,
                     "{}_diffs.json".format("_".join(machines)),
                 )
@@ -393,6 +393,7 @@ def _main():
             if args.html:
                 make_html(sorted_report, image, machines, args.html)
     except Exception as err:
+        raise
         # Don't raise to the interpreter level as this script shouldn't fail
         # even if the license report creation fails.
         print(err, file=sys.stderr)
