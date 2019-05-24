@@ -793,7 +793,7 @@ while true; do
 
   pin)
     (cd "$builddir/mbl-manifest"
-     repo manifest -r -o "$builddir/pinned-manifest.xml"
+     repo --no-pager manifest -r -o "$builddir/pinned-manifest.xml"
     )
 
     # If we are saving build artifacts, then save them as they are
