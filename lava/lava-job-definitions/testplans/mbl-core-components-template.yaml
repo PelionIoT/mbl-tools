@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "Core/Linaro Tests" %}
+{% set job_name = "Core Component Tests" %}
 {% set lxc_creation = false %}
 
 {% block testplan %}
