@@ -96,25 +96,7 @@ default_url="git@github.com:ARMmbed/mbl-manifest.git"
 default_distro="mbl"
 default_images="mbl-image-development"
 default_accept_eula_machines=""
-
-# Set of license package name (PN) exceptions
-# This hash array uses a key (PN) created from reading the recipeinfo
-# Then the key is replaced with a value found in this array so that the bitbake
-# environment display command will find the right package
-declare -A license_package_exceptions
-license_package_exceptions=(
-  ["binutils-cross-arm"]="binutils-cross"
-  ["docker"]="docker/docker"
-  ["gcc-cross-arm"]="gcc-cross"
-  ["gcc-cross-initial-arm"]="gcc-cross-initial"
-  ["gnu-config"]="gnu-config_git"
-  ["go-cross-arm"]="go-cross"
-  ["kmod"]="kmod_git"
-  ["libtool"]="libtool-native"
-  ["mbl-image-production"]="mbl-image-production.bb"
-  ["ncurses"]="ncurses/ncurses"
-  ["packagegroup-mbl"]="packagegroup-mbl.bb")
-
+default_lic_cmp_build_tag=""
 # Test if a machine name appears in the all_machines list.
 #
 
@@ -199,74 +181,6 @@ define_conf()
     mv -f "$path.new" "$path"
   fi
   rm -f "$path.new"
-}
-
-# Extract the bitbake information into an env file, or store the failed output
-# in an out file for later review
-
-extra_bitbake_info()
-{
-  local package="$1"
-  local output_path="$2"
-  local tmpf="$output_path/bitbake.out"
-  local envf="$output_path/bitbake.env"
-  local ret
-  printf "%s\nbitbake -e -b %s\n" "$(date)" "$package" >> "$tmpf"
-  bitbake -e -b "$package" >> "$tmpf" 2>&1
-  ret=$?
-  if [ $ret -eq 0 ]; then
-    # Extract the license extra information
-    grep -E '^(LICENSE=|SUMMARY=|HOMEPAGE=|PV=|PN=|PR=|PF=)' "$tmpf" > "$envf"
-    rm -f "$tmpf"
-  fi
-  return $ret
-}
-
-# Get all the extra bitbake information for all the packages used in
-# the build to help with license review
-
-retrieve_extra_package_info()
-{
-  local bblicenses=$1
-  local packages
-  local pn
-  local pvn
-  local pvn_short
-  local pkg
-  local pvstr
-
-  packages=$(ls -1 "$bblicenses")
-  for pkg in $packages; do
-    printf "%s: retrieving extra bitbake package info\n" "$pkg"
-
-    if [ -f "$bblicenses/$pkg/recipeinfo" ]; then
-      # Package name without native extension
-      pn=${pkg/-native/}
-
-      # Check for PN exceptions (replacing the package name if found)
-      pn=${license_package_exceptions[$pn]:-$pn}
-
-      # Make full package version name (to match bb file)
-      pvstr=$(grep -E '^PV:' "$bblicenses/$pkg/recipeinfo")
-      pvn="${pn}_${pvstr/PV: /}"
-
-      # Create short pvn (without last digit of version and following string)
-      # E.g. flibble_1.0.7+git0ef3 becomes flibble_1.0
-      # Complex reg expression, so can't use bash search/replace
-      # shellcheck disable=SC2001
-      pvn_short=$(echo "$pvn" | sed -e 's|\(.*\)\.[^.]*$|\1|')
-
-      # First try the PVN, then the short PVN and finally the PN to get the
-      # package information
-      if ! ( extra_bitbake_info "$pvn" "$bblicenses/$pkg" ||
-             extra_bitbake_info "$pvn_short" "$bblicenses/$pkg" ||
-             extra_bitbake_info "$pn" "$bblicenses/$pkg" ); then
-        printf "warning: could not retrieve bitbake info for %s (%s in %s)\n" "$pvn" "$pkg" "$bblicenses" >&2
-      fi
-    else
-      printf "note: ignoring package %s as no recipeinfo\n" "$pkg" >&2
-    fi
-  done
 }
 
 ## Setup the yocto source archiver
@@ -396,6 +310,27 @@ create_binary_release_readme()
 
 }
 
+create_license_report()
+{
+  local build_lic_paths=${1:?Missing license-paths parameter of ${FUNCNAME[0]}}
+  local prev_build_tag="$2"
+  local api_key="$3"
+  local html_output_dir=${4:?Missing html_output_dir parameter of ${FUNCNAME[0]}}
+  local machines=${5:?Missing machines parameter of ${FUNCNAME[0]}}
+
+  "./license_diff_report.py" "$build_tag" \
+                             --lics-to-review "$build_lic_paths" \
+                             --lics-to-compare "$prev_build_tag" \
+                             --images "$images" \
+                             --machines "$machines" \
+                             --apikey "$api_key" \
+                             --html "$html_output_dir"
+
+  mkdir -p "$outputdir/license-reports"
+  # Copy the HTML report(s) to the artifact dir
+  mv "$html_output_dir/"*.manifest.html "$outputdir/license-reports"
+}
+
 find_license_manifest_dir()
 {
   local image=${1:?Missing image parameter of ${FUNCNAME[0]}}
@@ -431,13 +366,16 @@ artifact_image_manifests()
   license_manifest_dir=$(find_license_manifest_dir "$image" "$machine")
   cp "${license_manifest_dir}/license.manifest" "${artifact_image_dir}/license.manifest"
   cp "${license_manifest_dir}/image_license.manifest" "${artifact_image_dir}/image_license.manifest"
-
+  cp "${license_manifest_dir}/image_license.manifest.json" "${artifact_image_dir}/image_license.manifest.json"
+  cp "${license_manifest_dir}/license.manifest.json" "${artifact_image_dir}/license.manifest.json"
   # Don't exit (due to "set -e") if we can't find initramfs image license
   # manifests - we may not have an initramfs image on some platforms
   local initramfs_license_manifest_dir
   if initramfs_license_manifest_dir=$(find_license_manifest_dir mbl-image-initramfs "$machine"); then
     cp "${initramfs_license_manifest_dir}/license.manifest" "${artifact_image_dir}/initramfs-license.manifest"
     cp "${initramfs_license_manifest_dir}/image_license.manifest" "${artifact_image_dir}/initramfs-image_license.manifest"
+    cp "${initramfs_license_manifest_dir}/license.manifest.json" "${artifact_image_dir}/initramfs-license.manifest.json"
+    cp "${initramfs_license_manifest_dir}/image_license.manifest.json" "${artifact_image_dir}/initramfs-image_license.manifest.json"
   fi
 }
 
@@ -551,7 +489,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,licenses-buildtag:,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -572,6 +510,10 @@ while [ $# -gt 0 ]; do
 
   --archive-source)
     flag_archiver=original
+    ;;
+
+  --artifactory-api-key)
+    opt_prev=artifactory_api_key
     ;;
 
   --binary-release)
@@ -635,6 +577,10 @@ while [ $# -gt 0 ]; do
     flag_licenses=1
     ;;
 
+  --licenses-buildtag)
+    opt_prev=lic_cmp_build_tag
+    ;;
+
   --machine)
     opt_append=machines
     ;;
@@ -666,6 +612,21 @@ done
 if [ -n "${external_manifest:-}" ] && [ -n "${manifest:-}" ]; then
   printf "error: --external-manifest and --manifest are mutually exclusive.\n" >&2
   exit 3
+fi
+
+if [ "$flag_licenses" -eq 1 ]; then
+  if [ -z "${artifactory_api_key:-}" ]; then
+    printf "error: --licenses also requires --artifactory-api-key \n" >&2
+    exit 3
+  fi
+  if [ -z "${build_tag:-}" ]; then
+      printf "error: --licenses also requires --build_tag\n" >&2
+      exit 3
+  fi
+fi
+
+if [ -z "${lic_cmp_build_tag:-}" ]; then
+  lic_cmp_build_tag="$default_lic_cmp_build_tag"
 fi
 
 if [ -z "${branch:-}" ]; then
@@ -896,11 +857,6 @@ while true; do
        # quoted.
        # shellcheck disable=SC2086
        bitbake $images
-
-       if [ "$flag_licenses" -eq 1 ]; then
-         # Get the extra bitbake package info that aids license review
-         retrieve_extra_package_info "$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc/deploy/licenses"
-       fi
       )
     done
     push_stages artifact
@@ -996,6 +952,22 @@ while true; do
         # ... the license information...
         write_info "save artifact licenses\n"
         tar c -C "$bbtmpdir/deploy" -f "$machinedir/licenses.tar" "licenses"
+
+        if [ "$flag_licenses" -eq 1 ]; then
+          write_info "create license report\n"
+          for image in $images; do
+            for mach in $machines; do
+              # use the license manifests we just copied to the artifact dir
+              build_lic_paths+="${outputdir}/machine/${mach}/images/${image}"
+            done
+          done
+
+          create_license_report "$build_lic_paths" \
+                                "$lic_cmp_build_tag" \
+                                "$artifactory_api_key" \
+                                "$outputdir" \
+                                "$machines"
+        fi
 
         maybe_compress "$machinedir/licenses.tar"
       done
