@@ -301,7 +301,7 @@ create_binary_release_readme()
     "${execdir}/README.binary_release_template" > "${artifact_image_dir}/README"
 
   case "$machine" in
-    imx8mmevk-mbl)
+    imx8mmevk-mbl|imx7d-pico-mbl)
       cat "${execdir}/Licensing_and_Acknowledgment.template_nxp" >> "${artifact_image_dir}/README"
       ;;
     *)
@@ -838,6 +838,9 @@ while true; do
        if [ -n "${build_tag:-}" ]; then
          define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/meta-mbl-distro/conf/distro/mbl.conf" \
                      "DISTRO_VERSION" "$build_tag"
+       fi
+       if [ "${flag_binary_release}" -eq 1 ]; then
+         echo "MACHINE_FEATURES_remove += \"qca9377-bin\"" >> $builddir/machine-$machine/mbl-manifest/conf/local.conf
        fi
        setup_archiver "$builddir/machine-$machine/mbl-manifest/conf/local.conf" "$flag_archiver"
 
