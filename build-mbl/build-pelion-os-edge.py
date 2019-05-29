@@ -286,7 +286,7 @@ def main():
         _inject_mcc(args.builddir, path)
 
     _set_up_bitbake_ssh(args.builddir)
-    # _build(args.builddir)
+    _build(args.builddir)
     _save_artifacts(args.builddir, args.outputdir)
 
 
