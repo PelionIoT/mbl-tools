@@ -11,7 +11,15 @@
     definitions:
     {{ macros.mbl_test_dependency() | indent }}
 
-    {{ macros.mbl_component_test("application-framework") | indent }}
+    {# Use the correct ipk depending on architecture. #}
+    {% if device_type in  ["imx8mmevk-mbl"] %}
+        {# For the arm64 devices get the correct ipk. #}
+        {% set am_setup = "mv /scratch/app-lifecycle-manager-test-package_1.0_any.ipk.arm64 /scratch/app-lifecycle-manager-test-package_1.0_any.ipk" %}
+    {% else %}
+        {# For all else use the default. #}
+        {% set am_setup = "" %}
+    {% endif %}
+    {{ macros.mbl_component_test("application-framework", am_setup) | indent }}
 
     {{ macros.mbl_component_test("cloud-services") | indent }}
 
