@@ -70,6 +70,38 @@ def _build(workdir):
     )
 
 
+def _save_artifacts(workdir, outputdir):
+    """
+    Save artifacts to the output directory.
+
+    Args:
+    * workdir (Path): top level of work area.
+    * outputdir (Path): output directory where to save artifacts.
+    """
+    if outputdir:
+        # Save artifact from deploy/images directory
+        shutil.copytree(
+            workdir / "poky" / "console-image" / "tmp" / "deploy" / "images",
+            outputdir / "images",
+            symlinks=True,
+            ignore=shutil.ignore_patterns("*.cpio.gz", "*.wic"),
+        )
+
+        # Save license info from deply/license directory
+        shutil.copytree(
+            workdir / "poky" / "console-image" / "tmp" / "deploy" / "licenses",
+            outputdir / "licenses",
+        )
+
+        # Save the manifest file from .repo/manifests
+        shutil.copy(
+            workdir / ".repo" / "manifests" / "default.xml",
+            outputdir / "manifest.xml",
+        )
+    else:
+        print("Warning: --outputdir not specified. Not saving artifacts.")
+
+
 def _inject_mcc(workdir, path):
     """
     Add Mbed Cloud Client credentials into the build.
@@ -233,6 +265,7 @@ def main():
 
     _set_up_bitbake_ssh(args.builddir)
     _build(args.builddir)
+    _save_artifacts(args.builddir, args.outputdir)
 
 
 if __name__ == "__main__":
