@@ -26,6 +26,7 @@ import pathlib
 import shutil
 import subprocess
 import sys
+import warnings
 
 import file_util
 
@@ -34,6 +35,25 @@ SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent
 DEFAULT_MANIFEST_REPO = (
     "ssh://git@github.com/armPelionEdge/manifest-pelion-os-edge"
 )
+
+
+def warning_on_one_line(
+    message, category, filename, lineno, file=None, line=None
+):
+    """Format a warning the standard way."""
+    return "{}:{}: {}: {}\n".format(
+        filename, lineno, category.__name__, message
+    )
+
+
+def warning(message):
+    """
+    Issue a UserWarning Warning.
+
+    Args:
+    * message: warning's message
+    """
+    warnings.warn(message, stacklevel=2)
 
 
 def _create_workarea(workdir, manifest_repo, branch):
@@ -99,7 +119,7 @@ def _save_artifacts(workdir, outputdir):
             outputdir / "manifest.xml",
         )
     else:
-        print("Warning: --outputdir not specified. Not saving artifacts.")
+        warning("--outputdir not specified. Not saving artifacts.")
 
 
 def _inject_mcc(workdir, path):
@@ -159,10 +179,10 @@ def _set_up_download_dir(download_dir):
     Args:
     * download_dir (Path): directory to use for BitBake's downloads.
     """
-    if not download_dir:
-        return
-
-    os.environ["DL_DIR"] = str(pathlib.Path(download_dir).resolve())
+    if download_dir:
+        os.environ["DL_DIR"] = str(pathlib.Path(download_dir).resolve())
+    else:
+        warning("--downloaddir not specified. Not setting DL_DIR.")
 
 
 def _str_to_resolved_path(path_str):
@@ -249,6 +269,8 @@ def _parse_args():
 
 def main():
     """Script entry point."""
+    warnings.formatwarning = warning_on_one_line
+
     args = _parse_args()
     _set_up_container_ssh()
     _set_up_git()
@@ -264,7 +286,7 @@ def main():
         _inject_mcc(args.builddir, path)
 
     _set_up_bitbake_ssh(args.builddir)
-    _build(args.builddir)
+    # _build(args.builddir)
     _save_artifacts(args.builddir, args.outputdir)
 
 
