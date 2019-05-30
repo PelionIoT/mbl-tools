@@ -114,7 +114,7 @@ def _save_artifacts(workdir, outputdir):
         )
         output_license_file = outputdir / "licenses.tar.gz"
         with tarfile.open(output_license_file, "w:gz") as tar:
-            tar.add(licenses_path, arcname=os.path.basename(licenses_path))
+            tar.add(licenses_path, arcname=licenses_path.name)
 
         # Save the manifest file from .repo/manifests
         shutil.copy(
