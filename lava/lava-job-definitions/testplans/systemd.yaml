@@ -15,6 +15,16 @@
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {{ macros.systemd_tests(venv_name) | indent }}
+    - path: ci/lava/tests/systemd_tests.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: systemd_tests
+      from: git
+      history: False
+      branch: {{ mbl_branch }}
+      {% if "mbl-core" in mbl_revisions %}
+      revision: {{ mbl_revisions["mbl-core"] }}
+      {% endif %}
+      parameters:
+          virtual_env: {{ venv_name }}
 
 {% endblock testplan %}
