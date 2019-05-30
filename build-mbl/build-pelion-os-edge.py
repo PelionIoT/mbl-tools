@@ -27,6 +27,7 @@ import shutil
 import subprocess
 import sys
 import warnings
+import tarfile
 
 import file_util
 
@@ -107,11 +108,13 @@ def _save_artifacts(workdir, outputdir):
             ignore=shutil.ignore_patterns("*.cpio.gz", "*.wic"),
         )
 
-        # Save license info from deply/license directory
-        shutil.copytree(
-            workdir / "poky" / "console-image" / "tmp" / "deploy" / "licenses",
-            outputdir / "licenses",
+        # Save licenses info from deploy/licenses directory
+        licenses_path = (
+            workdir / "poky" / "console-image" / "tmp" / "deploy" / "licenses"
         )
+        output_license_file = outputdir / "licenses.tar.gz"
+        with tarfile.open(output_license_file, "w:gz") as tar:
+            tar.add(licenses_path, arcname=licenses_path.name)
 
         # Save the manifest file from .repo/manifests
         shutil.copy(
