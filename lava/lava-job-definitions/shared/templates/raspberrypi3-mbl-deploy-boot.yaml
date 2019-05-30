@@ -3,7 +3,7 @@
 # We work around this by passing the path of the ramdisk because
 # this is known to be uploaded to the same directory.
 context:
-  extra_kernel_args: "dwc_otg.lpm_enable=0 dwc_otg.fiq_enable=0 dwc_otg.fiq_fsm_enable=0 dwc_otg.nak_holdoff=0 8250.nr_uarts=1 lava_ip={SERVER_IP} lava_dir={PRESEED_CONFIG}"
+  extra_kernel_args: "init=/lib/systemd/systemd dwc_otg.lpm_enable=0 dwc_otg.fiq_enable=0 dwc_otg.fiq_fsm_enable=0 dwc_otg.nak_holdoff=0 8250.nr_uarts=1 lava_ip={SERVER_IP} lava_dir={PRESEED_CONFIG}"
   extra_nfsroot_args: ",vers=3"
   console_device: "ttyS0"
 
@@ -17,9 +17,9 @@ actions:
       url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/zImage
       type: zimage
     nfsrootfs:
-      url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/mbl/linaro-pyro-pinned/raspberrypi3/31/rpb/rpb-console-image-raspberrypi3-20171109202053-31.rootfs.tar.xz
+      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/raspbian_rootfs.tar.xz
       compression: xz
-    os: oe
+    os: debian
     dtb:
       url: "http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/{{ dtb_filename }}"
     preseed:
@@ -34,8 +34,10 @@ actions:
     auto_login:
       login_prompt: "login:"
       username: root
+      password_prompt: 'Password:'
+      password: root
     prompts:
-    - "root@raspberrypi3:~#"
+    - "root@raspberrypi3(.*)"
     timeout:
       minutes: 5
 
@@ -63,9 +65,15 @@ actions:
           - ifconfig
           - ifconfig eth0 up
           - dir=$(cat /proc/cmdline | awk -F"lava_dir=" '{ print $2 }' | cut -d"/" -f1,2)
-          - addr=http://${ip}/tftp/${dir}/preseed/mbl-image-development-raspberrypi3-mbl.wic.gz
-          - wget -O- ${addr} | gunzip -c > /dev/mmcblk0
-          - sync
+          - addr=http://${ip}/tftp/${dir}/preseed/console-image-raspberrypi3-mbl.wic.gz
+          - wget -nv -O /tmp/console-image-raspberrypi3-mbl.wic.gz ${addr}
+          # Download bmap file from Artifactory proxy
+          - echo "192.168.130.43 artifactory-proxy artifactory-proxy.mbed-linux.arm.com" >> /etc/hosts
+          - image_url={{ image_url}}
+          - bmap_url=${image_url//wic.gz/wic.bmap}
+          - wget -nv -O /tmp/console-image-raspberrypi3-mbl.wic.bmap ${bmap_url}
+          # Flash the SD card
+          - bmaptool -q copy --bmap /tmp/console-image-raspberrypi3-mbl.wic.bmap /tmp/console-image-raspberrypi3-mbl.wic.gz ${part}
 
 # Reboot on (just flashed) SDCARD, nothing to do (minimal method)
 - boot:
@@ -79,9 +87,19 @@ actions:
       download_command:  sleep 10 ; ifconfig ; wget
       unpack_command: tar -C / -xzf
     auto_login:
-      login_prompt: "mbed-linux-os-(.*) login:"
+      login_prompt: "raspberrypi3-mbl login:"
       username: root
+      password_prompt: "Password:"
+      password: redmbed
+      # After the login the system will prompt to set up a new password.
+      # The following 2 lines will be sent to the system simulating the user
+      # changing the password
+      login_commands:
+      - qwertyQwerty12345
+      - qwertyQwerty12345
     prompts:
-      - "root@mbed-linux-os(.*):~#"
+      - "root@raspberrypi3-mbl(.*)"
+      - "New password:"
+      - "Re-enter new password:"
     timeout:
       minutes: 5
