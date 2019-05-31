@@ -312,6 +312,8 @@ create_binary_release_readme()
 
 create_license_report()
 {
+  set +u
+  set +e
   local build_lic_paths=${1:?Missing license-paths parameter of ${FUNCNAME[0]}}
   local prev_build_tag="$2"
   local api_key="$3"
@@ -329,6 +331,8 @@ create_license_report()
   mkdir -p "$outputdir/license-reports"
   # Copy the HTML report(s) to the artifact dir
   mv "$html_output_dir/"*.manifest.html "$outputdir/license-reports"
+  set -u
+  set -e
 }
 
 find_license_manifest_dir()
