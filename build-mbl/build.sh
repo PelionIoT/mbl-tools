@@ -301,7 +301,7 @@ create_binary_release_readme()
     "${execdir}/README.binary_release_template" > "${artifact_image_dir}/README"
 
   case "$machine" in
-    imx8mmevk-mbl|imx7d-pico-mbl)
+    imx8mmevk-mbl)
       cat "${execdir}/Licensing_and_Acknowledgment.template_nxp" >> "${artifact_image_dir}/README"
       ;;
     *)
