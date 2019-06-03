@@ -840,7 +840,7 @@ while true; do
                      "DISTRO_VERSION" "$build_tag"
        fi
        if [ "${flag_binary_release}" -eq 1 ]; then
-         echo "MACHINE_FEATURES_remove += \"qca9377-bin\"" >> $builddir/machine-$machine/mbl-manifest/conf/local.conf
+         echo "MACHINE_FEATURES_remove += \"qca9377-bin\"" >> "$builddir/machine-$machine/mbl-manifest/conf/local.conf"
        fi
        setup_archiver "$builddir/machine-$machine/mbl-manifest/conf/local.conf" "$flag_archiver"
 
