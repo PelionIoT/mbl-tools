@@ -935,7 +935,7 @@ while true; do
 
           # Dot graphs
           mkdir -p "$imagedir/dot/"
-          bh_path="$builddir/machine-$machine/mbl-manifest/build-mbl/buildhistory/images/${machine/-/_}/glibc/$image"
+          bh_path="$builddir/machine-$machine/mbl-manifest/build-mbl/buildhistory/images/${machine//-/_}/glibc/$image"
           for path in "$bh_path/"*.dot; do
             if [ -e "$path" ]; then
               write_info "save artifact %s\n" "$(basename "$path")"
