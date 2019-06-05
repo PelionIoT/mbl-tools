@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "Core Componens" %}
+{% set job_name = "Core Components" %}
 {% set lxc_creation = false %}
 
 {% block testplan %}
