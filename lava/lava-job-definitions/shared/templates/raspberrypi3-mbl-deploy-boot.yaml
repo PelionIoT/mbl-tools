@@ -35,7 +35,7 @@ actions:
       login_prompt: login:
       username: root
     prompts:
-    - root@raspberrypi3:~#
+    - "root@raspberrypi3:~#"
     timeout:
       minutes: 5
 
@@ -79,9 +79,9 @@ actions:
       download_command:  sleep 10 ; ifconfig ; wget
       unpack_command: tar -C / -xzf
     auto_login:
-      login_prompt: mbed-linux-os-(.*) login:
+      login_prompt: "mbed-linux-os-(.*) login:"
       username: root
     prompts:
-      - root@mbed-linux-os(.*):~#
+      - "root@mbed-linux-os(.*):~#"
     timeout:
       minutes: 5

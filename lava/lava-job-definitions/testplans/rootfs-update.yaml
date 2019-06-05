@@ -25,10 +25,10 @@
     # We don't power cycle because the rootfs update has rebooted the DUT
     reset: false
     auto_login:
-        login_prompt: lava-mbed-linux-os-(.*) login:
+        login_prompt: "lava-mbed-linux-os-(.*) login:"
         username: root
     prompts:
-        - root@lava-mbed-linux-os-(.*):~#
+        - "root@lava-mbed-linux-os-(.*):~#"
     timeout:
         minutes: 5
     failure-retry: 3

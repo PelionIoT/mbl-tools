@@ -14,9 +14,9 @@ actions:
     commands: ums
     failure_retry: 3
     auto_login:
-      login_prompt: mbed-linux-os-(.*) login:
+      login_prompt: "mbed-linux-os-(.*) login:"
       username: root
     prompts:
-      - root@mbed-linux-os(.*):~#
+      - "root@mbed-linux-os(.*):~#"
     timeout:
       minutes: 10
