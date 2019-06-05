@@ -1,9 +1,11 @@
-- path: ci/lava/dependencies/install_docker.yaml
+- path: ci/lava/tests/provision-mbl.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
-  name: install_docker
+  name: provision-mbl
   from: git
   history: False
   branch: {{ mbl_branch }}
   {% if "mbl-core" in mbl_revisions %}
   revision: {{ mbl_revisions["mbl-core"] }}
   {% endif %}
+  parameters:
+      virtual_env: {{ venv_name }}

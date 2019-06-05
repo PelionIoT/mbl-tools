@@ -1,0 +1,45 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "RootFS Update Pelion" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "rootfs-update-pelion-lxc" %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 30
+    namespace: lxc
+    definitions:
+
+    {{ macros.avahi-discovery("pre") | indent }}
+
+    {{ macros.install-mbl-cli(venv_name) | indent }}
+
+    {{ macros.enable-wifi(venv_name) | indent }}
+
+    {{ macros.provision-mbl(venv_name) | indent }}
+
+- test:
+    timeout:
+      minutes: 1
+    namespace: target
+    definitions:
+    {{ macros.restart-mbl-cloud-client() | indent }}
+
+- test:
+    timeout:
+      minutes: 10
+    namespace: lxc
+    definitions:
+    {% set rootfs_test_stage = "UPDATE" %}
+    {% set rootfs_update_method = "PELION" %}
+    {{ macros.rootfs-update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
+
+    {% set rootfs_test_stage = "POST_CHECK" %}
+    {{ macros.rootfs-update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
+
+    {{ macros.avahi-discovery("post") | indent }}
+
+    {{ macros.delete-certificate(venv_name) | indent }}
+
+{% endblock testplan %}

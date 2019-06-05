@@ -1,6 +1,6 @@
-- path: ci/lava/tests/build-helloworld.yaml
+- path: ci/lava/tests/core-component.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
-  name: build-helloworld
+  name: core-component: {{ component_name }}
   from: git
   history: False
   branch: {{ mbl_branch }}
@@ -8,4 +8,6 @@
   revision: {{ mbl_revisions["mbl-core"] }}
   {% endif %}
   parameters:
-     arm_arch: {{ device_type }}
+      COMPONENT: "{{ component_name }}"
+      SETUP: "{{ setup }}"
+      TEARDOWN: "{{ teardown }}"

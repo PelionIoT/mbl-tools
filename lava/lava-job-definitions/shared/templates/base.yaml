@@ -35,7 +35,7 @@ protocols:
 {% endif %}
 
 # Deploy and boot the target
-{% include "shared/templates/" + device_type + "_deploy_boot.yaml" with context %}
+{% include "shared/templates/" + device_type + "-deploy-boot.yaml" with context %}
 
 {% if lxc_creation %}
 

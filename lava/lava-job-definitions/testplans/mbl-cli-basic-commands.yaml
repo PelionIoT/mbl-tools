@@ -2,7 +2,7 @@
 
 {% set job_name = "MBL CLI Basic Commands" %}
 {% set lxc_creation = true %}
-{% set lxc_name = "mbl-cli-lxc" %}
+{% set lxc_name = "mbl-cli-basic-commands-lxc" %}
 
 {% block testplan %}
 - test:
@@ -11,13 +11,13 @@
     namespace: lxc
     definitions:
 
-    {{ macros.install_mbl_cli(venv_name) | indent }}
+    {{ macros.install-mbl-cli(venv_name) | indent }}
 
-    - path: ci/lava/tests/mbl_cli_basic_commands.yaml
+    - path: ci/lava/tests/mbl-cli-basic-commands.yaml
       repository: https://github.com/ARMmbed/mbl-cli.git
       parameters:
           virtual_env: {{ venv_name }}
-      name: run_mbl_cli_basic_commands
+      name: mbl-cli-basic-commands
       from: git
       history: False
       branch: {{ mbl_branch }}
