@@ -37,8 +37,6 @@ _ test:
     definitions:
     - path: ci/lava/tests/helloworld-update-pelion.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      parameters:
-          virtual_env: "{{ venv_name }}"
       name: helloworld-update-pelion
       from: git
       history: False
@@ -46,6 +44,8 @@ _ test:
       {% if "mbl-core" in mbl_revisions %}
       revision: {{ mbl_revisions["mbl-core"] }}
       {% endif %}
+      parameters:
+          virtual_env: "{{ venv_name }}"
 
     {{ macros.delete_certificate(venv_name) | indent }}
 {% endblock testplan %}
