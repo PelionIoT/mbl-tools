@@ -32,7 +32,7 @@ actions:
     commands: nfs
     failure_retry: 3
     auto_login:
-      login_prompt: login:
+      login_prompt: "login:"
       username: root
     prompts:
     - "root@raspberrypi3:~#"
