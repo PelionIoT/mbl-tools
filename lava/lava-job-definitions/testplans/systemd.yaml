@@ -15,9 +15,9 @@
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    - path: ci/lava/tests/systemd_tests.yaml
+    - path: ci/lava/tests/systemd.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: systemd_tests
+      name: systemd
       from: git
       history: False
       branch: "{{ mbl_branch }}"

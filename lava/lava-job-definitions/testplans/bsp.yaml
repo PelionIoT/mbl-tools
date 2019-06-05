@@ -19,7 +19,7 @@
     - path: automated/linux/mbl/mbl_auto.yaml
       repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
       history: false
-      name: mbl_auto
+      name: mbl-auto
       from: git
       branch: linaro-mbl
 

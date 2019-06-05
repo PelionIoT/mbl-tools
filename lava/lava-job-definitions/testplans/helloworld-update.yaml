@@ -21,7 +21,7 @@
 
     - path: ci/lava/tests/helloworld-update.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: run_hello_world
+      name: helloworld-update
       from: git
       history: False
       branch: "{{ mbl_branch }}"
