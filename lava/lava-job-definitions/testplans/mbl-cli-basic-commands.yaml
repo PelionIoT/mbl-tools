@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "MBL CLI Basic Commands" %}
+{% set job_name = "MBL CLI basic commands" %}
 {% set lxc_creation = true %}
 {% set lxc_name = "mbl-cli-basic-commands-lxc" %}
 

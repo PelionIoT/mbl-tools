@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "RootFS Update"%}
+{% set job_name = "RootFS update"%}
 {% set lxc_creation = true %}
 {% set lxc_name = "rootfs-update-lxc" %}
 

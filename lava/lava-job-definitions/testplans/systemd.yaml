@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "systemd tests" %}
+{% set job_name = "systemd" %}
 {% set lxc_creation = true %}
 {% set lxc_name = "systemd-lxc" %}
 

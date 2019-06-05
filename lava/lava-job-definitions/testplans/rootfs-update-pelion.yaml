@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "RootFS Update Pelion" %}
+{% set job_name = "RootFS update via Pelion" %}
 {% set lxc_creation = true %}
 {% set lxc_name = "rootfs-update-pelion-lxc" %}
 

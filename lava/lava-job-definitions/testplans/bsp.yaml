@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "BSP Tests" %}
+{% set job_name = "BSP" %}
 {% set lxc_creation = false %}
 
 {% block testplan %}
