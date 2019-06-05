@@ -23,7 +23,7 @@
 
     {{ macros.provision_mbl(venv_name) | indent }}
 
-_ test:
+- test:
     timeout:
       minutes: 1
     namespace: target
