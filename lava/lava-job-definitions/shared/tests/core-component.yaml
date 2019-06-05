@@ -1,9 +1,9 @@
 - path: ci/lava/tests/core-component.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
-  name: core-component: {{ component_name }}
+  name: "core-component: {{ component_name }}"
   from: git
   history: False
-  branch: {{ mbl_branch }}
+  branch: "{{ mbl_branch }}"
   {% if "mbl-core" in mbl_revisions %}
   revision: {{ mbl_revisions["mbl-core"] }}
   {% endif %}

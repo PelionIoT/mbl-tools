@@ -11,11 +11,11 @@
     namespace: lxc
     definitions:
 
-    {{ macros.avahi-discovery() | indent }}
+    {{ macros.avahi_discovery() | indent }}
 
-    {{ macros.install-mbl-cli(venv_name) | indent }}
+    {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {{ macros.provision-mbl(venv_name) | indent }}
+    {{ macros.provision_mbl(venv_name) | indent }}
 
-    {{ macros.delete-certificate(venv_name) | indent }}
+    {{ macros.delete_certificate(venv_name) | indent }}
 {% endblock testplan %}

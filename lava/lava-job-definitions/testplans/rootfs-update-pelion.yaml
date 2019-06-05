@@ -11,20 +11,20 @@
     namespace: lxc
     definitions:
 
-    {{ macros.avahi-discovery("pre") | indent }}
+    {{ macros.avahi_discovery("pre") | indent }}
 
-    {{ macros.install-mbl-cli(venv_name) | indent }}
+    {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {{ macros.enable-wifi(venv_name) | indent }}
+    {{ macros.enable_wifi(venv_name) | indent }}
 
-    {{ macros.provision-mbl(venv_name) | indent }}
+    {{ macros.provision_mbl(venv_name) | indent }}
 
 - test:
     timeout:
       minutes: 1
     namespace: target
     definitions:
-    {{ macros.restart-mbl-cloud-client() | indent }}
+    {{ macros.restart_mbl_cloud_client() | indent }}
 
 - test:
     timeout:
@@ -33,13 +33,12 @@
     definitions:
     {% set rootfs_test_stage = "UPDATE" %}
     {% set rootfs_update_method = "PELION" %}
-    {{ macros.rootfs-update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
+    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
 
     {% set rootfs_test_stage = "POST_CHECK" %}
-    {{ macros.rootfs-update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
+    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
 
-    {{ macros.avahi-discovery("post") | indent }}
+    {{ macros.avahi_discovery("post") | indent }}
 
-    {{ macros.delete-certificate(venv_name) | indent }}
-
+    {{ macros.delete_certificate(venv_name) | indent }}
 {% endblock testplan %}

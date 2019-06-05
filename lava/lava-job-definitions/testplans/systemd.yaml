@@ -11,7 +11,7 @@
     namespace: lxc
     definitions:
 
-    {{ macros.mbl_avahi_discovery_test() | indent }}
+    {{ macros.avahi_discovery() | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
@@ -20,11 +20,10 @@
       name: systemd_tests
       from: git
       history: False
-      branch: {{ mbl_branch }}
+      branch: "{{ mbl_branch }}"
       {% if "mbl-core" in mbl_revisions %}
       revision: {{ mbl_revisions["mbl-core"] }}
       {% endif %}
       parameters:
-          virtual_env: {{ venv_name }}
-
+          virtual_env: "{{ venv_name }}"
 {% endblock testplan %}

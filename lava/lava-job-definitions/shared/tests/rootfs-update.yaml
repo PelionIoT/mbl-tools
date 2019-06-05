@@ -1,14 +1,14 @@
 - path: ci/lava/tests/rootfs-update.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
-  name: rootfs-update-{{ test_stage }}
+  name: "rootfs-update-{{ test_stage }}"
   from: git
   history: False
-  branch: {{ mbl_branch }}
+  branch: "{{ mbl_branch }}"
   {% if "mbl-core" in mbl_revisions %}
   revision: {{ mbl_revisions["mbl-core"] }}
   {% endif %}
   parameters:
-      test_stage: {{ test_stage }}
-      image_url: {{ image_url }}
-      pelion_update: {{ update_method }}
-      virtual_env: {{ venv_name }}
+      test_stage: "{{ test_stage }}"
+      image_url: "{{ image_url }}"
+      pelion_update: "{{ update_method }}"
+      virtual_env: "{{ venv_name }}"

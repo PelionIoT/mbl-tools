@@ -1,11 +1,10 @@
 # Restart the mbl-cli-cloud-client
-#
 - from: inline
   repository:
     metadata:
       format: Lava-Test Test Definition 1.0
       name: restart-mbl-cloud-client
-      description: "restart-mbl-cloud-client"
+      description: restart-mbl-cloud-client
     run:
       steps:
         - systemctl restart mbl-cloud-client

@@ -11,24 +11,24 @@
     namespace: lxc
     definitions:
 
-    {{ macros.avahi-discovery() | indent }}
+    {{ macros.avahi_discovery() | indent }}
 
-    {{ macros.install-mbl-cli(venv_name) | indent }}
+    {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {{ macros.enable-wifi(venv_name) | indent }}
+    {{ macros.enable_wifi(venv_name) | indent }}
 
-    {{ macros.install-docker() | indent }}
+    {{ macros.install_docker() | indent }}
 
-    {{ macros.build-helloworld() | indent }}
+    {{ macros.build_helloworld() | indent }}
 
-    {{ macros.provision-mbl(venv_name) | indent }}
+    {{ macros.provision_mbl(venv_name) | indent }}
 
-- test:
+_ test:
     timeout:
       minutes: 1
     namespace: target
     definitions:
-    {{ macros.restart-mbl-cloud-client() | indent }}
+    {{ macros.restart_mbl_cloud_client() | indent }}
 
 - test:
     timeout:
@@ -38,15 +38,14 @@
     - path: ci/lava/tests/helloworld-update-pelion.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       parameters:
-          virtual_env: {{ venv_name }}
+          virtual_env: "{{ venv_name }}"
       name: helloworld-update-pelion
       from: git
       history: False
-      branch: {{ mbl_branch }}
+      branch: "{{ mbl_branch }}"
       {% if "mbl-core" in mbl_revisions %}
       revision: {{ mbl_revisions["mbl-core"] }}
       {% endif %}
 
-    {{ macros.delete-certificate(venv_name) | indent }}
-
+    {{ macros.delete_certificate(venv_name) | indent }}
 {% endblock testplan %}

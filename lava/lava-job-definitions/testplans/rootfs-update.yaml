@@ -11,13 +11,13 @@
     namespace: lxc
     definitions:
 
-    {{ macros.avahi-discovery("pre") | indent }}
+    {{ macros.avahi_discovery("pre") | indent }}
 
-    {{ macros.install-mbl-cli(venv_name) | indent }}
+    {{ macros.install_mbl_cli(venv_name) | indent }}
 
     {% set rootfs_test_stage = "UPDATE" %}
     {% set rootfs_update_method = "MBL_CLI" %}
-    {{ macros.rootfs-update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
+    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
 
 - boot:
     namespace: target
@@ -25,10 +25,10 @@
     # We don't power cycle because the rootfs update has rebooted the DUT
     reset: false
     auto_login:
-        login_prompt: 'lava-mbed-linux-os-(.*) login:'
-        username: 'root'
+        login_prompt: lava-mbed-linux-os-(.*) login:
+        username: root
     prompts:
-        - 'root@lava-mbed-linux-os-(.*):~#'
+        - root@lava-mbed-linux-os-(.*):~#
     timeout:
         minutes: 5
     failure-retry: 3
@@ -41,7 +41,7 @@
 
     {% set rootfs_test_stage = "POST_CHECK" %}
     {% set rootfs_update_method = "MBL_CLI" %}
-    {{ macros.rootfs-update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
+    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
 
-    {{ macros.avahi-discovery-test("post") | indent }}
+    {{ macros.avahi_discovery("post") | indent }}
 {% endblock testplan %}

@@ -11,23 +11,23 @@
     namespace: lxc
     definitions:
 
-    {{ macros.avahi-discovery() | indent }}
+    {{ macros.avahi_discovery() | indent }}
 
-    {{ macros.install-mbl-cli(venv_name) | indent }}
+    {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {{ macros.install-docker() | indent }}
+    {{ macros.install_docker() | indent }}
 
-    {{ macros.build-helloworld() | indent }}
+    {{ macros.build_helloworld() | indent }}
 
     - path: ci/lava/tests/helloworld-update.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      parameters:
-          virtual_env: {{ venv_name }}
       name: run_hello_world
       from: git
       history: False
-      branch: {{ mbl_branch }}
+      branch: "{{ mbl_branch }}"
       {% if "mbl-core" in mbl_revisions %}
       revision: {{ mbl_revisions["mbl-core"] }}
       {% endif %}
+      parameters:
+          virtual_env: "{{ venv_name }}"
 {% endblock testplan %}

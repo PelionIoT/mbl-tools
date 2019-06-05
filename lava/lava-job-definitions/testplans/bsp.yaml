@@ -9,7 +9,6 @@
       minutes: 20
     namespace: target
     definitions:
-
     - path: automated/linux/optee/optee-xtest.yaml
       repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
       history: false
@@ -37,5 +36,4 @@
       name: memtester
       from: git
       branch: linaro-mbl
-
 {% endblock testplan %}
