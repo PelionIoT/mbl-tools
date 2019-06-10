@@ -1,5 +1,5 @@
-- path: lava/tests/mbl-test-dependency.yaml
+- path: lava/tests/install-test-dependencies.yaml
   repository: https://github.com/ARMmbed/mbl-scratch.git
-  name: test-dependencies
+  name: install-test-dependencies
   from: git
   history: False

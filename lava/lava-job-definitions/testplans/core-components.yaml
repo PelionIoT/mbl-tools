@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "Core Component Tests" %}
+{% set job_name = "Core Components" %}
 {% set lxc_creation = false %}
 
 {% block testplan %}
@@ -9,7 +9,7 @@
       minutes: 20
     namespace: target
     definitions:
-    {{ macros.mbl_test_dependency() | indent }}
+    {{ macros.install_test_dependencies() | indent }}
 
     {# Use the correct ipk depending on architecture. #}
     {% if device_type in  ["imx8mmevk-mbl"] %}
@@ -19,19 +19,19 @@
         {# For all else use the default. #}
         {% set am_setup = "" %}
     {% endif %}
-    {{ macros.mbl_component_test("application-framework", am_setup) | indent }}
+    {{ macros.core_component("application-framework", am_setup) | indent }}
 
-    {{ macros.mbl_component_test("cloud-services") | indent }}
+    {{ macros.core_component("cloud-services") | indent }}
 
     {% set fm_setup = "python3 firmware-management/mbl-app-manager/tests/native/test_case_generator_mbl-app-manager.py -o /home/app -v" %}
     {% set fm_teardown = "/bin/rm -rf /home/app/*" %}
-    {{ macros.mbl_component_test("firmware-management", fm_setup, fm_teardown) | indent }}
+    {{ macros.core_component("firmware-management", fm_setup, fm_teardown) | indent }}
 
-    {{ macros.mbl_component_test("management-agents") | indent }}
+    {{ macros.core_component("management-agents") | indent }}
 
-    {{ macros.mbl_component_test("mbl-core") | indent }}
+    {{ macros.core_component("mbl-core") | indent }}
 
-    {{ macros.mbl_component_test("platform-services") | indent }}
+    {{ macros.core_component("platform-services") | indent }}
 
-    {{ macros.mbl_component_test("secure-services") | indent }}
+    {{ macros.core_component("secure-services") | indent }}
 {% endblock testplan %}
