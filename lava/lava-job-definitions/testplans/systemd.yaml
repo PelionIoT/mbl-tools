@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "systemd tests" %}
+{% set job_name = "systemd" %}
 {% set lxc_creation = true %}
 {% set lxc_name = "systemd-lxc" %}
 
@@ -11,20 +11,19 @@
     namespace: lxc
     definitions:
 
-    {{ macros.mbl_avahi_discovery_test() | indent }}
+    {{ macros.avahi_discovery() | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    - path: ci/lava/tests/systemd_tests.yaml
+    - path: ci/lava/tests/systemd.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: systemd_tests
+      name: systemd
       from: git
       history: False
-      branch: {{ mbl_branch }}
+      branch: "{{ mbl_branch }}"
       {% if "mbl-core" in mbl_revisions %}
       revision: {{ mbl_revisions["mbl-core"] }}
       {% endif %}
       parameters:
-          virtual_env: {{ venv_name }}
-
+          virtual_env: "{{ venv_name }}"
 {% endblock testplan %}
