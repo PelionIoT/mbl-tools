@@ -1,0 +1,32 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "Wired and Wifi" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "wired-and-wifi-test-lxc" %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+    {{ macros.avahi_discovery() | indent }}
+
+    {{ macros.install_mbl_cli(venv_name) | indent }}
+
+    {{ macros.enable_wifi(venv_name) | indent }}
+
+    - path: ci/lava/tests/wired-and-wifi.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      parameters:
+          virtual_env: {{ venv_name }}
+          device_type: {{ device_type }}
+      name: wired_wifi_tests
+      from: git
+      history: False
+      branch: {{ mbl_branch }}
+      {% if "mbl-core" in mbl_revisions %}
+      revision: {{ mbl_revisions["mbl-core"] }}
+      {% endif %}
+
+{% endblock testplan %}
