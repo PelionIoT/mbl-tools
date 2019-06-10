@@ -1,3 +1,0 @@
-{% extends "shared/templates/raspberrypi3-mbl_deploy_boot.yaml" %}
-
-{% set dtb_filename = "bcm2710-rpi-3-b.dtb" %}

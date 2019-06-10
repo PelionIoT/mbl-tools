@@ -3,46 +3,46 @@
 
 {# Common actions #}
 {% macro install_docker() %}
-    {% include "shared/actions/install_docker.yaml" %}
+    {% include "shared/actions/install-docker.yaml" %}
 {% endmacro %}
 
 {% macro install_mbl_cli(venv_name) %}
-    {% include "shared/actions/install_mbl_cli.yaml" %}
+    {% include "shared/actions/install-mbl-cli.yaml" %}
 {% endmacro %}
 
-{% macro mbl_test_dependency() %}
-    {% include "shared/actions/mbl_test_dependency.yaml" %}
+{% macro install_test_dependencies() %}
+    {% include "shared/actions/install-test-dependencies.yaml" %}
 {% endmacro %}
 
-{% macro mbl_cli_provisioning(venv_name) %}
-    {% include "shared/actions/mbl_cli_provisioning.yaml" %}
+{% macro provision_mbl(venv_name) %}
+    {% include "shared/actions/provision-mbl.yaml" %}
 {% endmacro %}
 
 {% macro enable_wifi(venv_name) %}
-    {% include "shared/actions/enable_wifi.yaml" %}
+    {% include "shared/actions/enable-wifi.yaml" %}
 {% endmacro %}
 
 {% macro restart_mbl_cloud_client() %}
-    {% include "shared/actions/restart_mbl_cloud_client.yaml" %}
+    {% include "shared/actions/restart-mbl-cloud-client.yaml" %}
 {% endmacro %}
 
 {% macro delete_certificate(venv_name) %}
-    {% include "shared/actions/delete_certificate.yaml" %}
+    {% include "shared/actions/delete-certificate.yaml" %}
 {% endmacro %}
 
 {# Reusable tests #}
-{% macro mbl_avahi_discovery_test(stage) %}
-    {% include "shared/tests/mbl_avahi_discovery_test.yaml" %}
+{% macro avahi_discovery(stage) %}
+    {% include "shared/tests/avahi-discovery.yaml" %}
 {% endmacro %}
 
-{% macro mbl_component_test(component_name, setup, teardown) %}
-    {% include "shared/tests/mbl_component_test.yaml" %}
+{% macro core_component(component_name, setup, teardown) %}
+    {% include "shared/tests/core-component.yaml" %}
 {% endmacro %}
 
 {% macro rootfs_update(test_stage, image_url, update_method, venv_name) %}
-    {% include "shared/tests/rootfs_update.yaml" %}
+    {% include "shared/tests/rootfs-update.yaml" %}
 {% endmacro %}
 
-{% macro build_hello_world() %}
+{% macro build_helloworld() %}
     {% include "shared/tests/build-helloworld.yaml" %}
 {% endmacro %}
