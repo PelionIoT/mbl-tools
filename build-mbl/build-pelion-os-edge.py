@@ -23,12 +23,11 @@ Makefile, we'll run BitBake directly.
 import argparse
 import os
 import pathlib
-import re
 import shutil
 import subprocess
 import sys
-import tarfile
 import warnings
+import tarfile
 
 import file_util
 
@@ -156,16 +155,6 @@ def _set_up_container_ssh():
     subprocess.run([SCRIPTS_DIR / "ssh-setup.sh"], check=True)
 
 
-def _get_localconf_path(workdir):
-    """
-    Get the path to local.conf within a work area.
-
-    Args:
-    * workdir (Path): top level of work area.
-    """
-    return workdir / "poky" / "meta-pelion-edge" / "conf" / "local.conf.sample"
-
-
 def _set_up_bitbake_ssh(workdir):
     """
     Configure BitBake to allow use of ssh-agent.
@@ -173,7 +162,9 @@ def _set_up_bitbake_ssh(workdir):
     Args:
     * workdir (Path): top level of work area.
     """
-    localconf_path = _get_localconf_path(workdir)
+    localconf_path = (
+        workdir / "poky" / "meta-pelion-edge" / "conf" / "local.conf.sample"
+    )
 
     # Add some BitBake config to allow BitBake tasks to read the SSH_AUTH_SOCK
     with file_util.replace_section_in_file(
@@ -182,29 +173,6 @@ def _set_up_bitbake_ssh(workdir):
         localconf.write("export SSH_AUTH_SOCK\n")
         localconf.write('BB_HASHBASE_WHITELIST_append = " SSH_AUTH_SOCK"\n')
         localconf.write('BB_HASHCONFIG_WHITELIST_append = " SSH_AUTH_SOCK"\n')
-
-
-def _set_up_root_login(workdir):
-    """
-    Modify distro config so that root isn't prompted to change password.
-
-    By default, Pelion Edge forces the root user to change their password the
-    first time they log in. This is a pain for LAVA to deal with so remove that
-    behaviour.
-
-    Args:
-    * workdir (Path): top level of work area.
-    """
-    localconf_path = _get_localconf_path(workdir)
-    with file_util.atomic_read_modify_write_file(localconf_path) as (
-        reader,
-        writer,
-    ):
-        chage_regex = re.compile("(?:INHERIT.+chageusers|CHAGE_USERS_PARAMS)")
-        for line in reader:
-            if chage_regex.search(line) and not line.startswith("#"):
-                writer.write("#")
-            writer.write(line)
 
 
 def _set_up_download_dir(download_dir):
@@ -321,7 +289,6 @@ def main():
         _inject_mcc(args.builddir, path)
 
     _set_up_bitbake_ssh(args.builddir)
-    _set_up_root_login(args.builddir)
     _build(args.builddir)
     _save_artifacts(args.builddir, args.outputdir)
 
