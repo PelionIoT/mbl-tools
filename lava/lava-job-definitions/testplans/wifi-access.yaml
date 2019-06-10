@@ -18,15 +18,15 @@
 
     - path: ci/lava/tests/wifi-access.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      parameters:
-          virtual_env: {{ venv_name }}
-          device_type: {{ device_type }}
       name: wifi_access
       from: git
       history: False
-      branch: {{ mbl_branch }}
+      branch: "{{ mbl_branch }}"
       {% if "mbl-core" in mbl_revisions %}
       revision: {{ mbl_revisions["mbl-core"] }}
       {% endif %}
+      parameters:
+          virtual_env: "{{ venv_name }}"
+          device_type: "{{ device_type }}"
 
 {% endblock testplan %}
