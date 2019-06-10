@@ -1,0 +1,1 @@
+{% extends "shared/templates/uboot-ums-deploy-boot.yaml" %}

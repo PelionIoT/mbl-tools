@@ -1,8 +1,8 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "MBL-CLI Provisioning" %}
+{% set job_name = "Provision MBL" %}
 {% set lxc_creation = true %}
-{% set lxc_name = "mbl-cli-provisioning-lxc" %}
+{% set lxc_name = "provision-mbl-lxc" %}
 
 {% block testplan %}
 - test:
@@ -11,12 +11,11 @@
     namespace: lxc
     definitions:
 
-
-    {{ macros.mbl_avahi_discovery_test() | indent }}
+    {{ macros.avahi_discovery() | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {{ macros.mbl_cli_provisioning(venv_name) | indent }}
+    {{ macros.provision_mbl(venv_name) | indent }}
 
     {{ macros.delete_certificate(venv_name) | indent }}
 {% endblock testplan %}

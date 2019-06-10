@@ -1,8 +1,8 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "Hello World" %}
+{% set job_name = "Helloworld update" %}
 {% set lxc_creation = true %}
-{% set lxc_name = "hello-world-lxc" %}
+{% set lxc_name = "helloworld-update-lxc" %}
 
 {% block testplan %}
 - test:
@@ -11,23 +11,23 @@
     namespace: lxc
     definitions:
 
-    {{ macros.mbl_avahi_discovery_test() | indent }}
+    {{ macros.avahi_discovery() | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
     {{ macros.install_docker() | indent }}
 
-    {{ macros.build_hello_world() | indent }}
+    {{ macros.build_helloworld() | indent }}
 
-    - path: ci/lava/tests/mbl-cli-run-helloworld.yaml
+    - path: ci/lava/tests/helloworld-update.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      parameters:
-          virtual_env: {{ venv_name }}
-      name: run_hello_world
+      name: helloworld-update
       from: git
       history: False
-      branch: {{ mbl_branch }}
+      branch: "{{ mbl_branch }}"
       {% if "mbl-core" in mbl_revisions %}
       revision: {{ mbl_revisions["mbl-core"] }}
       {% endif %}
+      parameters:
+          virtual_env: "{{ venv_name }}"
 {% endblock testplan %}

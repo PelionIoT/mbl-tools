@@ -21,9 +21,9 @@ actions:
       compression: xz
     os: oe
     dtb:
-      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/{{ dtb_filename }}
+      url: "http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/{{ dtb_filename }}"
     preseed:
-      url: {{ image_url }}
+      url: "{{ image_url }}"
 
 - boot:
     namespace: target
@@ -32,10 +32,10 @@ actions:
     commands: nfs
     failure_retry: 3
     auto_login:
-      login_prompt: 'login:'
+      login_prompt: "login:"
       username: root
     prompts:
-    - 'root@raspberrypi3:~#'
+    - "root@raspberrypi3:~#"
     timeout:
       minutes: 5
 
@@ -51,7 +51,7 @@ actions:
         metadata:
           format: Lava-Test Test Definition 1.0
           name: mmcblk0-write
-          description: "Flash RPi3 SDCARD"
+          description: Flash RPi3 SDCARD
           os:
           - oe
           scope:
@@ -80,7 +80,7 @@ actions:
       unpack_command: tar -C / -xzf
     auto_login:
       login_prompt: "mbed-linux-os-(.*) login:"
-      username: "root"
+      username: root
     prompts:
       - "root@mbed-linux-os(.*):~#"
     timeout:
