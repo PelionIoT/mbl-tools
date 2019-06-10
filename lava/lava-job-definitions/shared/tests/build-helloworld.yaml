@@ -1,11 +1,11 @@
-- path: ci/lava/tests/lxc-build-helloworld.yaml
+- path: ci/lava/tests/build-helloworld.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
-  name: build_hello_world
+  name: build-helloworld
   from: git
   history: False
-  branch: {{ mbl_branch }}
+  branch: "{{ mbl_branch }}"
   {% if "mbl-core" in mbl_revisions %}
   revision: {{ mbl_revisions["mbl-core"] }}
   {% endif %}
   parameters:
-     arm_arch: {{ device_type }}
+     arm_arch: "{{ device_type }}"

@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 {% import "shared/macros.jinja2" as macros with context %}
 
-device_type: {{ device_type }}
+device_type: "{{ device_type }}"
 
-job_name: {{ build_tag }} - {{ job_name }}
+job_name: "{{ build_tag }} - {{ job_name }}"
 
 {% set venv_name = "/tmp/venv" %}
 
@@ -27,7 +27,7 @@ timeouts:
 {% if lxc_creation %}
 protocols:
   lava-lxc:
-    name: {{ lxc_name }}
+    name: "{{ lxc_name }}"
     template: ubuntu
     distribution: ubuntu
     release: xenial
@@ -35,7 +35,7 @@ protocols:
 {% endif %}
 
 # Deploy and boot the target
-{% include "shared/templates/" + device_type + "_deploy_boot.yaml" with context %}
+{% include "shared/templates/" + device_type + "-deploy-boot.yaml" with context %}
 
 {% if lxc_creation %}
 
@@ -71,12 +71,12 @@ notify:
     {% if notify_user %}
     - to:
        method: email
-       user: {{ notify_user }}
+       user: "{{ notify_user }}"
     {% endif %}
     {% for email in notify_emails %}
     - to:
        method: email
-       email: {{ email }}
+       email: "{{ email }}"
     {% endfor %}
     criteria:
       status: finished

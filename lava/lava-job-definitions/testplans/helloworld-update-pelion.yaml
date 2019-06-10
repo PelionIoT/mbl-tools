@@ -1,8 +1,8 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "Pelion App Update" %}
+{% set job_name = "Helloworld update via Pelion" %}
 {% set lxc_creation = true %}
-{% set lxc_name = "pelion-app-update-lxc" %}
+{% set lxc_name = "helloworld-update-lxc" %}
 
 {% block testplan %}
 - test:
@@ -11,7 +11,7 @@
     namespace: lxc
     definitions:
 
-    {{ macros.mbl_avahi_discovery_test() | indent }}
+    {{ macros.avahi_discovery() | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
@@ -19,9 +19,9 @@
 
     {{ macros.install_docker() | indent }}
 
-    {{ macros.build_hello_world() | indent }}
+    {{ macros.build_helloworld() | indent }}
 
-    {{ macros.mbl_cli_provisioning(venv_name) | indent }}
+    {{ macros.provision_mbl(venv_name) | indent }}
 
 - test:
     timeout:
@@ -35,18 +35,17 @@
       minutes: 10
     namespace: lxc
     definitions:
-    - path: ci/lava/tests/mbl-cli-pelion-app-update.yaml
+    - path: ci/lava/tests/helloworld-update-pelion.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      parameters:
-          virtual_env: {{ venv_name }}
-      name: pelion-app-update
+      name: helloworld-update-pelion
       from: git
       history: False
-      branch: {{ mbl_branch }}
+      branch: "{{ mbl_branch }}"
       {% if "mbl-core" in mbl_revisions %}
       revision: {{ mbl_revisions["mbl-core"] }}
       {% endif %}
+      parameters:
+          virtual_env: "{{ venv_name }}"
 
     {{ macros.delete_certificate(venv_name) | indent }}
-
 {% endblock testplan %}
