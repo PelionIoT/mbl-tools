@@ -77,7 +77,9 @@ MBL_LINKED_REPOSITORIES_REPO_SHORT_NAME = "meta-mbl"
 MBL_LINKED_REPOSITORIES_REPO_NAME = "{}/{}".format(
     mnf.ARM_MRR_REPO_NAME_PREFIX, MBL_LINKED_REPOSITORIES_REPO_SHORT_NAME
 )
-MBL_LINKED_REPOSITORIES_REPO_PATH = "meta-mbl-distro/conf/distro/mbl-linked-repositories.conf"
+MBL_LINKED_REPOSITORIES_REPO_PATH = (
+    "meta-mbl-distro/conf/distro/mbl-linked-repositories.conf"
+)
 
 #
 # Events summary log string constants (used in ReleaseManager.summary_logs)
