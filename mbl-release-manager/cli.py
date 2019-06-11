@@ -17,8 +17,9 @@ In short:
 * Clones all repositories of type 1), create branch/tag and push to remote
 * Update armmbed/mbl-manifest repository manifest XML files accordingly,
     commit and push to remote
-* Update armmbed/meta-mbl/conf/dist/mbl-linked-repositories.conf accordingly,
-    commit and push to remote.
+* Update
+    armmbed/meta-mbl/meta-mbl-distro/conf/dist/mbl-linked-repositories.conf
+    accordingly, commit and push to remote.
 
 The script supports:
 * diagnostic mode requires user confirmation for each step
