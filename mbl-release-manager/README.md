@@ -28,7 +28,7 @@ In more details, it performs the next significant operations:
 1. Clone the manifest repository mbl-manifest according to user input and parse it's Google Repo manifest files into a database.
 1. Validate dependencies between user input and manifest files. Check for inconsistencies.
 1. Clone all repositories that needs to have commits and/or new branches (according to user input). This is done using multiple threads and waiting for a timeout. At the same time update Google Repo manifest files with the new revisions. Repositories are cloned per Google Repo manifest file name key, in a sub-folder.For example, for default.xml script clones into a folder called 'default'. Some Google Repo manifest files might have identical repositories with different input revision, that's why we do that. External repositories are cloned into the destination temporary folder root.
-1. Check if meta-mbl/conf/dist/mbl-linked-repositories.conf need to be updated. Updated if needed, commit and push. Push is done even if conf file was not updated. In that case script will treat this repository such as every repository that needs to be changed (The only repository guaranteed to have a commit is mbl-manifest).
+1. Check if meta-mbl/meta-mbl-distro/conf/dist/mbl-linked-repositories.conf need to be updated. Updated if needed, commit and push. Push is done even if conf file was not updated. In that case script will treat this repository such as every repository that needs to be changed (The only repository guaranteed to have a commit is mbl-manifest).
 1. Push all repositories. This is done using multiple threads and waiting for a timeout.
 1. Print a summary of significant operations.
 
@@ -129,7 +129,7 @@ All main keys must be unique inside the main dictionary or inside a sub-dictiona
 
     B. **Non-Arm MRRs - (Community or 3rd party Manifest Referenced Repositories)** - ref or commit hash must exist on the remote repository.
 
-1. **External Arm managed repositories** - These are given in '_external_' SD. These are repository names which are not pointed in any of the mbl-manifest Google Repo manifest files. **'armmbed/mbl-manifest'** is such a type, which MUST be given in the JSON file. If 'armmbed/meta-mbl' is given, the file **meta-mbl/conf/dist/mbl-linked-repositories.conf** will be modified accordingly to point into the new linked references (if such exist).
+1. **External Arm managed repositories** - These are given in '_external_' SD. These are repository names which are not pointed in any of the mbl-manifest Google Repo manifest files. **'armmbed/mbl-manifest'** is such a type, which MUST be given in the JSON file. If 'armmbed/meta-mbl' is given, the file **meta-mbl/meta-mbl-distro/conf/dist/mbl-linked-repositories.conf** will be modified accordingly to point into the new linked references (if such exist).
 
 ## 5. Validity checks examples
 
