@@ -18,7 +18,7 @@
 
     - path: ci/lava/tests/wifi-access.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: wifi_access
+      name: wifi-access
       from: git
       history: False
       branch: "{{ mbl_branch }}"
