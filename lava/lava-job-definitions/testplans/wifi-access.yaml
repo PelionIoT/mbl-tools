@@ -1,0 +1,32 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "WiFi Access" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "wifi-access-lxc" %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+    {{ macros.avahi_discovery() | indent }}
+
+    {{ macros.install_mbl_cli(venv_name) | indent }}
+
+    {{ macros.enable_wifi(venv_name) | indent }}
+
+    - path: ci/lava/tests/wifi-access.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: wifi-access
+      from: git
+      history: False
+      branch: "{{ mbl_branch }}"
+      {% if "mbl-core" in mbl_revisions %}
+      revision: {{ mbl_revisions["mbl-core"] }}
+      {% endif %}
+      parameters:
+          virtual_env: "{{ venv_name }}"
+          device_type: "{{ device_type }}"
+
+{% endblock testplan %}
