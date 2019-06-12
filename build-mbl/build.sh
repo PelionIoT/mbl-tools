@@ -89,7 +89,7 @@ repo_init_atomic ()
   mv "$path-ri" "$path"
 }
 
-all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl"
+all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl imx6ul-pico-mbl"
 
 default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
@@ -880,21 +880,17 @@ while true; do
           # We are interested in the image...
           mkdir -p "$imagedir/images"
 
+          # Relevant to all machines
+          suffixes="manifest tar.xz wic.gz wic.bmap"
+
           case $machine in
-          imx7s-warp-mbl)
-            suffixes="manifest tar.xz wic.gz wic.bmap"
-            targetsys=arm-oe-linux-gnueabi
-            ;;
-          raspberrypi3-mbl)
-            suffixes="manifest tar.xz wic.gz wic.bmap"
-            targetsys=arm-oe-linux-gnueabi
-            ;;
-          imx7d-pico-mbl)
-            suffixes="manifest tar.xz wic.gz wic.bmap"
+          raspberrypi3-mbl) ;& # fall-through
+          imx7s-warp-mbl)   ;& # fall-through
+          imx7d-pico-mbl)   ;& # fall-through
+          imx6ul-pico-mbl)
             targetsys=arm-oe-linux-gnueabi
             ;;
           imx8mmevk-mbl)
-            suffixes="manifest tar.xz wic.gz wic.bmap"
             targetsys=aarch64-oe-linux
             ;;
           esac
