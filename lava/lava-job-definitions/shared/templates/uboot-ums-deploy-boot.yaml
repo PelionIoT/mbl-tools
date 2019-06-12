@@ -19,4 +19,4 @@ actions:
     prompts:
       - "root@mbed-linux-os(.*):~#"
     timeout:
-      minutes: 10
+      minutes: 15
