@@ -32,4 +32,11 @@ git clone git@github.com:ARMmbed/mbl-tools
 mbl-tools/maintenance/scripts/git-sync-start.bash --release my-release
 ```
 
+Release tagging on release branch x.y:
+```
+mkdir my-workdir ; cd my-workdir
+git clone git@github.com:ARMmbed/mbl-tools -b mbl-os-x.y
+mbl-tools/maintenance/scripts/git-sync-start.bash --release my-release
+```
+
 After running these commands, follow the help printed from the `git-sync-start.bash` script.
