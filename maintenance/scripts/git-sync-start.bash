@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Defaults
-MBL_LINKED_REPO="armmbed/mbl-core"
-MBL_LINKED_FILE="armmbed/meta-mbl/meta-mbl-distro/conf/distro/mbl-linked-repositories.conf"
-MBL_LINKED_LINE="SRCREV_MBL_CORE_REPO"
-MANIFEST_OVERRIDE_DIR=".repo/local_manifests"
-MANIFEST_OVERRIDE_FILE="mbl-core-override.xml"
 #DEBUG=1
 
 if [ "$1" == "-h" ]; then
@@ -15,7 +9,7 @@ if [ "$1" == "-h" ]; then
 fi
 
 # Should be working off master
-MANIFEST=maintenance/default.xml
+MANIFEST=maintenance/maintenance.xml
 RELEASE=0
 if [ "$1" == "--release" ]; then
     # Should be working off latest dev branch
@@ -52,35 +46,21 @@ repo init $QUIET -u "$MBL_TOOLS_DIR" -b "$MBL_TOOLS_BRANCH" -m "$MANIFEST"
 repo sync $QUIET
 
 if [ $RELEASE -eq 1 ]; then
-    # Create override file
-    # Currently only supports mbl-core
-    MBL_LINKED_SHA=$(grep "$MBL_LINKED_LINE" "$MBL_LINKED_FILE" | sed -e 's/.*\(".*"\)/\1/')
-    if [[ "$MBL_LINKED_SHA" =~ ^[\"0-9a-f]+$ ]]; then
-        echo "Overriding $MBL_LINKED_REPO version to $MBL_LINKED_SHA"
-        echo "Via $MANIFEST_OVERRIDE_DIR/$MANIFEST_OVERRIDE_FILE"
-        mkdir -p "$MANIFEST_OVERRIDE_DIR"
-        cat << EOF > $MANIFEST_OVERRIDE_DIR/$MANIFEST_OVERRIDE_FILE
-<?xml version="1.0" encoding="UTF-8"?>
-<manifest>
-  <remove-project name="$MBL_LINKED_REPO"/>
-  <project name="$MBL_LINKED_REPO" remote="origin" revision=$MBL_LINKED_SHA/>
-</manifest>
-EOF
-        repo sync $QUIET
-    else
-        echo -e "\n\e[91mWARNING: Unrecognized linking SHA, not using exact $MBL_LINKED_REPO revision"
-        echo -e "File:$MBL_LINKED_FILE\nSHA found:$MBL_LINKED_SHA\e[0m\n"
-    fi
-
     echo "RELEASE BRANCH flow:"
+    echo "$ ${MBL_TOOLS_SCRIPTS_DIR}/git-sync-manifest.bash pinned-manifest.xml mbl-os-x.y"
     echo "$ repo start new-release-branch --all"
-    echo "* edit/commit mbl-tools/maintenance/release.xml to default to new-release-branch"
-    echo "* edit/commit mbl-jenkins/mbl-pipeline to use new-release-branch"
-    echo "* edit/commit meta-mbl/meta-mbl-distro/conf/distro/mbl.conf to set DISTRO_VERSION"
+    echo "* edit/commit armmbed/mbl-tools/maintenance/release.xml to default to new-release-branch"
+    echo "* edit/commit armmbed/mbl-jenkins/mbl-pipeline to use new-release-branch"
+    echo "* edit/commit armmbed/meta-mbl/meta-mbl-distro/conf/distro/mbl.conf to set DISTRO_VERSION"
     echo "$ repo forall -c push --set-upstream origin new-release-branch"
     echo "* github: create the PRs/test and get them merged"
     echo ""
-    echo "RELEASE TAG flow: (assumes release.xml is pointing to release branches)"
+    echo "RELEASE CANDIDATE TAG flow: (assumes branched as above and built on jenkins)"
+    echo "* add/commit/push armmbed/mbl-manifest/release.xml - a built pinned manifest"
+    echo "$ cd armmbed/mbl-manifest; git tag mbl-os-x.y.z-rcn; git push origin mbl-os-x.y.z-rcn"
+    echo ""
+    echo "RELEASE TAG flow: (assumes branched and rc tag as above)"
+    echo "$ ${MBL_TOOLS_SCRIPTS_DIR}/git-sync-rc-tag.bash mbl-os-x.y.z-rcn"
     echo "$ repo forall -c git tag new-release-tag"
     echo "$ repo forall -c git push origin new-release-tag"
 else
