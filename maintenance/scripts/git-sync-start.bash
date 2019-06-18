@@ -26,9 +26,9 @@ fi
 
 # Currently assume we can get the manifests from the local mbl-tools checkout
 # Warning! Will not pick up local modifications!
-MBL_TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && git rev-parse --show-toplevel)"
-MBL_TOOLS_BRANCH="$(cd $MBL_TOOLS_DIR && git name-rev --name-only HEAD)"
-MBL_TOOLS_SCRIPTS_DIR="${MBL_TOOLS_DIR}/maintenance/scripts"
+MBL_TOOLS_SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MBL_TOOLS_DIR="$(cd "$MBL_TOOLS_SCRIPTS_DIR" && git rev-parse --show-toplevel)"
+MBL_TOOLS_BRANCH="$(cd "$MBL_TOOLS_DIR" && git name-rev --name-only HEAD)"
 
 WORKDIR="${1-mbl-maint}"
 
@@ -49,6 +49,7 @@ if [ $RELEASE -eq 1 ]; then
     echo "RELEASE BRANCH flow:"
     echo "$ ${MBL_TOOLS_SCRIPTS_DIR}/git-sync-manifest.bash pinned-manifest.xml mbl-os-x.y"
     echo "$ repo start new-release-branch --all"
+    echo "* commit armmbed/mbl-manifest/default.xml with changes done by manifest script"
     echo "* edit/commit armmbed/mbl-tools/maintenance/release.xml to default to new-release-branch"
     echo "* edit/commit armmbed/mbl-jenkins/mbl-pipeline to use new-release-branch"
     echo "* edit/commit armmbed/meta-mbl/meta-mbl-distro/conf/distro/mbl.conf to set DISTRO_VERSION"
