@@ -4,6 +4,8 @@
 {% set lxc_creation = true %}
 {% set lxc_name = "wifi-access-lxc" %}
 
+{% set _ = tags.update({"imx7d-pico-mbl": ["external_antenna"]}) %}
+
 {% block testplan %}
 - test:
     timeout:
