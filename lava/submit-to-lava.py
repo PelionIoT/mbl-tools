@@ -71,6 +71,7 @@ class LAVATemplates(object):
                 notify_user=notify_user,
                 notify_emails=notify_emails,
                 device_type=device_type,
+                tags={},
             )
             lava_jobs.append(lava_job)
             if self.dry_run:
