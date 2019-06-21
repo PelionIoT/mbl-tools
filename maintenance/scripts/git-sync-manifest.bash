@@ -28,11 +28,11 @@ if [ ! -d ".repo" ]; then
     exit 1
 fi
 
-TAG_ONLY=0
-if [ "$1" == "--tag-only" ]; then
+OVERRIDE_ONLY=0
+if [ "$1" == "--override-only" ]; then
     # Mode used by the git-sync-rc-tag.bash script to just use the release.xml to set
     # up the overrides for the arm repos, don't mess with the default.xml manifest
-    TAG_ONLY=1
+    OVERRIDE_ONLY=1
     shift
 fi
 
@@ -43,7 +43,7 @@ if [ "$MANIFEST" == "" ] || [ ! -f "$MANIFEST" ]; then
 fi
 
 MBL_BRANCH=$2
-if [ $TAG_ONLY -eq 0 ] && [ "$MBL_BRANCH" == "" ]; then
+if [ $OVERRIDE_ONLY -eq 0 ] && [ "$MBL_BRANCH" == "" ]; then
     echo "ERROR: Missing branch name"
     exit 2
 fi
@@ -62,7 +62,7 @@ VALID=0
 # Run through the pinned manifest for 2 reasons:
 # 1. Work out the pinned versions of the armmbed repos we should be branching
 # 2. Create a pinned version of the non-arm repos in mbl-manifest default.xml
-if [ $TAG_ONLY -eq 0 ]; then echo "Updating $MBL_MANIFEST_FILE"; fi
+if [ $OVERRIDE_ONLY -eq 0 ]; then echo "Updating $MBL_MANIFEST_FILE"; fi
 while IFS= read -r line
 do
     if [ $VALID -eq 0 ]; then
@@ -84,12 +84,12 @@ do
             line=$(echo "$line" | sed -e 's/path=\"[a-z/-]*\"//')
             OVERRIDE_STR="$OVERRIDE_STR  <remove-project name=\"$repo\"/>\n  $line\n"
 
-            if [ $TAG_ONLY -eq 0 ]; then
+            if [ $OVERRIDE_ONLY -eq 0 ]; then
                 # Update the arm repo to use the branch - altering the existing MBL manifest
                 echo " Setting branch $MBL_BRANCH for $repo"
                 sed -i "s|\(.*${repo}.*revision=\"\).*\(\".*\)|\1$MBL_BRANCH\2|" $MBL_MANIFEST_FILE
             fi
-        elif [[ $TAG_ONLY -eq 0 && "$line" =~ $MANIFEST_PROJECT ]]; then
+        elif [[ $OVERRIDE_ONLY -eq 0 && "$line" =~ $MANIFEST_PROJECT ]]; then
             # Pin the non-arm repo - altering the existing MBL manifest
             repo="${BASH_REMATCH[1]}"
             echo " Pinning $repo at ${BASH_REMATCH[2]}"
@@ -109,7 +109,7 @@ if [ "$VALID" -ne 1 ]; then
 fi
 
 # Just an blank line for formatting reasons
-if [ "$TAG_ONLY" -eq 0 ]; then echo ""; fi
+if [ "$OVERRIDE_ONLY" -eq 0 ]; then echo ""; fi
 
 if [ "$OVERRIDE_REPOS" != "" ]; then
     echo "Overriding versions for $OVERRIDE_REPOS"

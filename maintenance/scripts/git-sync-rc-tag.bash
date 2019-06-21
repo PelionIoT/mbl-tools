@@ -55,4 +55,4 @@ repo sync $QUIET
 
 # Perform the MBL manifest read and override and sync using this newly checked out
 # mbl-manifest repo (without changing the mbl-manifest default.xml file)
-"$MBL_TOOLS_SCRIPTS_DIR"/git-sync-manifest.bash --tag-only "$MBL_MANIFEST_FILE"
+"$MBL_TOOLS_SCRIPTS_DIR"/git-sync-manifest.bash --override-only "$MBL_MANIFEST_FILE"
