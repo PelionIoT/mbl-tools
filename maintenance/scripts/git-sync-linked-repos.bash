@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright (c) 2019, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # TODO - can refactor this to enable more than one linked repo
 # E.g. 11-2 in https://www.tldp.org/LDP/abs/html/loops1.html
 
@@ -14,7 +18,7 @@ MANIFEST_OVERRIDE_FILE="mbl-linked-override.xml"
 if [ "$1" == "-h" ]; then
     echo "Create an override to match the versions of the linked repos"
     echo "$MBL_LINKED_REPO only at this time"
-    echo "Usage: $(basename $0)"
+    echo "Usage: $(basename "$0")"
     exit 0
 fi
 
@@ -25,7 +29,7 @@ fi
 
 QUIET=-q
 DEBUG=${DEBUG:-0}
-if [ $DEBUG -ne 0 ]; then
+if [ "$DEBUG" -ne 0 ]; then
     QUIET=
 fi
 

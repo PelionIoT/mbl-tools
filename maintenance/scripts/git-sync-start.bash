@@ -1,10 +1,14 @@
 #!/bin/bash
 
+# Copyright (c) 2019, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 #DEBUG=1
 
 if [ "$1" == "-h" ]; then
-    echo "Start the release or maintenance sync process"
-    echo "Usage: $(basename $0) [--release] [WORKDIR]"
+    echo "Start the release or maintenance sync process by creating a repo directory"
+    echo "Usage: $(basename "$0") [--release] [WORKDIR]"
     exit 0
 fi
 
@@ -20,7 +24,7 @@ fi
 
 QUIET=-q
 DEBUG=${DEBUG:-0}
-if [ $DEBUG -ne 0 ]; then
+if [ "$DEBUG" -ne 0 ]; then
     QUIET=
 fi
 
@@ -38,7 +42,7 @@ if [ -d "$WORKDIR" ]; then
 fi
 
 mkdir -p "$WORKDIR"
-cd "$WORKDIR"
+cd "$WORKDIR" || exit 1
 
 echo "Using mbl-tools: $MBL_TOOLS_DIR @ $MBL_TOOLS_BRANCH"
 

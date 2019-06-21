@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright (c) 2019, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Defaults
 MANIFEST_OVERRIDE_DIR=".repo/local_manifests"
 MANIFEST_OVERRIDE_FILE="mbl-manifest-override.xml"
@@ -13,7 +17,7 @@ if [ "$1" == "-h" ]; then
     echo "Create a new manifest of pinned non-arm repos using supplied pins; and"
     echo "Set the arm repos to use the supplied MBL_BRANCH; and"
     echo "Create an override to repo sync to pinned versions of arm repos"
-    echo "Usage: $(basename $0) PINNED_MANIFEST.xml MBL_BRANCH"
+    echo "Usage: $(basename "$0") PINNED_MANIFEST.xml MBL_BRANCH"
     echo "  PINNED_MANIFEST.xml - the pinned manifest from the last good build"
     echo "  MBL_BRANCH - the name of the new branch (for release)"
     exit 0
@@ -33,20 +37,20 @@ if [ "$1" == "--tag-only" ]; then
 fi
 
 MANIFEST=$1
-if [ "$MANIFEST" == "" -o  ! -f "$MANIFEST" ]; then
+if [ "$MANIFEST" == "" ] || [ ! -f "$MANIFEST" ]; then
     echo "ERROR: Invalid manifest file name - $MANIFEST"
     exit 2
 fi
 
 MBL_BRANCH=$2
-if [ $TAG_ONLY -eq 0 -a "$MBL_BRANCH" == "" ]; then
+if [ $TAG_ONLY -eq 0 ] && [ "$MBL_BRANCH" == "" ]; then
     echo "ERROR: Missing branch name"
     exit 2
 fi
 
 DEBUG=${DEBUG:-0}
 QUIET=-q
-if [ $DEBUG -ne 0 ]; then
+if [ "$DEBUG" -ne 0 ]; then
     QUIET=
 fi
 
@@ -77,7 +81,7 @@ do
             # Default to existing origin remotes rather than github
             line=${line/\"github\"/\"origin\"}
             # Remove any paths from the project
-            line=$(echo $line | sed -e 's/path=\"[a-z/-]*\"//')
+            line=$(echo "$line" | sed -e 's/path=\"[a-z/-]*\"//')
             OVERRIDE_STR="$OVERRIDE_STR  <remove-project name=\"$repo\"/>\n  $line\n"
 
             if [ $TAG_ONLY -eq 0 ]; then
@@ -91,7 +95,7 @@ do
             echo " Pinning $repo at ${BASH_REMATCH[2]}"
             sed -i "s|.*${repo}.*|$line|" $MBL_MANIFEST_FILE
         else
-            if [ $DEBUG -eq 1 ]; then echo "IGNORED:$line"; fi
+            if [ "$DEBUG" -eq 1 ]; then echo "IGNORED:$line"; fi
             if [[ "$line" =~ revision=\"master\" ]]; then
                 echo -e "\n\e[91mWARNING: Using pinned manifest file that references the \"master\" version\e[0m\n"
             fi
@@ -99,13 +103,13 @@ do
     fi
 done < "$MANIFEST"
 
-if [ $VALID -ne 1 ]; then
+if [ "$VALID" -ne 1 ]; then
     echo "ERROR: Invalid manifest file contents - $MANIFEST"
     exit 1
 fi
 
 # Just an blank line for formatting reasons
-if [ $TAG_ONLY -eq 0 ]; then echo ""; fi
+if [ "$TAG_ONLY" -eq 0 ]; then echo ""; fi
 
 if [ "$OVERRIDE_REPOS" != "" ]; then
     echo "Overriding versions for $OVERRIDE_REPOS"
@@ -119,5 +123,4 @@ if [ "$OVERRIDE_REPOS" != "" ]; then
 fi
 
 # Now override the linked repos (even if we haven't overridden anything above)
-$MBL_TOOLS_SCRIPTS_DIR/git-sync-linked-repos.bash
-
+"$MBL_TOOLS_SCRIPTS_DIR"/git-sync-linked-repos.bash
