@@ -7,8 +7,8 @@
 # Defaults
 MANIFEST_OVERRIDE_DIR=".repo/local_manifests"
 MANIFEST_OVERRIDE_FILE="mbl-manifest-override.xml"
-MANIFEST_ARM_REPO=".*(armmbed/[a-z\-]+).*"
-MANIFEST_PROJECT=".*<project name=\"([\/a-zA-Z0-9_\-]+).*revision=\"([a-f0-9]+).*"
+MANIFEST_PROJECT_RE_ARM=".*<project name=\"(armmbed/[a-z\-]+)\".*"
+MANIFEST_PROJECT_RE=".*<project name=\"([\/a-zA-Z0-9_\-]+).*revision=\"([a-f0-9]+).*"
 MBL_MANIFEST_FILE="armmbed/mbl-manifest/default.xml"
 
 #DEBUG=1
@@ -70,7 +70,7 @@ do
             VALID=1
         fi
     else
-        if [[ "$line" =~ $MANIFEST_ARM_REPO ]]; then
+        if [[ "$line" =~ $MANIFEST_PROJECT_RE_ARM ]]; then
             # Found an Arm project that needs overriding to match the pinned version
             repo="${BASH_REMATCH[1]}"
             OVERRIDE_REPOS="$repo $OVERRIDE_REPOS"
@@ -87,13 +87,13 @@ do
             if [ $OVERRIDE_ONLY -eq 0 ]; then
                 # Update the arm repo to use the branch - altering the existing MBL manifest
                 echo " Setting branch $MBL_BRANCH for $repo"
-                sed -i "s|\(.*${repo}.*revision=\"\).*\(\".*\)|\1$MBL_BRANCH\2|" $MBL_MANIFEST_FILE
+                sed -i "s|\(.*<project name=\"${repo}\".*revision=\"\).*\(\".*\)|\1$MBL_BRANCH\2|" $MBL_MANIFEST_FILE
             fi
-        elif [[ $OVERRIDE_ONLY -eq 0 && "$line" =~ $MANIFEST_PROJECT ]]; then
+        elif [[ $OVERRIDE_ONLY -eq 0 && "$line" =~ $MANIFEST_PROJECT_RE ]]; then
             # Pin the non-arm repo - altering the existing MBL manifest
             repo="${BASH_REMATCH[1]}"
             echo " Pinning $repo at ${BASH_REMATCH[2]}"
-            sed -i "s|.*${repo}.*|$line|" $MBL_MANIFEST_FILE
+            sed -i "s|.*<project name=\"${repo}\".*|$line|" $MBL_MANIFEST_FILE
         else
             if [ "$DEBUG" -eq 1 ]; then echo "IGNORED:$line"; fi
             if [[ "$line" =~ revision=\"master\" ]]; then
