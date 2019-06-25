@@ -33,6 +33,9 @@ if [ "$DEBUG" -ne 0 ]; then
     QUIET=
 fi
 
+# Read the setting in the manifest xml we are using
+REMOTE=$(grep "<remote" .repo/manifest.xml | sed -e 's|.*name=\"\(.*\)\".*|\1|')
+
 # Create override file
 # Currently only supports mbl-core
 MBL_LINKED_SHA=$(grep "$MBL_LINKED_LINE" "$MBL_LINKED_FILE" | sed -e 's/.*\(".*"\)/\1/')
@@ -44,7 +47,7 @@ if [[ "$MBL_LINKED_SHA" =~ ^[\"0-9a-f]+$ ]]; then
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
   <remove-project name="$MBL_LINKED_REPO"/>
-  <project name="$MBL_LINKED_REPO" remote="origin" revision=$MBL_LINKED_SHA/>
+  <project name="$MBL_LINKED_REPO" remote="$REMOTE" revision=$MBL_LINKED_SHA/>
 </manifest>
 EOF
     repo sync $QUIET

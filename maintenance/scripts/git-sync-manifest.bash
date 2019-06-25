@@ -56,6 +56,9 @@ fi
 
 MBL_TOOLS_SCRIPTS_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
+# Read the setting in the manifest xml we are using
+REMOTE=$(grep "<remote" .repo/manifest.xml | sed -e 's|.*name=\"\(.*\)\".*|\1|')
+
 OVERRIDE_STR=""
 OVERRIDE_REPOS=""
 VALID=0
@@ -78,8 +81,8 @@ do
             # Set up the override details for this repo
             # Fix project lines that are missing the correct ending - replace "> with "\> 
             line=${line/\"\>/\"\/\>}
-            # Default to existing origin remotes rather than github
-            line=${line/\"github\"/\"origin\"}
+            # Default to manifest remote we are using rather than github
+            line=${line/\"github\"/\"$REMOTE\"}
             # Remove any paths from the project
             line=$(echo "$line" | sed -e 's/path=\"[a-z/-]*\"//')
             OVERRIDE_STR="$OVERRIDE_STR  <remove-project name=\"$repo\"/>\n  $line\n"

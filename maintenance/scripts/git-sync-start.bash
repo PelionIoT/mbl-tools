@@ -8,7 +8,7 @@
 
 if [ "$1" == "-h" ]; then
     echo "Start the release or maintenance sync process by creating a repo directory"
-    echo "Usage: $(basename "$0") [--release] [WORKDIR]"
+    echo "Usage: $(basename "$0") [--release] [--flowhelp] [WORKDIR]"
     exit 0
 fi
 
@@ -34,20 +34,32 @@ MBL_TOOLS_SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MBL_TOOLS_DIR="$(cd "$MBL_TOOLS_SCRIPTS_DIR" && git rev-parse --show-toplevel)"
 MBL_TOOLS_BRANCH="$(cd "$MBL_TOOLS_DIR" && git name-rev --name-only HEAD)"
 
-WORKDIR="${1-mbl-maint}"
+if [ "$1" != "--flowhelp" ]; then
+    # Create the new work directory and perform a repo sync
 
-if [ -d "$WORKDIR" ]; then
-    echo "ERROR: work dir already exists: $WORKDIR"
-    exit 1
+    WORKDIR="${1-mbl-maint}"
+
+    if [ -d "$WORKDIR" ]; then
+        echo "ERROR: work dir already exists: $WORKDIR"
+        exit 1
+    fi
+
+    mkdir -p "$WORKDIR"
+    cd "$WORKDIR" || exit 1
+
+    echo "Using mbl-tools: $MBL_TOOLS_DIR @ $MBL_TOOLS_BRANCH"
+
+    repo init $QUIET -u "$MBL_TOOLS_DIR" -b "$MBL_TOOLS_BRANCH" -m "$MANIFEST"
+    repo sync $QUIET
+else
+    if [ ! -d ".repo" ]; then
+        echo "ERROR: No .repo directory found, please run in the repo directory root"
+        exit 1
+    fi
 fi
 
-mkdir -p "$WORKDIR"
-cd "$WORKDIR" || exit 1
-
-echo "Using mbl-tools: $MBL_TOOLS_DIR @ $MBL_TOOLS_BRANCH"
-
-repo init $QUIET -u "$MBL_TOOLS_DIR" -b "$MBL_TOOLS_BRANCH" -m "$MANIFEST"
-repo sync $QUIET
+# Read the setting in the manifest xml we are using
+REMOTE=$(grep "<remote" .repo/manifest.xml | sed -e 's|.*name=\"\(.*\)\".*|\1|')
 
 if [ $RELEASE -eq 1 ]; then
     echo "RELEASE BRANCH flow:"
@@ -57,24 +69,28 @@ if [ $RELEASE -eq 1 ]; then
     echo "* edit/commit armmbed/mbl-tools/maintenance/release.xml to default to mbl-os-x.y"
     echo "* edit/commit armmbed/mbl-jenkins/mbl-pipeline to use mbl-os-x.y"
     echo "* edit/commit armmbed/meta-mbl/meta-mbl-distro/conf/distro/mbl.conf to set DISTRO_VERSION"
-    echo "$ repo forall -c push --set-upstream origin mbl-os-x.y"
+    echo "$ repo forall -c push --set-upstream $REMOTE mbl-os-x.y"
     echo "* github: create the PRs/test and get them merged"
     echo ""
     echo "RELEASE CANDIDATE TAG flow: (assumes branched as above and built on jenkins)"
     echo "* add/commit/push armmbed/mbl-manifest/release.xml - a built pinned manifest"
-    echo "$ cd armmbed/mbl-manifest; git tag mbl-os-x.y.z-rcn; git push origin mbl-os-x.y.z-rcn"
+    echo "$ cd armmbed/mbl-manifest; git tag mbl-os-x.y.z-rcn; git push $REMOTE mbl-os-x.y.z-rcn"
     echo ""
     echo "RELEASE TAG flow: (assumes branched and rc tag as above)"
     echo "$ ${MBL_TOOLS_SCRIPTS_DIR}/git-sync-rc-tag.bash mbl-os-x.y.z-rcn"
     echo "$ repo forall -c git tag new-release-tag"
-    echo "$ repo forall -c git push origin new-release-tag"
+    echo "$ repo forall -c git push $REMOTE new-release-tag"
 else
     echo "MAINTENANCE flow:"
     echo "$ repo start new-maintenance-branch --all"
     echo "* manually per project - review and pick the commits:"
-    echo "  $ ${MBL_TOOLS_SCRIPTS_DIR}/git-sync-diff.bash [dev-branch-name]"
+    echo "  $ ${MBL_TOOLS_SCRIPTS_DIR}/git-sync-diff.bash"
     echo "  $ git cherry-pick <shas>"
-    echo "$ repo forall -c git push --set-upstream origin new-maintenance-branch"
+    echo "  * Suggestion: keep a log of the diff output and which commits you picked"
+    echo "$ repo forall -c git push --set-upstream $REMOTE new-maintenance-branch"
     echo "* github: create the PRs/test and get them merged"
-    echo "$ repo forall -c ${MBL_TOOLS_SCRIPTS_DIR}/git-sync-tag.bash [dev-branch-name]"
+    echo "  * Suggestion: create test commits for mbl-manifest/meta-mbl to point to"
+    echo "  * Suggestion: new-maintenance-branch; after testing you can drop these test"
+    echo "  * Suggestion: commits via rebase and push/merge without re-test"
+    echo "$ repo forall -c ${MBL_TOOLS_SCRIPTS_DIR}/git-sync-tag.bash"
 fi

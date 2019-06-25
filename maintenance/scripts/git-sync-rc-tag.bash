@@ -39,6 +39,9 @@ fi
 
 MBL_TOOLS_SCRIPTS_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
+# Read the setting in the manifest xml we are using
+REMOTE=$(grep "<remote" .repo/manifest.xml | sed -e 's|.*name=\"\(.*\)\".*|\1|')
+
 # Create override for this RC tag
 echo "Overriding $MBL_MANIFEST_REPO version to $MBL_RC_TAG"
 echo " Via $MANIFEST_OVERRIDE_DIR/$MANIFEST_OVERRIDE_FILE"
@@ -48,7 +51,7 @@ cat << EOF > $MANIFEST_OVERRIDE_DIR/$MANIFEST_OVERRIDE_FILE
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
   <remove-project name="$MBL_MANIFEST_REPO"/>
-  <project name="$MBL_MANIFEST_REPO" remote="origin" revision="refs/tags/$MBL_RC_TAG"/>
+  <project name="$MBL_MANIFEST_REPO" remote="$REMOTE" revision="refs/tags/$MBL_RC_TAG"/>
 </manifest>
 EOF
 repo sync $QUIET
