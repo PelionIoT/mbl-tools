@@ -1,0 +1,28 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "PSA architecture tests" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "psa-arch-tests-lxc" %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 3
+    namespace: lxc
+    definitions:
+
+    {{ macros.install_mbl_cli(venv_name) | indent }}
+
+    - path: ci/lava/tests/psa-arch-tests.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: psa-arch-tests
+      from: git
+      history: False
+      branch: "{{ mbl_branch }}"
+      {% if "mbl-core" in mbl_revisions %}
+      revision: {{ mbl_revisions["mbl-core"] }}
+      {% endif %}
+      parameters:
+          virtual_env: "{{ venv_name }}"
+{% endblock testplan %}
+
