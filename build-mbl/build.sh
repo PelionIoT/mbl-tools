@@ -877,7 +877,7 @@ while true; do
        fi
 
        # Print out the content of the manifest and pinned manifest files.
-       # This is useful to have at log level what we are building.
+       # This is useful to have at the log level that we are building.
        cat_files "$builddir/mbl-manifest/.repo/manifest.xml" "$builddir/pinned-manifest.xml"
 
        # images is a space separated list of options, it should not be
