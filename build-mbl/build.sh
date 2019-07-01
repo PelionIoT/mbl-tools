@@ -421,6 +421,16 @@ export_eula_env_vars() {
     done
 }
 
+cat_files() {
+    local files=("$@")
+
+    for file in "${files[@]}";
+    do
+        printf "Printing the content of file: %s\n" "$file"
+        cat "$file"
+    done
+}
+
 usage()
 {
   cat <<EOF
@@ -740,6 +750,14 @@ while true; do
     if [ ! -e "$builddir/mbl-manifest" ]; then
       repo_init_atomic "$builddir/mbl-manifest" -u "$url" -b "$branch" -m "$manifest"
     fi
+
+    # If we are saving build artifacts, then save them as they are
+    # created rather than waiting for the end of the build process,
+    # this makes debug of build issues easier.
+    if [ -n "${outputdir:-}" ]; then
+      cp "$builddir/mbl-manifest/.repo/manifest.xml" "$outputdir/manifest.xml"
+    fi
+
     push_stages sync
     ;;
 
@@ -857,6 +875,10 @@ while true; do
          bitbake -e > bitbake-e.log.t
          mv -f bitbake-e.log.t "$machinedir/bitbake-e.log"
        fi
+
+       # Print out the content of the manifest and pinned manifest files.
+       # This is useful to have at the log level that we are building.
+       cat_files "$builddir/mbl-manifest/.repo/manifest.xml" "$builddir/pinned-manifest.xml"
 
        # images is a space separated list of options, it should not be
        # quoted because it will form multiple options rather than one
