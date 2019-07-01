@@ -868,7 +868,7 @@ while true; do
 
        # If outputdir is specified, the output of bitbake -e is saved in the
        # machine artifact directory. This command will output the configuration
-       # files and the class files used in thqe execution environment.
+       # files and the class files used in the execution environment.
        if [ -n "${outputdir:-}" ]; then
          machinedir="$outputdir/machine/$machine"
          mkdir -p "$machinedir"
