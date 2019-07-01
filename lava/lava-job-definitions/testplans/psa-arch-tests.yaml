@@ -7,7 +7,7 @@
 {% block testplan %}
 - test:
     timeout:
-      minutes: 3
+      minutes: 10
     namespace: lxc
     definitions:
 
