@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2019, Arm Limited and Contributors. All rights reserved. -->
+<!-- SPDX-License-Identifier: MIT -->
+<manifest>
+
+  <remote fetch="ssh://git@github.com" name="origin"/>
+
+  <default revision="warrior-dev" sync-j="4"/>
+
+  <project name="armmbed/mbl-manifest" remote="origin"/>
+  <project name="armmbed/meta-mbl" remote="origin"/>
+  <project name="armmbed/mbl-config" remote="origin"/>
+  <project name="armmbed/mbl-core" remote="origin"/>
+  <project name="armmbed/mbl-tools" remote="origin"/>
+  <project name="armmbed/mbl-cli" remote="origin"/>
+  <project name="armmbed/mbl-jenkins" remote="origin"/>
+  <project name="armmbed/mbl-jenkins-libraries" remote="origin"/>
+</manifest>
