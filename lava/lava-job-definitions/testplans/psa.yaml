@@ -1,0 +1,23 @@
+{% extends "shared/templates/base_yocto.yaml" %}
+
+{% set job_name = "PSA Crypto"%}
+{% set lxc_creation = false %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 20
+    namespace: target
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: psa-arch-crypto-tests
+          description: psa-arch-crypto-tests
+        run:
+          steps:
+            - psa-arch-crypto-tests
+      name: psa-crypto
+      path: inline/psa-arch-crypto-tests.yaml
+{% endblock testplan %}

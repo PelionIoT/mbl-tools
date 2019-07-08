@@ -1,0 +1,22 @@
+actions:
+- deploy:
+    namespace: target
+    to: u-boot-ums
+    os: oe
+    image:
+      url: "{{ image_url }}"
+      compression: gz
+      root_partition: 1
+
+- boot:
+    namespace: target
+    method: u-boot
+    commands: ums
+    failure_retry: 3
+    auto_login:
+      login_prompt: "imx8mmevk login:"
+      username: root
+    prompts:
+      - "root@imx8mmevk:~#"
+    timeout:
+      minutes: 15
