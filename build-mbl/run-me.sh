@@ -47,7 +47,7 @@ dockerfile_for_project() {
             printf "%s\n" "Dockerfile"
             ;;
         poky)
-            printf "%s\n" "Dockerfile.poky"
+            printf "%s\n" "poky-build/Dockerfile.poky"
             ;;
         *)
             printf "Unrecognized project \"%s\"" "$project" >&2

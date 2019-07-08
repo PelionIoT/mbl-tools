@@ -150,8 +150,8 @@ RUN apt-get update && apt-get install -y gpg-agent
 
 ENV LANG en_US.UTF-8
 
-# Scripts used to build pelion-os-edge image
-COPY build-poky.py file_util.py poky-bitbake-wrapper.sh git-setup.sh ssh-setup.sh ./
+# Scripts used to build poky-psa image
+COPY poky-build/build-poky.py support/file_util.py poky-build/poky-bitbake-wrapper.sh git-setup.sh ssh-setup.sh ./
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
