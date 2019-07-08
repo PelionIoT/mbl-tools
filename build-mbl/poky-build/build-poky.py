@@ -294,7 +294,7 @@ def _parse_args():
     )
     parser.add_argument(
         "-x",
-        metavar="STRING",
+        action="store_true",
         help="Enable debugging. Currently ignored.",
         required=False,
     )
