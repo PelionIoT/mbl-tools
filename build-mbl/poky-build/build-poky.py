@@ -204,6 +204,7 @@ def _str_to_resolved_path(path_str):
 
 
 def _parse_args():
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--builddir",
@@ -265,6 +266,45 @@ def _parse_args():
         help="Specify the version of mbl-tools that this script came from.",
         required=False,
     )
+    parser.add_argument(
+        "--accept-eula",
+        metavar="STRING",
+        help="Automatically accept any EULAs required for building MACHINE",
+        required=False,
+    )
+    parser.add_argument(
+        "--machine",
+        metavar="STRING",
+        help="Machine to build. Defaults to imxmmevk. Currently ignored",
+        required=False,
+        default="imx8mmevk",
+    )
+    parser.add_argument(
+        "--build-tag",
+        metavar="STRING",
+        help="Specify a unique version tag to identify the build.",
+        required=False,
+    )
+    parser.add_argument(
+        "--jobs",
+        "-j",
+        metavar="STRING",
+        help="Set the number of parallel processes. Default # CPU on the host.",
+        required=False,
+    )
+    parser.add_argument(
+        "-x",
+        metavar="STRING",
+        help="Enable debugging. Currently ignored.",
+        required=False,
+    )
+    parser.add_argument(
+        "--artifactory-api-key",
+        metavar="STRING",
+        help="Artifactory API key. Currently ignored.",
+        required=False,
+    )
+
 
     args = parser.parse_args()
 
