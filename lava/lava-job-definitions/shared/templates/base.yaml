@@ -41,6 +41,19 @@ protocols:
     verbose: true
 {% endif %}
 
+{% if not root_partition %}
+{%    set root_partition = 2  %}
+{% endif %}
+
+{% if not login_prompt %}
+{%    set login_prompt = "mbed-linux-os-(.*) login:" %}
+{% endif %}
+
+{% if not prompts %}
+{%    set prompts = ["root@mbed-linux-os(.*):~#"] %}
+{% endif %}
+
+
 # Deploy and boot the target
 {% include "shared/templates/" + device_type + "-deploy-boot.yaml" with context %}
 

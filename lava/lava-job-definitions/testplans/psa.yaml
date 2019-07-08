@@ -1,7 +1,10 @@
-{% extends "shared/templates/base_yocto.yaml" %}
+{% extends "shared/templates/base.yaml" %}
 
 {% set job_name = "PSA Crypto"%}
 {% set lxc_creation = false %}
+{% set root_partition = 1 %}
+{% set login_prompt = "imx8mmevk login:" %}
+{% set prompts = [ "root@imx8mmevk:~#" ] %}
 
 {% block testplan %}
 - test:

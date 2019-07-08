@@ -79,9 +79,11 @@ actions:
       download_command:  sleep 10 ; ifconfig ; wget
       unpack_command: tar -C / -xzf
     auto_login:
-      login_prompt: "mbed-linux-os-(.*) login:"
+      login_prompt:  "{{ login_prompt }}"
       username: root
     prompts:
-      - "root@mbed-linux-os(.*):~#"
+{% for prompt in prompts %}
+      - "{{ prompt }}"
+{% endfor %}
     timeout:
       minutes: 5
