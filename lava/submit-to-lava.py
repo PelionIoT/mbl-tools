@@ -289,6 +289,20 @@ def _parse_arguments(cli_args):
         default=[],
     )
     parser.add_argument(
+        "--lava-callback-domain",
+        help="Notification callback domain",
+        dest="callback_domain",
+        default="",
+        required=False,
+    )
+    parser.add_argument(
+        "--lava-callback-port",
+        help="Notification callback port",
+        dest="callback_port",
+        default="",
+        required=False,
+    )
+    parser.add_argument(
         "--debug",
         help="Enable debug messages",
         action="store_true",
@@ -362,6 +376,8 @@ def _main(args):
             args.notify_user,
             args.notify_emails,
             args.device_type,
+            args.callback_domain,
+            args.callback_port,
         )
 
         # Instantiate a LAVA server
