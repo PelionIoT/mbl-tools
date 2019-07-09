@@ -74,7 +74,7 @@ class LAVATemplates(object):
                 notify_emails=notify_emails,
                 device_type=device_type,
                 callback_domain=callback_domain,
-                callback_domain=callback_port,
+                callback_port=callback_port,
                 tags={},
             )
             lava_jobs.append(lava_job)
