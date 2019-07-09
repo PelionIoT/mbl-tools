@@ -19,6 +19,8 @@ tags:
 metadata:
     build-url: "{{ build_url }}"
     build-tag: "{{ build_tag }}"
+    testplan: "{{ job_name }}"
+    mbl-branch: "{{ mbl_branch }}"
 
 priority: medium
 visibility: public
