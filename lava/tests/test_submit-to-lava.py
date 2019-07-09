@@ -92,7 +92,7 @@ class TestLAVATemplates(object):
             ["notify_emails"],
             "imx7s-warp-mbl",
             "callback.domain",
-            "callback.port"
+            "callback.port",
         )
 
         # Check the results
