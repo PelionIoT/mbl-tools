@@ -57,6 +57,8 @@ class LAVATemplates(object):
         notify_user,
         notify_emails,
         device_type,
+        callback_domain,
+        callback_port,
     ):
         """Process templates rendering them with the right values."""
         lava_jobs = []
@@ -71,6 +73,8 @@ class LAVATemplates(object):
                 notify_user=notify_user,
                 notify_emails=notify_emails,
                 device_type=device_type,
+                callback_domain=callback_domain,
+                callback_domain=callback_port,
                 tags={},
             )
             lava_jobs.append(lava_job)

@@ -91,6 +91,8 @@ class TestLAVATemplates(object):
             "notify_user",
             ["notify_emails"],
             "imx7s-warp-mbl",
+            "callback.domain",
+            "callback.port"
         )
 
         # Check the results
@@ -104,6 +106,8 @@ class TestLAVATemplates(object):
             notify_user="notify_user",
             notify_emails=["notify_emails"],
             device_type="imx7s-warp-mbl",
+            callback_domain="callback.domain",
+            callback_port="callback.port",
         )
         lt._dump_job.assert_called_with(
             "some yaml string", "imx7s-warp-mbl", "lava_template_name"
