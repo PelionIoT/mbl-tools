@@ -88,6 +88,7 @@ def _build(workdir):
             SCRIPTS_DIR / "poky-bitbake-wrapper.sh",
             workdir,
             "core-image-minimal",
+            "-j", "48",
         ],
         check=True,
     )
