@@ -913,7 +913,6 @@ while true; do
             targetsys=arm-oe-linux-gnueabi
             ;;
           imx8mmevk-mbl)
-
             targetsys=aarch64-oe-linux
             ;;
           esac
