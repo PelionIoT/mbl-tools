@@ -19,6 +19,8 @@ tags:
 metadata:
     build-url: "{{ build_url }}"
     build-tag: "{{ build_tag }}"
+    testplan: "{{ job_name }}"
+    mbl-branch: "{{ mbl_branch }}"
 
 priority: medium
 visibility: public
@@ -101,4 +103,15 @@ notify:
     criteria:
       status: finished
     verbosity: verbose
+{% endif %}
+
+{% if callback_domain and callback_port %}
+notify:
+    criteria:
+       status: finished
+    callbacks:
+      - url: http://{{ callback_domain }}:{{ callback_port }}/
+        method: POST
+        dataset: minimal
+        content-type: json
 {% endif %}
