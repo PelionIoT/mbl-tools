@@ -57,6 +57,8 @@ class LAVATemplates(object):
         notify_user,
         notify_emails,
         device_type,
+        callback_domain,
+        callback_port,
     ):
         """Process templates rendering them with the right values."""
         lava_jobs = []
@@ -71,6 +73,8 @@ class LAVATemplates(object):
                 notify_user=notify_user,
                 notify_emails=notify_emails,
                 device_type=device_type,
+                callback_domain=callback_domain,
+                callback_port=callback_port,
                 tags={},
             )
             lava_jobs.append(lava_job)
@@ -285,6 +289,20 @@ def _parse_arguments(cli_args):
         default=[],
     )
     parser.add_argument(
+        "--lava-callback-domain",
+        help="Notification callback domain",
+        dest="callback_domain",
+        default="",
+        required=False,
+    )
+    parser.add_argument(
+        "--lava-callback-port",
+        help="Notification callback port",
+        dest="callback_port",
+        default="",
+        required=False,
+    )
+    parser.add_argument(
         "--debug",
         help="Enable debug messages",
         action="store_true",
@@ -358,6 +376,8 @@ def _main(args):
             args.notify_user,
             args.notify_emails,
             args.device_type,
+            args.callback_domain,
+            args.callback_port,
         )
 
         # Instantiate a LAVA server
