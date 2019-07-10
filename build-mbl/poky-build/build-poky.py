@@ -28,13 +28,9 @@ import file_util
 
 SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent
 
-DEFAULT_MANIFEST_REPO = (
-    "ssh://git@github.com/ARMmbed/mbl-manifest"
-)
+DEFAULT_MANIFEST_REPO = "ssh://git@github.com/ARMmbed/mbl-manifest"
 
-DEFAULT_MANIFEST_XML = (
-    "poky.xml"
-)
+DEFAULT_MANIFEST_XML = "poky.xml"
 
 
 def warning_on_one_line(
@@ -80,16 +76,8 @@ def _build(workdir, image):
     Args:
     * workdir (Path): top level of work area.
     """
-    print(SCRIPTS_DIR)
-    print(workdir)
-
     subprocess.run(
-        [
-            SCRIPTS_DIR / "poky-bitbake-wrapper.sh",
-            workdir,
-            image,
-        ],
-        check=True,
+        [SCRIPTS_DIR / "poky-bitbake-wrapper.sh", workdir, image], check=True
     )
 
 
@@ -104,7 +92,14 @@ def _save_artifacts(workdir, outputdir, machine, image):
     if outputdir:
         # Save artifact from deploy/images directory
         shutil.copytree(
-            workdir / "layers" / "poky" / image / "tmp" / "deploy" / "images" / machine,
+            workdir
+            / "layers"
+            / "poky"
+            / image
+            / "tmp"
+            / "deploy"
+            / "images"
+            / machine,
             outputdir / "machine" / machine / "images" / image / "images",
             symlinks=True,
             ignore=shutil.ignore_patterns("*.cpio.gz", "*.wic"),
@@ -127,7 +122,6 @@ def _save_artifacts(workdir, outputdir, machine, image):
         warning("--outputdir not specified. Not saving artifacts.")
 
 
-
 def _set_up_git():
     """Initialize a sane git setup."""
     subprocess.run([SCRIPTS_DIR / "git-setup.sh"], check=True)
@@ -146,7 +140,12 @@ def _set_up_bitbake_ssh(workdir):
     * workdir (Path): top level of work area.
     """
     localconf_path = (
-        workdir / "layers" / "poky" / "meta-poky" / "conf" / "local.conf.sample"
+        workdir
+        / "layers"
+        / "poky"
+        / "meta-poky"
+        / "conf"
+        / "local.conf.sample"
     )
 
     # Add some BitBake config to allow BitBake tasks to read the SSH_AUTH_SOCK
@@ -157,15 +156,21 @@ def _set_up_bitbake_ssh(workdir):
         localconf.write('BB_HASHBASE_WHITELIST_append = " SSH_AUTH_SOCK"\n')
         localconf.write('BB_HASHCONFIG_WHITELIST_append = " SSH_AUTH_SOCK"\n')
 
+
 def _set_up_bitbake_machine(workdir, machine):
     """
-    Configure BitBake to build the selected machine 
+    Configure BitBake to build the selected machine.
 
     Args:
     * workdir (Path): top level of work area.
     """
     localconf_path = (
-        workdir / "layers" / "poky" / "meta-poky" / "conf" / "local.conf.sample"
+        workdir
+        / "layers"
+        / "poky"
+        / "meta-poky"
+        / "conf"
+        / "local.conf.sample"
     )
 
     # Add some BitBake config to allow BitBake tasks build the right thing
@@ -176,8 +181,6 @@ def _set_up_bitbake_machine(workdir, machine):
         localconf.write('ACCEPT_FSL_EULA = "1"\n')
         localconf.write('CORE_IMAGE_EXTRA_INSTALL += "mbed-crypto-test"\n')
         localconf.write('CORE_IMAGE_EXTRA_INSTALL += "psa-arch-tests"\n')
-
-
 
 
 def _set_up_download_dir(download_dir):
@@ -224,7 +227,7 @@ def _parse_args():
         metavar="MANIFEST",
         help=(
             "manifest xml to use. Default is "
-             '"{}"'.format(DEFAULT_MANIFEST_XML)
+            '"{}"'.format(DEFAULT_MANIFEST_XML)
         ),
         default=DEFAULT_MANIFEST_XML,
     )
@@ -289,7 +292,8 @@ def _parse_args():
         "--jobs",
         "-j",
         metavar="STRING",
-        help="Set the number of parallel processes. Default # CPU on the host.",
+        help="Set the number of parallel processes. "
+        "Default # CPU on the host.",
         required=False,
     )
     parser.add_argument(
@@ -312,7 +316,6 @@ def _parse_args():
         required=False,
     )
 
-
     args = parser.parse_args()
 
     file_util.ensure_is_directory(args.builddir)
@@ -327,7 +330,10 @@ def main():
     args = _parse_args()
 
     if args.machine != "imx8mmevk":
-        print("ERROR: The only supported machine is imx8mmevk. The selected machine is {}".format(args.machine))
+        print(
+            "ERROR: The only supported machine is imx8mmevk. "
+            "The selected machine is {}".format(args.machine)
+        )
         sys.exit(1)
 
     _set_up_container_ssh()
