@@ -97,7 +97,7 @@ notify:
     criteria:
        status: finished
     callbacks:
-      - url: http://{{ callback_domain }:{{ callback_port }}/
+      - url: http://{{ callback_domain }}:{{ callback_port }}/
         method: POST
         dataset: minimal
         content-type: json
