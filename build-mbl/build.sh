@@ -89,7 +89,7 @@ repo_init_atomic ()
   mv "$path-ri" "$path"
 }
 
-all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl imx6ul-pico-mbl imx8mmevk"
+all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl imx6ul-pico-mbl"
 
 default_manifest="default.xml"
 default_url="git@github.com:ARMmbed/mbl-manifest.git"
@@ -912,8 +912,7 @@ while true; do
           imx6ul-pico-mbl)
             targetsys=arm-oe-linux-gnueabi
             ;;
-          imx8mmevk-mbl)   ;& # fall-through
-          imx8mmevk)
+          imx8mmevk-mbl)
 
             targetsys=aarch64-oe-linux
             ;;
