@@ -93,7 +93,7 @@ notify:
 {% endif %}
 
 {% if callback_domain and callback_port %}
- notify:
+notify:
     criteria:
        status: finished
     callbacks:
