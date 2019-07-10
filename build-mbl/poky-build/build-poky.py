@@ -275,7 +275,7 @@ def _parse_args():
     parser.add_argument(
         "--machine",
         metavar="STRING",
-        help="Machine to build. Defaults to imxmmevk. Currently ignored",
+        help="Machine to build. The only supported machine is imxmmevk",
         required=False,
         default="imx8mmevk",
     )
@@ -325,6 +325,10 @@ def main():
     warnings.formatwarning = warning_on_one_line
 
     args = _parse_args()
+
+    if args.machine != "imx8mmevk":
+        print("ERROR: The only supported machine is imx8mmevk. The selected machine is {}".format(args.machine))
+        sys.exit(1)
 
     _set_up_container_ssh()
     _set_up_git()
