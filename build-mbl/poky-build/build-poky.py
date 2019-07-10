@@ -73,7 +73,7 @@ def _create_workarea(workdir, manifest_repo, branch, manifest):
     subprocess.run(["repo", "sync", "-j", "16"], cwd=workdir, check=True)
 
 
-def _build(workdir):
+def _build(workdir, image):
     """
     Kick off a build of the workarea.
 
@@ -87,13 +87,13 @@ def _build(workdir):
         [
             SCRIPTS_DIR / "poky-bitbake-wrapper.sh",
             workdir,
-            "core-image-minimal",
+            image,
         ],
         check=True,
     )
 
 
-def _save_artifacts(workdir, outputdir):
+def _save_artifacts(workdir, outputdir, machine, image):
     """
     Save artifacts to the output directory.
 
@@ -104,15 +104,15 @@ def _save_artifacts(workdir, outputdir):
     if outputdir:
         # Save artifact from deploy/images directory
         shutil.copytree(
-            workdir / "layers" / "poky" / "core-image-minimal" / "tmp" / "deploy" / "images",
-            outputdir / "images",
+            workdir / "layers" / "poky" / image / "tmp" / "deploy" / "images" / machine,
+            outputdir / "machine" / machine / "images" / image / "images",
             symlinks=True,
             ignore=shutil.ignore_patterns("*.cpio.gz", "*.wic"),
         )
 
         # Save licenses info from deploy/licenses directory
         licenses_path = (
-            workdir / "layers" / "poky" / "core-image-minimal" / "tmp" / "deploy" / "licenses"
+            workdir / "layers" / "poky" / image / "tmp" / "deploy" / "licenses"
         )
         output_license_file = outputdir / "licenses.tar.gz"
         with tarfile.open(output_license_file, "w:gz") as tar:
@@ -157,7 +157,7 @@ def _set_up_bitbake_ssh(workdir):
         localconf.write('BB_HASHBASE_WHITELIST_append = " SSH_AUTH_SOCK"\n')
         localconf.write('BB_HASHCONFIG_WHITELIST_append = " SSH_AUTH_SOCK"\n')
 
-def _set_up_bitbake_machine(workdir):
+def _set_up_bitbake_machine(workdir, machine):
     """
     Configure BitBake to build the selected machine 
 
@@ -172,7 +172,7 @@ def _set_up_bitbake_machine(workdir):
     with file_util.replace_section_in_file(
         path=localconf_path, section_name="MACHINE ??", comment_leader="#"
     ) as localconf:
-        localconf.write('MACHINE ?= "imx8mmevk"\n')
+        localconf.write('MACHINE ?= "{}"\n'.format(machine))
         localconf.write('ACCEPT_FSL_EULA = "1"\n')
         localconf.write('CORE_IMAGE_EXTRA_INSTALL += "mbed-crypto-test"\n')
         localconf.write('CORE_IMAGE_EXTRA_INSTALL += "psa-arch-tests"\n')
@@ -304,6 +304,13 @@ def _parse_args():
         help="Artifactory API key. Currently ignored.",
         required=False,
     )
+    parser.add_argument(
+        "--image",
+        metavar="STRING",
+        help="Name of the image to build.",
+        default="core-image-minimal",
+        required=False,
+    )
 
 
     args = parser.parse_args()
@@ -318,6 +325,7 @@ def main():
     warnings.formatwarning = warning_on_one_line
 
     args = _parse_args()
+
     _set_up_container_ssh()
     _set_up_git()
     _set_up_download_dir(args.downloaddir)
@@ -330,10 +338,10 @@ def main():
     )
 
     _set_up_bitbake_ssh(args.builddir)
-    _set_up_bitbake_machine(args.builddir)
+    _set_up_bitbake_machine(args.builddir, args.machine)
 
-    _build(args.builddir)
-    _save_artifacts(args.builddir, args.outputdir)
+    _build(args.builddir, args.image)
+    _save_artifacts(args.builddir, args.outputdir, args.machine, args.image)
 
 
 if __name__ == "__main__":
