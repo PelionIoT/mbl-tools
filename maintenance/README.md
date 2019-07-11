@@ -15,6 +15,13 @@ It also contains some helper scripts in `scripts`.
 
 Note: Some of the repositories may not be public at this time, as this process is for internal usage at this time.
 
+### Sections
+
+* [Maintenance Directions](#maintenance)
+* [Release Directions](#release)
+
+<a name="maintenance"/>
+
 ## Maintenance Directions
 
 Performing a merge of all commits needed from the dev branch into master.
@@ -145,19 +152,109 @@ cd $MAINTDIR
 repo forall -c $SCRIPTS/git-sync-tag.bash
 ```
 
+<a name="release"/>
+
 ## Releasing directions
 
-### Release on default dev branch:
+### Release branches
+
+Follow these instructions to create a release branch from the current dev branch.
+
+NOTE: A similar flow can be used to create a new dev branch from master (with some tweaks!)
+
+Set up the tools:
+
 ```
-mkdir my-workdir ; cd my-workdir
+mkdir RELWORKDIR ; cd RELWORKDIR
 git clone git@github.com:ARMmbed/mbl-tools
-mbl-tools/maintenance/scripts/git-sync-start.bash --release my-release
+export SCRIPTS=$(pwd)/mbl-tools/maintenance/scripts
 ```
 
-### Release tagging on release branch x.y:
+Create the checkout of all the repos, replacing `mbl-os-x.y` with the version to be released (e.g. `mbl-os-0.9`):
+
 ```
-mkdir my-workdir ; cd my-workdir
-git clone git@github.com:ARMmbed/mbl-tools -b mbl-os-x.y
-mbl-tools/maintenance/scripts/git-sync-start.bash --release my-release
+export RELVER=mbl-os-x.y
+$SCRIPTS/git-sync-start.bash --release ${RELVER}.setup
+cd ${RELVER}.setup
 ```
 
+Perform the correct alignment and set up of a pinned release manifest and create a release branch for all the repos:
+
+```
+$SCRIPTS/git-sync-manifest.bash pinned-manifest.xml $RELVER
+repo start $RELVER --all
+cd armmbed
+```
+Now we need to do the tweaks to the following repos:
+* `mbl-manifest` - commit `default.xml` with changes done by manifest script
+* `mbl-tools` - edit/commit `maintenance/release.xml` to set the default revision to `mbl-os-x.y` (this is important for the release tagging later!)
+* `mbl-jenkins` - edit/commit `mbl-pipeline` to use `mbl-os-x.y` branches for everything (tools, manifest, lava etc)
+* `meta-mbl` - edit/commit `meta-mbl-distro/conf/distro/mbl.conf` to set `DISTRO_VERSION` to `mbl-os-x.y.z` (NOTE: `z` version!)
+
+Next you can push all the changes to github (this skips the PR flow for the changes done):
+
+```
+repo forall -c push --set-upstream origin $RELVER
+```
+
+Now create the Jenkins job to test these new branches.
+
+### Release tagging
+
+Assuming you have created a release branch using the flow above and have it testing on Jenkins.
+
+First change the mbl-tools to use the release version you have altered:
+
+```
+cd RELWORKDIR
+cd mbl-tools
+git fetch origin
+git checkout $RELVER
+cd ..
+```
+
+Next get a checkout of all the release branches (the `${RELVER}.setup` directory is not needed anymore):
+
+```
+$SCRIPTS/git-sync-start.bash --release $RELVER
+cd $RELVER
+```
+
+#### Release candidates
+
+For release candidates, we just tag the `mbl-manifest` version containing a pinned manifest called `release.xml`.
+
+Get the `pinned-manifest.xml` from the Jenkins build, rename it to `release.xml` and commit/push it into `mbl-manifest` via the usual github PR process.
+
+Now you can create a release candidate tag of the form `mbl-os-x.y.z-rcn` - for example `mbl-os-0.7.0-rc1`:
+
+```
+export RELTAG="${RELVER}.z"
+export RELCAN="${RELTAG}-rcn"
+repo sync
+cd armmbed/mbl-manifest
+git tag $RELCAN
+git push origin $RELCAN
+cd ../..
+```
+
+#### Release tagging
+
+For release tagging we use the information from the `release.xml` at a release candidate tag to then tag all the other repos.
+
+This assumes you have followed the release branching, release tagging set up and release candidate flows above.
+
+First call `git-sync-rc-tag.bash` which uses the candidate tag to get the release manifest. 
+Then uses the revisions in the manifest to get correct repo versions. 
+Finally it uses the linked repo settings in `meta-mbl` to get the right linked repo versions:
+
+```
+$SCRIPTS/git-sync-rc-tag.bash $RELCAN
+```
+
+Next create the tags and push them:
+
+```
+repo forall -c git tag $RELTAG
+repo forall -c git push origin $RELTAG
+```
