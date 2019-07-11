@@ -21,6 +21,7 @@
         run:
           steps:
 
+            - set +x
             - psa-arch-crypto-tests > /tmp/results
             - state="LookingForTest"
             - while read a
