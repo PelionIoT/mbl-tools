@@ -69,6 +69,34 @@ def _create_workarea(workdir, manifest_repo, branch, manifest):
     subprocess.run(["repo", "sync", "-j", "16"], cwd=str(workdir), check=True)
 
 
+def _add_bitbake_layers(workdir):
+    """
+    Add the necessary bitbake layers.
+
+    Args:
+    * workdir (Path): top level of work area.
+    """
+    layer_command = "bitbake-layers add-layer "
+
+    subprocess.run(
+        [
+            str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"),
+            str(workdir),
+            layer_command + "../../meta-freescale/",
+        ],
+        check=True,
+    )
+
+    subprocess.run(
+        [
+            str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"),
+            str(workdir),
+            layer_command + "../../meta-mbl/meta-psa/",
+        ],
+        check=True,
+    )
+
+
 def _build(workdir, image):
     """
     Kick off a build of the workarea.
@@ -76,8 +104,13 @@ def _build(workdir, image):
     Args:
     * workdir (Path): top level of work area.
     """
+    build_command = "bitbake "
     subprocess.run(
-        [str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"), str(workdir), image],
+        [
+            str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"),
+            str(workdir),
+            build_command + image,
+        ],
         check=True,
     )
 
@@ -327,8 +360,10 @@ def main():
 
     _set_up_bitbake_machine(args.builddir, args.machine)
 
+    _add_bitbake_layers(args.builddir)
+
     _build(args.builddir, args.image)
-    _save_artifacts(args.builddir, args.outputdir, args.machine, args.image)
+    #_save_artifacts(args.builddir, args.outputdir, args.machine, args.image)
 
 
 if __name__ == "__main__":

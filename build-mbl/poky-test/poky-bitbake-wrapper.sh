@@ -10,14 +10,14 @@ set -u
 WORKAREA="$1"; shift;
 cd "${WORKAREA}/layers/poky"
 
+COMMAND="$1"; shift;
+
 set +u
 set +e
 # shellcheck disable=SC1091
 TEMPLATECONF=meta-poky/conf source oe-init-build-env
+
 set -e
 set -u
 
-bitbake-layers add-layer ../../meta-freescale/
-bitbake-layers add-layer ../../meta-mbl/meta-psa/
-
-bitbake "$@"
+$COMMAND
