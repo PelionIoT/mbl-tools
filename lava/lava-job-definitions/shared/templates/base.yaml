@@ -43,17 +43,11 @@ protocols:
     verbose: true
 {% endif %}
 
-{% if not root_partition %}
-{%    set root_partition = 2  %}
-{% endif %}
+{%    set root_partition = root_partition|default(2, true)  %}
 
-{% if not login_prompt %}
-{%    set login_prompt = "mbed-linux-os-(.*) login:" %}
-{% endif %}
+{%    set login_prompt = login_prompt|default("mbed-linux-os-(.*) login:", true) %}
 
-{% if not prompts %}
-{%    set prompts = ["root@mbed-linux-os(.*):~#"] %}
-{% endif %}
+{%    set prompts = prompts|default(["root@mbed-linux-os(.*):~#"], true) %}
 
 
 # Deploy and boot the target

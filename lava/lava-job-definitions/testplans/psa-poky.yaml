@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "PSA Crypto"%}
+{% set job_name = "PSA Crypto Poky"%}
 {% set lxc_creation = false %}
 {% set root_partition = 1 %}
 {% set login_prompt = "imx8mmevk login:" %}
@@ -9,51 +9,16 @@
 {% block testplan %}
 - test:
     timeout:
-      minutes: 20
+      minutes: 10
     namespace: target
     definitions:
-    - from: inline
-      repository:
-        metadata:
-          format: Lava-Test Test Definition 1.0
-          name: psa-arch-crypto-tests
-          description: psa-arch-crypto-tests
-        run:
-          steps:
-
-            - set +x
-            - psa-arch-crypto-tests > /tmp/results
-            - state="LookingForTest"
-            - while read a
-            - do
-            -   if [ $state == "LookingForTest" ];
-            -   then
-            -     if `echo $a | grep -q "DESCRIPTION:"`
-            -     then
-            -       test=`echo $a  | cut -d":" -f2-`
-            -       test=${test/ /}
-            -       test=${test// /_}
-            -       test=${test//_|_DESCRIPTION:/}
-            -       state="LookingForResult"
-            -     fi
-            -   elif [ $state = "LookingForResult" ];
-            -   then
-            -     if `echo $a | grep -q "RESULT"`
-            -     then
-            -       echo -n "<LAVA_SIGNAL_TESTCASE TEST_CASE_ID="
-            -       echo -n $test
-            -       echo -n " RESULT="
-            -       if `echo $a | grep -q "PASS"`
-            -       then
-            -         echo -n "pass"
-            -       else
-            -         echo -n "fail"
-            -       fi
-            -       echo ">"
-            -       state="LookingForTest"
-            -     fi
-            -   fi
-            - done < /tmp/results
-      name: psa-crypto
-      path: inline/psa-arch-crypto-tests.yaml
+    - path: ci/lava/tests/psa-arch-poky-tests.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: psa-arch-poky-tests
+      from: git
+      history: False
+      branch: "{{ mbl_branch }}"
+      {% if "mbl-core" in mbl_revisions %}
+      revision: {{ mbl_revisions["mbl-core"] }}
+      {% endif %}
 {% endblock testplan %}
