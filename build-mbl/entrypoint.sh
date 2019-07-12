@@ -7,8 +7,6 @@
 set -e
 set -u
 
-build_script=$(basename "${1:?}")
-
 ## UID/GID Management
 
 # We need to manage uid/gid inside a container because the workspace
@@ -43,7 +41,7 @@ else
   fi
 fi
 
-if useradd --shell /bin/bash -u "$LOCAL_UID" -g "$LOCAL_GID" -G sudo -c "" -m "$username"; then
+if useradd --shell /bin/bash -u "$LOCAL_UID" -g "$LOCAL_GID" -c "" -m "$username"; then
   _=
 else
   # We are about to test the exit code of useradd, hence there can
@@ -58,9 +56,4 @@ fi
 
 export HOME=/home/"$username"
 
-if [ "$build_script" = "build-poky.py" ]; then
-    sed -i 's/%sudo  ALL=(ALL:ALL) ALL/%sudo ALL=(ALL:ALL) NOPASSWD:ALL/' /etc/sudoers
-    sudo -E -u "$username" "$@"
-else
-    exec gosu "$LOCAL_UID:$LOCAL_GID" "$@"
-fi
+exec gosu "$LOCAL_UID:$LOCAL_GID" "$@"

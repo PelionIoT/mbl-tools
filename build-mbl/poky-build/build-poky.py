@@ -63,10 +63,10 @@ def _create_workarea(workdir, manifest_repo, branch, manifest):
     """
     subprocess.run(
         ["repo", "init", "-u", manifest_repo, "-b", branch, "-m", manifest],
-        cwd=workdir,
+        cwd=str(workdir),
         check=True,
     )
-    subprocess.run(["repo", "sync", "-j", "16"], cwd=workdir, check=True)
+    subprocess.run(["repo", "sync", "-j", "16"], cwd=str(workdir), check=True)
 
 
 def _build(workdir, image):
@@ -77,7 +77,7 @@ def _build(workdir, image):
     * workdir (Path): top level of work area.
     """
     subprocess.run(
-        [SCRIPTS_DIR / "poky-bitbake-wrapper.sh", workdir, image], check=True
+        [str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"), workdir, image], check=True
     )
 
 
@@ -124,37 +124,12 @@ def _save_artifacts(workdir, outputdir, machine, image):
 
 def _set_up_git():
     """Initialize a sane git setup."""
-    subprocess.run([SCRIPTS_DIR / "git-setup.sh"], check=True)
+    subprocess.run([str(SCRIPTS_DIR / "git-setup.sh")], check=True)
 
 
 def _set_up_container_ssh():
     """Initialize a sane SSH setup."""
-    subprocess.run([SCRIPTS_DIR / "ssh-setup.sh"], check=True)
-
-
-def _set_up_bitbake_ssh(workdir):
-    """
-    Configure BitBake to allow use of ssh-agent.
-
-    Args:
-    * workdir (Path): top level of work area.
-    """
-    localconf_path = (
-        workdir
-        / "layers"
-        / "poky"
-        / "meta-poky"
-        / "conf"
-        / "local.conf.sample"
-    )
-
-    # Add some BitBake config to allow BitBake tasks to read the SSH_AUTH_SOCK
-    with file_util.replace_section_in_file(
-        path=localconf_path, section_name="SSH support", comment_leader="#"
-    ) as localconf:
-        localconf.write("export SSH_AUTH_SOCK\n")
-        localconf.write('BB_HASHBASE_WHITELIST_append = " SSH_AUTH_SOCK"\n')
-        localconf.write('BB_HASHCONFIG_WHITELIST_append = " SSH_AUTH_SOCK"\n')
+    subprocess.run([str(SCRIPTS_DIR / "ssh-setup.sh")], check=True)
 
 
 def _set_up_bitbake_machine(workdir, machine):
@@ -203,7 +178,7 @@ def _str_to_resolved_path(path_str):
     Args:
     * path_str (str): string to convert to a Path object.
     """
-    return pathlib.Path(path_str).resolve(strict=False)
+    return pathlib.Path(path_str).resolve()
 
 
 def _parse_args():
@@ -347,7 +322,6 @@ def main():
         manifest=args.manifest,
     )
 
-    _set_up_bitbake_ssh(args.builddir)
     _set_up_bitbake_machine(args.builddir, args.machine)
 
     _build(args.builddir, args.image)
