@@ -363,7 +363,7 @@ def main():
     _add_bitbake_layers(args.builddir)
 
     _build(args.builddir, args.image)
-    #_save_artifacts(args.builddir, args.outputdir, args.machine, args.image)
+    _save_artifacts(args.builddir, args.outputdir, args.machine, args.image)
 
 
 if __name__ == "__main__":
