@@ -65,5 +65,5 @@ COPY git-setup.sh ssh-setup.sh build.sh \
      Licensing_and_Acknowledgment.template_nxp ./
 
 # Scripts used to build poky-psa image
-COPY poky-build/build-poky.py support/file_util.py poky-build/poky-bitbake-wrapper.sh git-setup.sh ssh-setup.sh ./
+COPY poky-test/build-poky.py support/file_util.py poky-test/poky-bitbake-wrapper.sh git-setup.sh ssh-setup.sh ./
 

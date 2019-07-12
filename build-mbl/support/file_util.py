@@ -112,7 +112,7 @@ def atomic_read_modify_write_file(
     # _after_ we replace the original file with the temporary one (unless a
     # failure occurs and triggers early cleanup).
     with tempfile.TemporaryDirectory(
-        dir=tmpdir, prefix=tmpdir_prefix
+        dir=str(tmpdir), prefix=tmpdir_prefix
     ) as tmp_dir_path:
         tmp_dir_path = pathlib.Path(tmp_dir_path)
         tmp_file_name = "{}{}.tmp".format(tmpdir_prefix, path.name)
@@ -123,8 +123,8 @@ def atomic_read_modify_write_file(
                 yield (orig_file, tmp_file)
         # Make sure the temporary file has the same owner, permissions, etc. as
         # the original before we do the replacement.
-        shutil.copystat(path, tmp_file_path)
-        os.replace(tmp_file_path, path)
+        shutil.copystat(str(path), str(tmp_file_path))
+        os.replace(str(tmp_file_path), str(path))
 
 
 @contextlib.contextmanager

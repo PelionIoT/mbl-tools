@@ -77,7 +77,8 @@ def _build(workdir, image):
     * workdir (Path): top level of work area.
     """
     subprocess.run(
-        [str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"), workdir, image], check=True
+        [str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"), str(workdir), image],
+        check=True,
     )
 
 
@@ -92,15 +93,17 @@ def _save_artifacts(workdir, outputdir, machine, image):
     if outputdir:
         # Save artifact from deploy/images directory
         shutil.copytree(
-            workdir
-            / "layers"
-            / "poky"
-            / image
-            / "tmp"
-            / "deploy"
-            / "images"
-            / machine,
-            outputdir / "machine" / machine / "images" / image / "images",
+            str(
+                workdir
+                / "layers"
+                / "poky"
+                / image
+                / "tmp"
+                / "deploy"
+                / "images"
+                / machine
+            ),
+            str(outputdir / "machine" / machine / "images" / image / "images"),
             symlinks=True,
             ignore=shutil.ignore_patterns("*.cpio.gz", "*.wic"),
         )
@@ -110,13 +113,13 @@ def _save_artifacts(workdir, outputdir, machine, image):
             workdir / "layers" / "poky" / image / "tmp" / "deploy" / "licenses"
         )
         output_license_file = outputdir / "licenses.tar.gz"
-        with tarfile.open(output_license_file, "w:gz") as tar:
-            tar.add(licenses_path, arcname=licenses_path.name)
+        with tarfile.open(str(output_license_file), "w:gz") as tar:
+            tar.add(str(licenses_path), arcname=licenses_path.name)
 
         # Save the manifest file from .repo/manifests
         shutil.copy(
-            workdir / ".repo" / "manifests" / "default.xml",
-            outputdir / "manifest.xml",
+            str(workdir / ".repo" / "manifests" / "default.xml"),
+            str(outputdir / "manifest.xml"),
         )
     else:
         warning("--outputdir not specified. Not saving artifacts.")
@@ -152,7 +155,7 @@ def _set_up_bitbake_machine(workdir, machine):
     with file_util.replace_section_in_file(
         path=localconf_path, section_name="MACHINE ??", comment_leader="#"
     ) as localconf:
-        localconf.write('MACHINE ?= "{}"\n'.format(machine))
+        localconf.write('MACHINE = "{}"\n'.format(machine))
         localconf.write('ACCEPT_FSL_EULA = "1"\n')
         localconf.write('CORE_IMAGE_EXTRA_INSTALL += "mbed-crypto-test"\n')
         localconf.write('CORE_IMAGE_EXTRA_INSTALL += "psa-arch-tests"\n')
