@@ -464,7 +464,7 @@ OPTIONAL parameters:
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys. Mandatory if passing
                         --mcc-destdir parameter.
-  --mcc-destdir PATH    Relative directory from bitbake \${TOPDIR} to where the file(s)
+  --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
                         passed with --inject-mcc should be copied to.
   --licenses            Collect extra build license info. Default disabled.
   --manifest MANIFEST   Name the manifest file. Default ${default_manifest}.
@@ -858,12 +858,15 @@ while true; do
         for file in $inject_mcc_files; do
           base="$(basename "$file")"
           if [ -z "${mcc_destdir:-}" ]; then
-              mcc_destdir=""
+              mcc_final_destdir="$builddir/machine-$machine/mbl-manifest/build-mbl"
+          else
+              mcc_final_destdir="$builddir/machine-$machine/mbl-manifest/layers/$mcc_destdir"
           fi
-          cp "$file" "$builddir/machine-$machine/mbl-manifest/build-mbl/$mcc_destdir/$base"
+          cp "$file" "$mcc_final_destdir/$base"
         done
       done
     fi
+    exit
     push_stages build
     ;;
 

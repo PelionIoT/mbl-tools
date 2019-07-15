@@ -42,7 +42,7 @@ OPTIONAL parameters:
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys.  Mandatory if passing
                         --mcc-destdir parameter.
-  --mcc-destdir PATH    Relative directory from bitbake ${TOPDIR} to where the file(s)
+  --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
                         passed with --inject-mcc should be copied to.
   --mbl-tools-version STRING
                         Specify the version of mbl-tools that this script comes
