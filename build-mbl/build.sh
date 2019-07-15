@@ -462,7 +462,10 @@ OPTIONAL parameters:
                         This option can be repeated to add multiple images.
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
-                        mechanism to inject development keys.
+                        mechanism to inject development keys. Mandatory if passing
+                        --mcc-destdir parameter.
+  --mcc-destdir PATH    Relative directory from bitbake \${TOPDIR} to where the file(s)
+                        passed with --inject-mcc should be copied to.
   --licenses            Collect extra build license info. Default disabled.
   --manifest MANIFEST   Name the manifest file. Default ${default_manifest}.
   --mbl-tools-version STRING
@@ -503,7 +506,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,licenses-buildtag:,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -581,6 +584,10 @@ while [ $# -gt 0 ]; do
 
   --inject-mcc)
     opt_append=inject_mcc_files
+    ;;
+
+  --mcc-destdir)
+    opt_prev=mcc_destdir
     ;;
 
   -j | --jobs)
@@ -705,6 +712,10 @@ if [ "${flag_binary_release}" -eq 1 ]; then
     fi
 fi
 
+if [ -n "${mcc_destdir:-}" ] && [ -z "${inject_mcc_files:-}" ]; then
+  printf "error: --mcc-destdir requires at least one --inject-mcc parameter.\n" >&2
+  exit 3
+fi
 
 if empty_stages_p; then
   if [ -r "$builddir/,stage" ]; then
@@ -846,7 +857,10 @@ while true; do
       for machine in $machines; do
         for file in $inject_mcc_files; do
           base="$(basename "$file")"
-          cp "$file" "$builddir/machine-$machine/mbl-manifest/build-mbl/$base"
+          if [ -z "${mcc_destdir:-}" ]; then
+              mcc_destdir=""
+          fi
+          cp "$file" "$builddir/machine-$machine/mbl-manifest/build-mbl/$mcc_destdir/$base"
         done
       done
     fi
