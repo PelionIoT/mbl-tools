@@ -104,12 +104,15 @@ def _build(workdir, image):
     Args:
     * workdir (Path): top level of work area.
     """
-    build_command = "bitbake "
+    build_command = "bitbake {}".format(image)
+
+    print(build_command)
+
     subprocess.run(
         [
             str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"),
             str(workdir),
-            build_command + image,
+            build_command,
         ],
         check=True,
     )
@@ -130,7 +133,7 @@ def _save_artifacts(workdir, outputdir, machine, image):
                 workdir
                 / "layers"
                 / "poky"
-                / image
+                / "build"
                 / "tmp"
                 / "deploy"
                 / "images"
@@ -143,7 +146,7 @@ def _save_artifacts(workdir, outputdir, machine, image):
 
         # Save licenses info from deploy/licenses directory
         licenses_path = (
-            workdir / "layers" / "poky" / image / "tmp" / "deploy" / "licenses"
+            workdir / "layers" / "poky" / "build" / "tmp" / "deploy" / "licenses"
         )
         output_license_file = outputdir / "licenses.tar.gz"
         with tarfile.open(str(output_license_file), "w:gz") as tar:
@@ -188,7 +191,7 @@ def _set_up_bitbake_machine(workdir, machine):
     with file_util.replace_section_in_file(
         path=localconf_path, section_name="MACHINE ??", comment_leader="#"
     ) as localconf:
-        localconf.write('MACHINE = "{}"\n'.format(machine))
+        localconf.write('MACHINE ?= "{}"\n'.format(machine))
         localconf.write('ACCEPT_FSL_EULA = "1"\n')
         localconf.write('CORE_IMAGE_EXTRA_INSTALL += "mbed-crypto-test"\n')
         localconf.write('CORE_IMAGE_EXTRA_INSTALL += "psa-arch-tests"\n')

@@ -10,7 +10,7 @@ set -u
 WORKAREA="$1"; shift;
 cd "${WORKAREA}/layers/poky"
 
-COMMAND="$1"; shift;
+COMMAND="$@"; shift
 
 set +u
 set +e

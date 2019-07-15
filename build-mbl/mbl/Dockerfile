@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN apt-get update && apt-get install gosu
 RUN pip3 install dohq-artifactory && pip3 install jinja2
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY support/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
 # invocation arguments are appended to the command line.
@@ -58,7 +58,8 @@ RUN mkdir -p /dev/net \
     && chmod 600 /dev/net/tun
 
 # Scripts used to build mbed-linux image
-COPY git-setup.sh ssh-setup.sh build.sh \
+COPY support/git-setup.sh support/ssh-setup.sh \
      README.binary_release_template \
      license-report \
      Licensing_and_Acknowledgment.template_nxp ./
+COPY mbl/build.sh ./

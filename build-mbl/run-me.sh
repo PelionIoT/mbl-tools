@@ -44,7 +44,7 @@ dockerfile_for_project() {
     project=${1:?}
     case "$1" in
         mbl)
-            printf "%s\n" "Dockerfile"
+            printf "%s\n" "mbl/Dockerfile"
             ;;
         poky)
             printf "%s\n" "poky-test/Dockerfile"
