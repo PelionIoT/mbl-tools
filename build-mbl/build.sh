@@ -866,7 +866,6 @@ while true; do
         done
       done
     fi
-    exit
     push_stages build
     ;;
 
