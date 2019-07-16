@@ -48,6 +48,7 @@ def warning(message):
 
     Args:
     * message: warning's message
+
     """
     warnings.warn(message, stacklevel=2)
 
@@ -60,6 +61,7 @@ def _create_workarea(workdir, manifest_repo, branch, manifest):
     * workdir (Path): top level of work area.
     * manfiest_repo (str): URI of repo containing the project manifest.
     * branch (str): branch of repo containing the project manifest.
+
     """
     subprocess.run(
         ["repo", "init", "-u", manifest_repo, "-b", branch, "-m", manifest],
@@ -75,6 +77,7 @@ def _add_bitbake_layers(workdir):
 
     Args:
     * workdir (Path): top level of work area.
+
     """
     layer_command = "bitbake-layers add-layer "
 
@@ -103,6 +106,7 @@ def _build(workdir, image):
 
     Args:
     * workdir (Path): top level of work area.
+
     """
     build_command = "bitbake {}".format(image)
 
@@ -125,6 +129,7 @@ def _save_artifacts(workdir, outputdir, machine, image):
     Args:
     * workdir (Path): top level of work area.
     * outputdir (Path): output directory where to save artifacts.
+
     """
     if outputdir:
         # Save artifact from deploy/images directory
@@ -146,7 +151,13 @@ def _save_artifacts(workdir, outputdir, machine, image):
 
         # Save licenses info from deploy/licenses directory
         licenses_path = (
-            workdir / "layers" / "poky" / "build" / "tmp" / "deploy" / "licenses"
+            workdir
+            / "layers"
+            / "poky"
+            / "build"
+            / "tmp"
+            / "deploy"
+            / "licenses"
         )
         output_license_file = outputdir / "licenses.tar.gz"
         with tarfile.open(str(output_license_file), "w:gz") as tar:
@@ -177,6 +188,7 @@ def _set_up_bitbake_machine(workdir, machine):
 
     Args:
     * workdir (Path): top level of work area.
+
     """
     localconf_path = (
         workdir
@@ -203,6 +215,7 @@ def _set_up_download_dir(download_dir):
 
     Args:
     * download_dir (Path): directory to use for BitBake's downloads.
+
     """
     if download_dir:
         os.environ["DL_DIR"] = str(pathlib.Path(download_dir).resolve())
@@ -216,6 +229,7 @@ def _str_to_resolved_path(path_str):
 
     Args:
     * path_str (str): string to convert to a Path object.
+
     """
     return pathlib.Path(path_str).resolve()
 
