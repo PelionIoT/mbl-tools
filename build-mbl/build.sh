@@ -97,6 +97,8 @@ default_distro="mbl"
 default_images="mbl-image-development"
 default_accept_eula_machines=""
 default_lic_cmp_build_tag=""
+default_mcc_destdir="build-mbl"
+
 # Test if a machine name appears in the all_machines list.
 #
 
@@ -717,9 +719,7 @@ if [ -n "${mcc_destdir:-}" ]; then
       printf "error: --mcc-destdir requires at least one --inject-mcc parameter.\n" >&2
       exit 3
   fi
-  mcc_final_destdir="layers/$mcc_destdir"
-else
-  mcc_final_destdir="build-mbl"
+  default_mcc_destdir="layers/$mcc_destdir"
 fi
 
 if empty_stages_p; then
@@ -862,7 +862,7 @@ while true; do
       for machine in $machines; do
         for file in $inject_mcc_files; do
           base="$(basename "$file")"
-          cp "$file" "$builddir/machine-$machine/mbl-manifest/$mcc_final_destdir/$base"
+          cp "$file" "$builddir/machine-$machine/mbl-manifest/$default_mcc_destdir/$base"
         done
       done
     fi
