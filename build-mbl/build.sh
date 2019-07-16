@@ -712,9 +712,14 @@ if [ "${flag_binary_release}" -eq 1 ]; then
     fi
 fi
 
-if [ -n "${mcc_destdir:-}" ] && [ -z "${inject_mcc_files:-}" ]; then
-  printf "error: --mcc-destdir requires at least one --inject-mcc parameter.\n" >&2
-  exit 3
+if [ -n "${mcc_destdir:-}" ]; then
+  if [ -z "${inject_mcc_files:-}" ]; then
+      printf "error: --mcc-destdir requires at least one --inject-mcc parameter.\n" >&2
+      exit 3
+  fi
+  mcc_final_destdir="layers/$mcc_destdir"
+else
+  mcc_final_destdir="build-mbl"
 fi
 
 if empty_stages_p; then
@@ -857,12 +862,7 @@ while true; do
       for machine in $machines; do
         for file in $inject_mcc_files; do
           base="$(basename "$file")"
-          if [ -z "${mcc_destdir:-}" ]; then
-              mcc_final_destdir="$builddir/machine-$machine/mbl-manifest/build-mbl"
-          else
-              mcc_final_destdir="$builddir/machine-$machine/mbl-manifest/layers/$mcc_destdir"
-          fi
-          cp "$file" "$mcc_final_destdir/$base"
+          cp "$file" "$builddir/machine-$machine/mbl-manifest/$mcc_final_destdir/$base"
         done
       done
     fi
