@@ -63,3 +63,6 @@ COPY support/git-setup.sh support/ssh-setup.sh \
      license-report \
      Licensing_and_Acknowledgment.template_nxp ./
 COPY mbl/build.sh ./
+
+# Scripts used to build poky-psa image
+COPY poky-test/build-poky.py support/file_util.py poky-test/poky-bitbake-wrapper.sh ./

@@ -47,7 +47,8 @@ dockerfile_for_project() {
             printf "%s\n" "mbl/Dockerfile"
             ;;
         poky)
-            printf "%s\n" "poky-test/Dockerfile"
+            # The mbl Dockerfile can be used
+            printf "%s\n" "mbl/Dockerfile"
             ;;
         *)
             printf "Unrecognized project \"%s\"" "$project" >&2
