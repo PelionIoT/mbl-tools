@@ -498,6 +498,7 @@ EOF
 
 url="$default_url"
 distro="$default_distro"
+mcc_final_destdir="$default_mcc_destdir"
 flag_compress=1
 flag_archiver=""
 flag_licenses=0
@@ -719,7 +720,7 @@ if [ -n "${mcc_destdir:-}" ]; then
       printf "error: --mcc-destdir requires at least one --inject-mcc parameter.\n" >&2
       exit 3
   fi
-  default_mcc_destdir="layers/$mcc_destdir"
+  mcc_final_destdir="layers/$mcc_destdir"
 fi
 
 if empty_stages_p; then
@@ -862,7 +863,7 @@ while true; do
       for machine in $machines; do
         for file in $inject_mcc_files; do
           base="$(basename "$file")"
-          cp "$file" "$builddir/machine-$machine/mbl-manifest/$default_mcc_destdir/$base"
+          cp "$file" "$builddir/machine-$machine/mbl-manifest/$mcc_final_destdir/$base"
         done
       done
     fi
