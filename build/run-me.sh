@@ -44,11 +44,10 @@ dockerfile_for_project() {
     project=${1:?}
     case "$1" in
         mbl)
-            printf "%s\n" "mbl/Dockerfile"
+            printf "%s\n" "common/Dockerfile"
             ;;
         poky)
-            # The mbl Dockerfile can be used
-            printf "%s\n" "mbl/Dockerfile"
+            printf "%s\n" "common/Dockerfile"
             ;;
         *)
             printf "Unrecognized project \"%s\"" "$project" >&2

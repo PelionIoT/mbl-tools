@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN apt-get update && apt-get install gosu
 RUN pip3 install dohq-artifactory && pip3 install jinja2
-COPY support/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY common/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
 # invocation arguments are appended to the command line.
@@ -58,11 +58,11 @@ RUN mkdir -p /dev/net \
     && chmod 600 /dev/net/tun
 
 # Scripts used to build mbed-linux image
-COPY support/git-setup.sh support/ssh-setup.sh \
+COPY common/git-setup.sh common/ssh-setup.sh \
      README.binary_release_template \
      license-report \
      Licensing_and_Acknowledgment.template_nxp ./
 COPY mbl/build.sh ./
 
 # Scripts used to build poky-psa image
-COPY poky-test/build-poky.py support/file_util.py poky-test/poky-bitbake-wrapper.sh ./
+COPY poky-test/build-poky.py common/file_util.py poky-test/poky-bitbake-wrapper.sh ./
