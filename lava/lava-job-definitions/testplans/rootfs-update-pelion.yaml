@@ -28,7 +28,7 @@
 
 - test:
     timeout:
-      minutes: 10
+      minutes: 15
     namespace: lxc
     definitions:
     {% set rootfs_test_stage = "UPDATE" %}
