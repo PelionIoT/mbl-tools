@@ -92,7 +92,7 @@ repo_init_atomic ()
 all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl imx6ul-pico-mbl imx6ul-des0258-mbl"
 
 default_manifest="default.xml"
-default_url="git@github.com:ARMmbed/mbl-manifest.git"
+default_manifest_repo="git@github.com:ARMmbed/mbl-manifest.git"
 default_distro="mbl"
 default_images="mbl-image-development"
 default_accept_eula_machines=""
@@ -475,7 +475,7 @@ OPTIONAL parameters:
                         Specify the command line that was used to invoke the
                         script that invokes build.sh. This is written to
                         buildinfo.txt in the output directory.
-  --url URL             Name the URL to clone. Default ${default_url}.
+  --manifest-repo URL   Name the manifest URL to clone. Default ${default_manifest_repo}.
   -x                    Enable shell debugging in this script.
 
   STAGE                 Start execution at STAGE, default previous
@@ -491,7 +491,7 @@ Useful STAGE names:
 EOF
 }
 
-url="$default_url"
+manifest_repo="$default_manifest_repo"
 distro="$default_distro"
 flag_compress=1
 flag_archiver=""
@@ -503,7 +503,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,licenses-buildtag:,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,licenses-buildtag:,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,manifest_repo: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -607,8 +607,8 @@ while [ $# -gt 0 ]; do
     opt_prev=outputdir
     ;;
 
-  --url)
-    opt_prev=url
+  --manifest_repo)
+    opt_prev=manifest_repo
     ;;
 
   -x)
@@ -748,7 +748,7 @@ while true; do
     # want to build.  The per machine mbl-manifest is forced to the
     # pinned manifest.
     if [ ! -e "$builddir/mbl-manifest" ]; then
-      repo_init_atomic "$builddir/mbl-manifest" -u "$url" -b "$branch" -m "$manifest"
+      repo_init_atomic "$builddir/mbl-manifest" -u "$manifest_repo" -b "$branch" -m "$manifest"
     fi
 
     # If we are saving build artifacts, then save them as they are
@@ -800,7 +800,7 @@ while true; do
       if [ ! -e "$builddir/machine-$machine/mbl-manifest" ]; then
         mkdir -p "$builddir/machine-$machine"
         # Default branch and manifest, we will override the manifest anyway.
-        repo_init_atomic "$builddir/machine-$machine/mbl-manifest" -u "$url"
+        repo_init_atomic "$builddir/machine-$machine/mbl-manifest" -u "$manifest_repo"
       fi
     done
     push_stages sync-pinned
