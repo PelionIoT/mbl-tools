@@ -74,7 +74,7 @@ protocols:
    templates that are extending this file. #}
 {% endblock testplan %}
 
-{% if notify_user or notify_emails or callback_domain and callback_port %}
+{% if notify_user or notify_emails or (callback_domain and callback_port) %}
 notify:
     {% if notify_user or notify_emails %}
     recipients:
