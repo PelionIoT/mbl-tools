@@ -185,38 +185,28 @@ define_conf()
   rm -f "$path.new"
 }
 
-## Setup the yocto source archiver
-## PATH: The path to local.conf
-## ARCHIVER: The bitbake archiver source mode to install.  One of
-##           original patched configured.
-##
-## Refer to the bitbake documentation for details of the archiver:
-## https://github.com/openembedded/openembedded-core/blob/master/meta/classes/archiver.bbclass
-##
-
-setup_archiver()
+inject_custom_data()
 {
   local path="$1"
-  local archiver="$2"
-  local name="build-mbl-archiver"
+  local custom_data="$2"
+  local name="$3"
 
-  # We need to modify the local.conf file to inherit the archiver
-  # class then configure the archiver behaviour.
+  # We need to modify the local.conf file to inject custom string the user
+  # specifies.
 
-  # The local.conf modification should be indempotent and handle the
+  # The modification should be indempotent and handle the
   # situation that consecutive builds (and hence consecutive calls to
-  # this setup function) change the archiver configuration, or indeed,
-  # remove the configuration.
+  # this function) change the custom data, or indeed, remove it
   #
   # We achieve this by putting start and end markers around the
   # configuration we inject.  We then implement a 3 stage processes:
   # 1) Remove any existing marked configuration
   # 2) Add the new required configuration, if any.
-  # 3) Atomically update the local.conf file with the new file if
+  # 3) Atomically update the file file with the new file if
   #    anything changed.
   #
   # The atomic update ensures that if we fail, or are interrupted, we
-  # never leave a partially updated local.conf.  Atomic update is not
+  # never leave a partially updated the file  Atomic update is not
   # because another process might race us!
 
   # If we previously aborted we may have left a working temporary file
@@ -224,27 +214,58 @@ setup_archiver()
   rm -f "$path.new"
 
   # Remove any existing marked configuration.
-  awk '/^# start '"$name"'$/ { drop = 1; next }
-       /^# stop '"$name"'$/  { drop = 0; next }
-       drop                  { next }
-                             { print }' "$path" > "$path.new"
+  sed '/^# start '"$name"'$/,/^# stop '"$name"'$/d' "$path" > "$path.new"
 
   # Add the new required configuration, if any.
-  if [ -n "${archiver}" ]; then
-    cat >> "$path.new" <<EOF
-# start build-mbl-archiver
-INHERIT += "archiver"
-ARCHIVER_MODE[src] = "$archiver"
-COPYLEFT_LICENSE_INCLUDE = "*"
-# stop build-mbl-archiver
-EOF
+  if [ -n "${custom_data}" ]; then
+    printf "# start %s\n%b\n# stop %s\n" "$name" "$custom_data" "$name" >> "$path.new"
   fi
 
-  # If anything changed then atomically update local.conf
+  # If anything changed then atomically update the file
   if ! cmp -s "$path" "$path.new"; then
     mv -f "$path.new" "$path"
   fi
   rm -f "$path.new"
+}
+
+setup_archiver()
+{
+  local path="$1"
+  local archiver="$2"
+  local name="build-mbl-archiver"
+  local custom_data=""
+
+  ## Setup the yocto source archiver
+  ## PATH: The path to local.conf
+  ## ARCHIVER: The bitbake archiver source mode to install.  One of
+  ##           original patched configured.
+  ##
+  ## Refer to the bitbake documentation for details of the archiver:
+  ## https://github.com/openembedded/openembedded-core/blob/master/meta/classes/archiver.bbclass
+
+  # We need to modify the local.conf file to inherit the archiver
+  # class then configure the archiver behaviour.
+  if [ -n "${archiver}" ]; then
+    custom_data=$(cat <<EOF
+INHERIT += "archiver"
+ARCHIVER_MODE[src] = "$archiver"
+COPYLEFT_LICENSE_INCLUDE = "*"
+EOF
+)
+  fi
+
+  # Inject the data into the file
+  inject_custom_data "$path" "$custom_data" "$name"
+}
+
+inject_local_conf_data()
+{
+  local path="$1"
+  local custom_data="$2"
+  local name="custom-data"
+
+  # Inject the data into the file
+  inject_custom_data "$path" "$custom_data" "$name"
 }
 
 create_binary_release()
@@ -469,6 +490,8 @@ OPTIONAL parameters:
   --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
                         passed with --inject-mcc should be copied to.
   --licenses            Collect extra build license info. Default disabled.
+  --local-conf-data STRING
+                        Data to append to local.conf.
   --manifest MANIFEST   Name the manifest file. Default ${default_manifest}.
   --mbl-tools-version STRING
                         Specify the version of mbl-tools that this script came
@@ -501,6 +524,7 @@ distro="$default_distro"
 mcc_final_destdir="$default_mcc_destdir"
 flag_compress=1
 flag_archiver=""
+local_conf_data=""
 flag_licenses=0
 flag_binary_release=0
 flag_interactive_mode=0
@@ -509,7 +533,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,manifest-repo: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -603,6 +627,10 @@ while [ $# -gt 0 ]; do
 
   --licenses-buildtag)
     opt_prev=lic_cmp_build_tag
+    ;;
+
+  --local-conf-data)
+    opt_prev=local_conf_data
     ;;
 
   --machine)
@@ -881,7 +909,10 @@ while true; do
        if [ "${flag_binary_release}" -eq 1 ]; then
          echo "MACHINE_FEATURES_remove += \"qca9377-bin\"" >> "$builddir/machine-$machine/mbl-manifest/conf/local.conf"
        fi
+
        setup_archiver "$builddir/machine-$machine/mbl-manifest/conf/local.conf" "$flag_archiver"
+
+       inject_local_conf_data "$builddir/machine-$machine/mbl-manifest/conf/local.conf" "$local_conf_data"
 
        # If outputdir is specified, the output of bitbake -e is saved in the
        # machine artifact directory. This command will output the configuration
