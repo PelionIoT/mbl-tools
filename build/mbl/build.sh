@@ -607,7 +607,7 @@ while [ $# -gt 0 ]; do
     opt_prev=outputdir
     ;;
 
-  --manifest_repo)
+  --manifest-repo)
     opt_prev=manifest_repo
     ;;
 
