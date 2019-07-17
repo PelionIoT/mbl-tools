@@ -503,7 +503,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,licenses-buildtag:,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,manifest_repo: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,licenses-buildtag:,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,manifest-repo: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
