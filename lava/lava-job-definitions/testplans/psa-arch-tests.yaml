@@ -10,6 +10,8 @@
       minutes: 10
     namespace: lxc
     definitions:
+    
+    {{ macros.avahi_discovery() | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
