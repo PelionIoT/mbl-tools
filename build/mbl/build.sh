@@ -221,11 +221,8 @@ inject_custom_data()
     printf "# start %s\n%b\n# stop %s\n" "$name" "$custom_data" "$name" >> "$path.new"
   fi
 
-  # If anything changed then atomically update the file
-  if ! cmp -s "$path" "$path.new"; then
-    mv -f "$path.new" "$path"
-  fi
-  rm -f "$path.new"
+  # Atomically update the file
+  mv -f "$path.new" "$path"
 }
 
 setup_archiver()
