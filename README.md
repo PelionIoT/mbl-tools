@@ -18,18 +18,18 @@ script, build.sh, inside the container to do the heavy lifting.
 There are a variety of options controlling what is built and how. The general form of a run-me.sh invocation is:
 
 ```
-./mbl-tools/build-mbl/run-me.sh [RUN-ME.SH OPTIONS]... -- [BUILD.SH OPTIONS]...
+./mbl-tools/build/run-me.sh [RUN-ME.SH OPTIONS]... -- [BUILD.SH OPTIONS]...
 ```
 
 Note the use of -- to separate options to run-me.sh from options that
 are passed through to build.sh
 
-Mandatory options for build-mbl/run-me.sh:
+Mandatory options for build/run-me.sh:
 ```
 --builddir PATH       Specify the root of the build tree.
 ```
 
-Mandatory options for build-mbl/build.sh:
+Mandatory options for build/build.sh:
 ```
 --branch BRANCH       Name the mbl-manifest branch to checkout.
 --machine MACHINE     Yocto MACHINE to build. Repeat --machine option to build more than one machine.
@@ -43,7 +43,7 @@ branches include: 'mbl-os-0.5', etc.
 For example, to build the tip of the master branch for Raspberry Pi 3:
 
 ```
-./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
+./mbl-tools/build/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
 ```
 
 The build process involves the download of many source artifacts.  It
@@ -55,7 +55,7 @@ For example, to designate a directory to hold cached downloads
 between successive builds, pass the --downloaddir option to run-me.sh:
 
 ```
-./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts --downloaddir my-downloads-dir -- --branch master --machine raspberrypi3-mbl
+./mbl-tools/build/run-me.sh --builddir my-build-dir --outputdir artifacts --downloaddir my-downloads-dir -- --branch master --machine raspberrypi3-mbl
 ```
 
 The build scripts will create by default the build and output directories
@@ -82,7 +82,7 @@ To get build artifacts out of a build, pass the `--outputdir` option to
 specify which directory the build artifacts should be placed in:
 
 ```
-./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
+./mbl-tools/build/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
 ```
 
 This does not work with interactive builds, only artifacts built by
@@ -106,7 +106,7 @@ use build.sh's `--binary-release` flag. Note that:
 
 For example, to create a binary release for the imx7s-warp-mbl machine:
 ```
-./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine imx7s-warp-mbl --image mbl-image-development --binary-release
+./mbl-tools/build/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine imx7s-warp-mbl --image mbl-image-development --binary-release
 ```
 The binary release archive will be created at `artifacts/machine/imx7s-warp-mbl/images/mbl-image-development/binary_release.tar`.
 
@@ -120,7 +120,7 @@ To get the pinned manifest for a build, use the --outputdir option to
 get the build artifacts:
 
 ```
-./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
+./mbl-tools/build/run-me.sh --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
 ```
 
 This will produce the file: pinned-manifest.xml in the directory
@@ -129,7 +129,7 @@ specified with --outputdir.
 To re-build using a previously pinned manifest use the --external-manifest option:
 
 ```
-./mbl-tools/build-mbl/run-me.sh --external-manifest pinned-manifest.xml --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
+./mbl-tools/build/run-me.sh --external-manifest pinned-manifest.xml --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
 ```
 
 #### Mbed Cloud Client Credentials
@@ -140,7 +140,7 @@ will be replaced with a dynamic key injection mechanism shortly.  In
 the meantime, the build scripts provide a work around:
 
 ```
-./mbl-tools/build-mbl/run-me.sh --inject-mcc mbed_cloud_dev_credentials.c --inject-mcc update_default_resources.c --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
+./mbl-tools/build/run-me.sh --inject-mcc mbed_cloud_dev_credentials.c --inject-mcc update_default_resources.c --builddir my-build-dir --outputdir artifacts -- --branch master --machine raspberrypi3-mbl
 ```
 
 #### Interactive mode
@@ -151,7 +151,7 @@ To achieve this the "interactive" stage needs to be passed to the build.sh
 script. For example:
 
 ```
-./mbl-tools/build-mbl/run-me.sh --builddir my-build-dir -- --branch master --machine raspberrypi3-mbl interactive
+./mbl-tools/build/run-me.sh --builddir my-build-dir -- --branch master --machine raspberrypi3-mbl interactive
 ```
 
 It is not recommended to use `outputdir` with interactive mode as the contents
