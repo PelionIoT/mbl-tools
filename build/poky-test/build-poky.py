@@ -112,7 +112,6 @@ def _build(workdir, image):
     * workdir (Path): top level of work area.
 
     """
-
     subprocess.run(
         [
             str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"),
