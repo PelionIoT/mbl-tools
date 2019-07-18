@@ -6,7 +6,7 @@ actions:
     image:
       url: "{{ image_url }}"
       compression: gz
-      root_partition: 2
+      root_partition: {{ root_partition }}
 
 - boot:
     namespace: target
@@ -14,9 +14,11 @@ actions:
     commands: ums
     failure_retry: 3
     auto_login:
-      login_prompt: "mbed-linux-os-(.*) login:"
+      login_prompt: "{{ login_prompt }}"
       username: root
     prompts:
-      - "root@mbed-linux-os(.*):~#"
+{% for prompt in prompts %}
+      - "{{ prompt }}"
+{% endfor %}
     timeout:
       minutes: 15
