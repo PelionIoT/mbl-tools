@@ -1,0 +1,24 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "PSA Crypto Poky"%}
+{% set lxc_creation = false %}
+{% set root_partition = 1 %}
+{% set login_prompt = "imx8mmevk login:" %}
+{% set prompts = [ "root@imx8mmevk:~#" ] %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 10
+    namespace: target
+    definitions:
+    - path: ci/lava/tests/psa-arch-poky-tests.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: psa-arch-poky-tests
+      from: git
+      history: False
+      branch: "{{ mbl_branch }}"
+      {% if "mbl-core" in mbl_revisions %}
+      revision: {{ mbl_revisions["mbl-core"] }}
+      {% endif %}
+{% endblock testplan %}
