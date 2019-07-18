@@ -206,7 +206,7 @@ inject_custom_data()
   #    anything changed.
   #
   # The atomic update ensures that if we fail, or are interrupted, we
-  # never leave a partially updated the file  Atomic update is not
+  # never leave a partially updated original file.  Atomic update is not
   # because another process might race us!
 
   # If we previously aborted we may have left a working temporary file
