@@ -73,7 +73,10 @@ OPTIONAL parameters:
   --image-name NAME     Specify the docker image name to build. Default ${default_imagename}.
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
-                        mechanism to inject development keys.
+                        mechanism to inject development keys.  Mandatory if passing
+                        --mcc-destdir parameter.
+  --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
+                        passed with --inject-mcc should be copied to.
   --mbl-tools-version STRING
                         Specify the version of mbl-tools that this script comes
                         from. This is written to buildinfo.txt in the output
@@ -100,7 +103,7 @@ flag_tty="-t"
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+ho:x -l builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,mbl-tools-version:,outputdir:,tty,no-tty -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+ho:x -l builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,mcc-destdir:,mbl-tools-version:,outputdir:,tty,no-tty -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -142,6 +145,10 @@ while [ $# -gt 0 ]; do
 
   --inject-mcc)
     opt_append=inject_mcc_files
+    ;;
+
+  --mcc-destdir)
+    opt_prev=mcc_destdir
     ;;
 
   --mbl-tools-version)
@@ -210,6 +217,9 @@ fi
 
 build_script=$(build_script_for_project "$project")
 dockerfile=$(dockerfile_for_project "$project")
+if [ -n "${mcc_destdir:-}" ]; then
+  build_args="${build_args:-} --mcc-destdir=$mcc_destdir"
+fi
 
 # If we didn't get an mbl-tools version on the command line, try to determine
 # it using git. This isn't important in most cases and won't work in all

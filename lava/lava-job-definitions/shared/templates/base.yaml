@@ -81,8 +81,9 @@ protocols:
    templates that are extending this file. #}
 {% endblock testplan %}
 
-{% if notify_user or notify_emails %}
+{% if notify_user or notify_emails or (callback_domain and callback_port) %}
 notify:
+    {% if notify_user or notify_emails %}
     recipients:
     {% if notify_user %}
     - to:
@@ -94,18 +95,15 @@ notify:
        method: email
        email: "{{ email }}"
     {% endfor %}
-    criteria:
-      status: finished
-    verbosity: verbose
-{% endif %}
-
-{% if callback_domain and callback_port %}
-notify:
-    criteria:
-       status: finished
+    {% endif %}
+    {% if callback_domain and callback_port %}
     callbacks:
       - url: http://{{ callback_domain }}:{{ callback_port }}/
         method: POST
         dataset: minimal
         content-type: json
+    {% endif %}
+    criteria:
+      status: finished
+    verbosity: verbose
 {% endif %}

@@ -97,6 +97,8 @@ default_distro="mbl"
 default_images="mbl-image-development"
 default_accept_eula_machines=""
 default_lic_cmp_build_tag=""
+default_mcc_destdir="build-mbl"
+
 # Test if a machine name appears in the all_machines list.
 #
 
@@ -462,7 +464,10 @@ OPTIONAL parameters:
                         This option can be repeated to add multiple images.
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
-                        mechanism to inject development keys.
+                        mechanism to inject development keys. Mandatory if passing
+                        --mcc-destdir parameter.
+  --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
+                        passed with --inject-mcc should be copied to.
   --licenses            Collect extra build license info. Default disabled.
   --manifest MANIFEST   Name the manifest file. Default ${default_manifest}.
   --mbl-tools-version STRING
@@ -493,6 +498,7 @@ EOF
 
 manifest_repo="$default_manifest_repo"
 distro="$default_distro"
+mcc_final_destdir="$default_mcc_destdir"
 flag_compress=1
 flag_archiver=""
 flag_licenses=0
@@ -503,7 +509,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,jobs:,licenses,licenses-buildtag:,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,manifest-repo: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,machine:,manifest:,mbl-tools-version:,outputdir:,parent-command-line:,manifest-repo: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -581,6 +587,10 @@ while [ $# -gt 0 ]; do
 
   --inject-mcc)
     opt_append=inject_mcc_files
+    ;;
+
+  --mcc-destdir)
+    opt_prev=mcc_destdir
     ;;
 
   -j | --jobs)
@@ -705,6 +715,13 @@ if [ "${flag_binary_release}" -eq 1 ]; then
     fi
 fi
 
+if [ -n "${mcc_destdir:-}" ]; then
+  if [ -z "${inject_mcc_files:-}" ]; then
+      printf "error: --mcc-destdir requires at least one --inject-mcc parameter.\n" >&2
+      exit 3
+  fi
+  mcc_final_destdir="layers/$mcc_destdir"
+fi
 
 if empty_stages_p; then
   if [ -r "$builddir/,stage" ]; then
@@ -846,7 +863,7 @@ while true; do
       for machine in $machines; do
         for file in $inject_mcc_files; do
           base="$(basename "$file")"
-          cp "$file" "$builddir/machine-$machine/mbl-manifest/build-mbl/$base"
+          cp "$file" "$builddir/machine-$machine/mbl-manifest/$mcc_final_destdir/$base"
         done
       done
     fi
