@@ -85,7 +85,9 @@ def _add_bitbake_layers(workdir):
         [
             str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"),
             str(workdir),
-            layer_command + "../../meta-freescale/",
+            "bitbake-layers",
+            "add-layer",
+            "../../meta-freescale",
         ],
         check=True,
     )
@@ -94,7 +96,9 @@ def _add_bitbake_layers(workdir):
         [
             str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"),
             str(workdir),
-            layer_command + "../../meta-mbl/meta-psa/",
+            "bitbake-layers",
+            "add-layer",
+            "../../meta-mbl/meta-psa/",
         ],
         check=True,
     )
@@ -108,15 +112,13 @@ def _build(workdir, image):
     * workdir (Path): top level of work area.
 
     """
-    build_command = "bitbake {}".format(image)
-
-    print(build_command)
 
     subprocess.run(
         [
             str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"),
             str(workdir),
-            build_command,
+            "bitbake",
+            image,
         ],
         check=True,
     )

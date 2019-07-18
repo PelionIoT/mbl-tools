@@ -10,7 +10,10 @@ set -u
 WORKAREA="$1"; shift;
 cd "${WORKAREA}/layers/poky"
 
-COMMAND="$*"; shift
+# Save command in array
+COMMAND=("$@")
+# Clear $@
+set --
 
 set +u
 set +e
@@ -20,4 +23,5 @@ TEMPLATECONF=meta-poky/conf source oe-init-build-env
 set -e
 set -u
 
-$COMMAND
+# Run the command
+"${COMMAND[@]}"
