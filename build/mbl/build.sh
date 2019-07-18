@@ -202,7 +202,7 @@ inject_custom_data()
   # configuration we inject.  We then implement a 3 stage processes:
   # 1) Remove any existing marked configuration
   # 2) Add the new required configuration, if any.
-  # 3) Atomically update the file file with the new file if
+  # 3) Atomically update the original file with the new file if
   #    anything changed.
   #
   # The atomic update ensures that if we fail, or are interrupted, we
