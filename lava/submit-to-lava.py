@@ -27,6 +27,7 @@ valid_device_types = (
     "imx7s-warp-mbl",
     "imx7d-pico-mbl",
     "imx8mmevk-mbl",
+    "imx6ul-pico-mbl",
 )
 
 
