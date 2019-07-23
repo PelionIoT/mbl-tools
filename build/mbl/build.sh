@@ -501,8 +501,8 @@ OPTIONAL parameters:
                         script that invokes build.sh. This is written to
                         buildinfo.txt in the output directory.
   --manifest-repo URL   Name the manifest URL to clone. Default ${default_manifest_repo}.
-  --url           URL   Name the manifest URL to clone.
-                        This option is deprecated
+  --url           URL   Name the manifest URL to clone. Default ${default_manifest_repo}.
+                        Deprecated. Use --manifest-repo instead.
   -x                    Enable shell debugging in this script.
 
   STAGE                 Start execution at STAGE, default previous
@@ -518,7 +518,7 @@ Useful STAGE names:
 EOF
 }
 
-manifest_repo_option=""
+manifest_repo=""
 url=""
 distro="$default_distro"
 mcc_final_destdir="$default_mcc_destdir"
@@ -642,7 +642,7 @@ while [ $# -gt 0 ]; do
     ;;
 
   --manifest-repo)
-    opt_prev=manifest_repo_option
+    opt_prev=manifest_repo
     ;;
   -o | --outputdir)
     opt_prev=outputdir
@@ -689,17 +689,14 @@ if [ -z "${branch:-}" ]; then
   exit 3
 fi
 
-if [ -n "${manifest_repo_option:-}" ] && [ -n "${url:-}" ]; then
-  printf "error: --manifest-repo and --url are mutually exclusive.\n" >&2
-  exit 3
+if [ -n "${url:-}" ]; then
+  printf "warning: --url is deprecated, use --manifest-repo\n" >&2
+  if [ -z "${manifest_repo:-}" ]; then
+    manifest_repo="$url"
+  fi
 fi
 
-if [ -n "${manifest_repo_option:-}" ]; then
-  manifest_repo="$manifest_repo_option"
-elif [ -n "${url:-}" ]; then
-  printf "warning: the --url option is deprecated. Use --manifest-repo instead.\n" >&2
-  manifest_repo="$url"
-else
+if [ -z "${manifest_repo:-}" ]; then
   manifest_repo="$default_manifest_repo"
 fi
 
