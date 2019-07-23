@@ -1,0 +1,23 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "Boot" %}
+{% set lxc_creation = false %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 20
+    namespace: target
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: uname
+          description: uname
+        run:
+          steps:
+            - uname -a
+      name: uname
+      path: inline/uname.yaml
+{% endblock testplan %}
