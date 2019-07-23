@@ -501,6 +501,8 @@ OPTIONAL parameters:
                         script that invokes build.sh. This is written to
                         buildinfo.txt in the output directory.
   --manifest-repo URL   Name the manifest URL to clone. Default ${default_manifest_repo}.
+  --url           URL   Name the manifest URL to clone.
+                        This option is deprecated
   -x                    Enable shell debugging in this script.
 
   STAGE                 Start execution at STAGE, default previous
@@ -516,7 +518,8 @@ Useful STAGE names:
 EOF
 }
 
-manifest_repo="$default_manifest_repo"
+manifest_repo_option=""
+url=""
 distro="$default_distro"
 mcc_final_destdir="$default_mcc_destdir"
 flag_compress=1
@@ -530,7 +533,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -638,12 +641,15 @@ while [ $# -gt 0 ]; do
     opt_prev=manifest
     ;;
 
+  --manifest-repo)
+    opt_prev=manifest_repo_option
+    ;;
   -o | --outputdir)
     opt_prev=outputdir
     ;;
 
-  --manifest-repo)
-    opt_prev=manifest_repo
+  --url)
+    opt_prev=url
     ;;
 
   -x)
@@ -681,6 +687,20 @@ fi
 if [ -z "${branch:-}" ]; then
   printf "error: missing --branch BRANCH parameter\n" >&2
   exit 3
+fi
+
+if [ -n "${manifest_repo_option:-}" ] && [ -n "${url:-}" ]; then
+  printf "error: --manifest-repo and --url are mutually exclusive.\n" >&2
+  exit 3
+fi
+
+if [ -n "${manifest_repo_option:-}" ]; then
+  manifest_repo="$manifest_repo_option"
+elif [ -n "${url:-}" ]; then
+  printf "warning: the --url option is deprecated. Use --manifest-repo instead.\n" >&2
+  manifest_repo="$url"
+else
+  manifest_repo="$default_manifest_repo"
 fi
 
 if [ -z "${manifest:-}" ]; then
