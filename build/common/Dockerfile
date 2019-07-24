@@ -59,9 +59,9 @@ RUN mkdir -p /dev/net \
 
 # Scripts used to build mbed-linux image
 COPY common/git-setup.sh common/ssh-setup.sh \
-     README.binary_release_template \
-     license-report \
-     Licensing_and_Acknowledgment.template_nxp ./
+     templates/README.binary_release_template \
+     templates/Licensing_and_Acknowledgment.template_nxp \
+     license-report ./
 COPY mbl/build.sh ./
 
 # Scripts used to build poky-psa image
