@@ -339,11 +339,12 @@ create_license_report()
   local api_key="$3"
   local html_output_dir=${4:?Missing html_output_dir parameter of ${FUNCNAME[0]}}
   local machines=${5:?Missing machines parameter of ${FUNCNAME[0]}}
+  local image=${6:?Missing images parameter of ${FUNCNAME[0]}}
 
   "./license_diff_report.py" "$build_tag" \
                              --lics-to-review "$build_lic_paths" \
                              --lics-to-compare "$prev_build_tag" \
-                             --images "$images" \
+                             --images "$image" \
                              --machines "$machines" \
                              --apikey "$api_key" \
                              --html "$html_output_dir"
@@ -479,6 +480,7 @@ OPTIONAL parameters:
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
   --image IMAGE         Select an alternative image.  Default $default_images.
+                        This option can be repeated to add multiple images.
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys. Mandatory if passing
@@ -605,7 +607,7 @@ while [ $# -gt 0 ]; do
     ;;
 
   --image)
-    opt_prev=images
+    opt_append=images
     ;;
 
   --inject-mcc)
@@ -721,10 +723,6 @@ fi
 if [ -z "${images:-}" ]; then
   images="$default_images"
 fi
-
-# Remove any spaces in the image
-images=${images// /}
-
 
 if [[ ${images} == *"mbl-image-production"* ]]; then
     printf "error: mbl-image-production not supported in this release.\n" >&2
@@ -1057,7 +1055,8 @@ while true; do
                                 "$lic_cmp_build_tag" \
                                 "$artifactory_api_key" \
                                 "$outputdir" \
-                                "$machines"
+                                "$machines" \
+                                "$image"
         fi
 
         maybe_compress "$machinedir/licenses.tar"
