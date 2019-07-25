@@ -479,7 +479,6 @@ OPTIONAL parameters:
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
   --image IMAGE         Select an alternative image.  Default $default_images.
-                        This option can be repeated to add multiple images.
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys. Mandatory if passing
@@ -606,7 +605,7 @@ while [ $# -gt 0 ]; do
     ;;
 
   --image)
-    opt_append=images
+    opt_prev=images
     ;;
 
   --inject-mcc)
@@ -722,6 +721,10 @@ fi
 if [ -z "${images:-}" ]; then
   images="$default_images"
 fi
+
+# Remove any spaces in the image
+images=${images// /}
+
 
 if [[ ${images} == *"mbl-image-production"* ]]; then
     printf "error: mbl-image-production not supported in this release.\n" >&2
