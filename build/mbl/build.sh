@@ -1049,14 +1049,15 @@ while true; do
               # use the license manifests we just copied to the artifact dir
               build_lic_paths+="${outputdir}/machine/${mach}/images/${image}"
             done
+
+              create_license_report "$build_lic_paths" \
+                                    "$lic_cmp_build_tag" \
+                                    "$artifactory_api_key" \
+                                    "$outputdir" \
+                                    "$machines" \
+                                    "$image"
           done
 
-          create_license_report "$build_lic_paths" \
-                                "$lic_cmp_build_tag" \
-                                "$artifactory_api_key" \
-                                "$outputdir" \
-                                "$machines" \
-                                "$image"
         fi
 
         maybe_compress "$machinedir/licenses.tar"
