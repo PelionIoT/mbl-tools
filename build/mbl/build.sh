@@ -339,11 +339,12 @@ create_license_report()
   local api_key="$3"
   local html_output_dir=${4:?Missing html_output_dir parameter of ${FUNCNAME[0]}}
   local machines=${5:?Missing machines parameter of ${FUNCNAME[0]}}
+  local image=${6:?Missing images parameter of ${FUNCNAME[0]}}
 
   "./license_diff_report.py" "$build_tag" \
                              --lics-to-review "$build_lic_paths" \
                              --lics-to-compare "$prev_build_tag" \
-                             --images "$images" \
+                             --images "$image" \
                              --machines "$machines" \
                              --apikey "$api_key" \
                              --html "$html_output_dir"
@@ -1048,13 +1049,15 @@ while true; do
               # use the license manifests we just copied to the artifact dir
               build_lic_paths+="${outputdir}/machine/${mach}/images/${image}"
             done
+
+              create_license_report "$build_lic_paths" \
+                                    "$lic_cmp_build_tag" \
+                                    "$artifactory_api_key" \
+                                    "$outputdir" \
+                                    "$machines" \
+                                    "$image"
           done
 
-          create_license_report "$build_lic_paths" \
-                                "$lic_cmp_build_tag" \
-                                "$artifactory_api_key" \
-                                "$outputdir" \
-                                "$machines"
         fi
 
         maybe_compress "$machinedir/licenses.tar"
