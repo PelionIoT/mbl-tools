@@ -1,6 +1,6 @@
 - path: ci/lava/tests/avahi-discovery.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
-  name: "avahi-discovery{{ '-%s' % stage if stage }}"
+  name: "avahi-discovery{{ '-%s' % stage if stage }}{{ iteration }}"
   from: git
   history: False
   branch: "{{ mbl_branch }}"
