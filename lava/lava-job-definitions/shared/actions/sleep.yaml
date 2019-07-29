@@ -1,0 +1,11 @@
+- from: inline
+  repository:
+    metadata:
+      format: Lava-Test Test Definition 1.0
+      name: "sleep{{ iteration }}"
+      description: "sleep for {{ seconds }} seconds"
+    run:
+      steps:
+        - sleep {{ seconds }}
+  name: "sleep{{ iteration }}"
+  path: inline/sleep.yaml
