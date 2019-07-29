@@ -19,7 +19,7 @@ actions:
     nfsrootfs:
       url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/raspbian_rootfs.tar.xz
       compression: xz
-    os: debian
+    os: oe
     dtb:
       url: "http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/{{ dtb_filename }}"
     preseed:
