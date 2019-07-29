@@ -15,9 +15,8 @@
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {% set rootfs_test_stage = "UPDATE" %}
     {% set rootfs_update_method = "MBL_CLI" %}
-    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
+    {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, rootfs_update_method, venv_name) | indent }}
 
 - boot:
     namespace: target
@@ -25,10 +24,10 @@
     # We don't power cycle because the rootfs update has rebooted the DUT
     reset: false
     auto_login:
-        login_prompt: "lava-mbed-linux-os-(.*) login:"
+        login_prompt: "mbed-linux-os-(.*) login:"
         username: root
     prompts:
-        - "root@lava-mbed-linux-os-(.*):~#"
+        - "root@mbed-linux-os-(.*):~#"
     timeout:
         minutes: 5
     failure-retry: 3
@@ -39,9 +38,7 @@
    namespace: lxc
    definitions:
 
-    {% set rootfs_test_stage = "POST_CHECK" %}
-    {% set rootfs_update_method = "MBL_CLI" %}
-    {{ macros.rootfs_update(rootfs_test_stage, image_url, rootfs_update_method, venv_name) | indent }}
+    {{ macros.rootfs_update("POST_CHECK", "rootfs2", image_url, rootfs_update_method, venv_name) | indent }}
 
     {{ macros.avahi_discovery("post") | indent }}
 {% endblock testplan %}
