@@ -30,8 +30,12 @@
     {% include "shared/actions/delete-certificate.yaml" %}
 {% endmacro %}
 
+{% macro sleep(seconds, iteration="") %}
+    {% include "shared/actions/sleep.yaml" %}
+{% endmacro %}
+
 {# Reusable tests #}
-{% macro avahi_discovery(stage) %}
+{% macro avahi_discovery(stage, iteration="") %}
     {% include "shared/tests/avahi-discovery.yaml" %}
 {% endmacro %}
 
@@ -39,7 +43,7 @@
     {% include "shared/tests/core-component.yaml" %}
 {% endmacro %}
 
-{% macro rootfs_update(test_stage, image_url, update_method, venv_name) %}
+{% macro rootfs_update(test_stage, rootfs, image_url, update_method, venv_name, iteration="") %}
     {% include "shared/tests/rootfs-update.yaml" %}
 {% endmacro %}
 
