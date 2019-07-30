@@ -18,13 +18,12 @@
     {{ macros.avahi_discovery("pre") | indent }}
 
     {% for iteration in range(iterations) %}
-    {% set rootfs_update_method = "MBL_CLI" %}
     {% if iteration is divisibleby 2 %}
         {% set rootfs = "rootfs1" %}
     {% else %}
         {% set rootfs = "rootfs2" %}
     {% endif %}
-    {{ macros.rootfs_update("UPDATE", rootfs, image_url, rootfs_update_method, venv_name, iteration) | indent }}
+    {{ macros.rootfs_update("UPDATE", rootfs, image_url, "MBL-CLI", venv_name, iteration) | indent }}
 
 - boot:
     namespace: target
@@ -51,7 +50,7 @@
     {% else %}
         {% set rootfs = "rootfs1" %}
     {% endif %}
-    {{ macros.rootfs_update("POST_CHECK", rootfs, image_url, rootfs_update_method, venv_name, iteration) | indent }}
+    {{ macros.rootfs_update("POST_CHECK", rootfs, image_url, "MBL-CLI", venv_name, iteration) | indent }}
 
     {{ macros.avahi_discovery("post", iteration) | indent }}
 

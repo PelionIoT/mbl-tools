@@ -31,10 +31,9 @@
       minutes: 15
     namespace: lxc
     definitions:
-    {% set rootfs_update_method = "PELION" %}
-    {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, rootfs_update_method, venv_name) | indent }}
+    {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, "PELION", venv_name) | indent }}
 
-    {{ macros.rootfs_update("POST_CHECK", "rootfs2", image_url, rootfs_update_method, venv_name) | indent }}
+    {{ macros.rootfs_update("POST_CHECK", "rootfs2", image_url, "PELION", venv_name) | indent }}
 
     {{ macros.avahi_discovery("post") | indent }}
 
