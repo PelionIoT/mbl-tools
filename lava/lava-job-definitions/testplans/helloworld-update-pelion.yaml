@@ -23,18 +23,6 @@
 
     {{ macros.provision_mbl(venv_name) | indent }}
 
-- test:
-    timeout:
-      minutes: 1
-    namespace: target
-    definitions:
-    {{ macros.restart_mbl_cloud_client() | indent }}
-
-- test:
-    timeout:
-      minutes: 10
-    namespace: lxc
-    definitions:
     - path: ci/lava/tests/helloworld-update-pelion.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
       name: helloworld-update-pelion
