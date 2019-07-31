@@ -19,18 +19,6 @@
 
     {{ macros.provision_mbl(venv_name) | indent }}
 
-- test:
-    timeout:
-      minutes: 1
-    namespace: target
-    definitions:
-    {{ macros.restart_mbl_cloud_client() | indent }}
-
-- test:
-    timeout:
-      minutes: 15
-    namespace: lxc
-    definitions:
     {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, "PELION", venv_name) | indent }}
 
     {{ macros.rootfs_update("POST_CHECK", "rootfs2", image_url, "PELION", venv_name) | indent }}
