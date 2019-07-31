@@ -1,9 +1,9 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "Weekly soak test - RootFS update" %}
+{% set job_name = "Weekly soak test - RootFS update via Pelion" %}
 {% set job_timeout = 10080 %}
 {% set lxc_creation = true %}
-{% set lxc_name = "rootfs-soak-update-lxc" %}
+{% set lxc_name = "rootfs-soak-update-pelion-lxc" %}
 {% set iterations = 14 %}
 
 {% block testplan %}
@@ -17,40 +17,26 @@
 
     {{ macros.avahi_discovery("pre") | indent }}
 
+    {{ macros.enable_wifi(venv_name) | indent }}
+
+    {{ macros.provision_mbl(venv_name) | indent }}
+
     {% for iteration in range(iterations) %}
     {% if iteration is divisibleby 2 %}
         {% set rootfs = "rootfs1" %}
     {% else %}
         {% set rootfs = "rootfs2" %}
     {% endif %}
-    {{ macros.rootfs_update("UPDATE", rootfs, image_url, "MBL-CLI", venv_name, iteration) | indent }}
 
-- boot:
-    namespace: target
-    method: minimal
-    # We don't power cycle because the rootfs update has rebooted the DUT
-    reset: false
-    auto_login:
-        login_prompt: "mbed-linux-os-(.*) login:"
-        username: root
-    prompts:
-        - "root@mbed-linux-os-(.*):~#"
-    timeout:
-        minutes: 5
-    failure-retry: 3
-
-- test:
-   timeout:
-      minutes: 750 # 720 minutes is half day, we give some slack to it
-   namespace: lxc
-   definitions:
+    {{ macros.rootfs_update("UPDATE", rootfs, image_url, "PELION", venv_name, iteration) | indent }}
 
     {% if iteration is divisibleby 2 %}
         {% set rootfs = "rootfs2" %}
     {% else %}
         {% set rootfs = "rootfs1" %}
     {% endif %}
-    {{ macros.rootfs_update("POST_CHECK", rootfs, image_url, "MBL-CLI", venv_name, iteration) | indent }}
+
+    {{ macros.rootfs_update("POST_CHECK", rootfs, image_url, "PELION", venv_name, iteration) | indent }}
 
     {{ macros.avahi_discovery("post", iteration) | indent }}
 
@@ -58,4 +44,6 @@
     {{ macros.sleep(42600, iteration) | indent }}
 
     {% endfor %}
+
+    {{ macros.delete_certificate(venv_name) | indent }}
 {% endblock testplan %}
