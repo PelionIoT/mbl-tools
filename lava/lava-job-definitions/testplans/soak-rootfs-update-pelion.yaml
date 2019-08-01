@@ -9,7 +9,7 @@
 {% block testplan %}
 - test:
     timeout:
-      minutes: 30
+      minutes: 750 # 720 minutes is half day, we give some slack to it
     namespace: lxc
     definitions:
 
