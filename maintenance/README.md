@@ -92,7 +92,7 @@ Only add the original authors of commits if there are problems with the sync, ot
 ```
 # First push all your branches into github
 cd $MAINTDIR
-repo forall -c git push --set-upstream origin $MAINTBRANCH
+repo forall -p -c git push --set-upstream origin $MAINTBRANCH
  
 # Example usage of hub tool to create PRs
 # For each PR you will get an opportunity to add PR message - where you include
@@ -194,7 +194,7 @@ Now we need to do the tweaks to the following repos:
 Next you can push all the changes to github (this skips the PR flow for the changes done):
 
 ```
-repo forall -c push --set-upstream origin $RELVER
+repo forall -p -c git push --set-upstream origin $RELVER
 ```
 
 Now create the Jenkins job to test these new branches.
