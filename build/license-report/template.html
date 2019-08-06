@@ -54,9 +54,9 @@
             {% for item in licenses %}
                 <tr>
                 {% for header in license_headers %}
-                    {% if licenses[item][header]["LICENSE STATUS"] == "NEW" %}
+                    {% if licenses[item][header] == "NEW" %}
                         <td class=new>{{licenses[item][header]}}</td>
-                    {% elif licenses[item][header]["LICENSE STATUS"] == "UPDATED" %}
+                    {% elif licenses[item][header] == "UPDATED" %}
                         <td class=update>{{licenses[item][header]}}</td>
                     {% else %}
                         <td>{{licenses[item][header]}}</td>
