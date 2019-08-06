@@ -329,6 +329,7 @@ def _parse_args():
         help=(
             "Images to check licenses for. For example: mbl-image-development."
         ),
+        default=["mbl-image-development"],
     )
     parser.add_argument("--apikey", help="Artifactory API key.")
     parser.add_argument(
