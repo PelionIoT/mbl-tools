@@ -21,4 +21,4 @@ actions:
       - "{{ prompt }}"
 {% endfor %}
     timeout:
-      minutes: 15
+      minutes: 30
