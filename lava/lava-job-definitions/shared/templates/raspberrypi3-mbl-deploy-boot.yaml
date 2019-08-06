@@ -44,7 +44,7 @@ actions:
 - test:
     namespace: target
     timeout:
-      minutes: 10
+      minutes: 15
     definitions:
     - from: inline
       name: mmcblk0-write
