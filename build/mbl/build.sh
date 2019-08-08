@@ -961,9 +961,9 @@ while true; do
        # quoted because it will form multiple options rather than one
        # option. However ideally each option in the list should be
        # quoted.
-       printf "\nCalling: DISTRO=%s bitbake %s\n\n" "$distro" "$images"
+       printf "\nCalling: bitbake %s\n\n" "$images"
        # shellcheck disable=SC2086
-       DISTRO="$distro" bitbake $images
+       bitbake $images
       )
     done
     push_stages artifact
