@@ -932,7 +932,7 @@ while true; do
        (
        bitbake_env_setup "$machine"
        if [ -n "${build_tag:-}" ]; then
-         define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/meta-mbl-distro/conf/distro/mbl.conf" \
+         define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/meta-mbl-distro/conf/distro/include/mbl-distro.inc" \
                      "DISTRO_VERSION" "$build_tag"
        fi
        if [ "${flag_binary_release}" -eq 1 ]; then
