@@ -13,6 +13,8 @@
 
     {{ macros.avahi_discovery("pre") | indent }}
 
+    {{ macros.create_python_environment(venv_name) | indent }}
+
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
     {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, "MBL-CLI", venv_name) | indent }}

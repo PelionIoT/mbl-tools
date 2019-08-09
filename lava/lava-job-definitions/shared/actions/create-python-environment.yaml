@@ -1,6 +1,6 @@
-- path: ci/lava/tests/core-component.yaml
+- path: ci/lava/dependencies/create-python-environment.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
-  name: Core-Components
+  name: create-python-environment
   from: git
   history: False
   branch: "{{ mbl_branch }}"

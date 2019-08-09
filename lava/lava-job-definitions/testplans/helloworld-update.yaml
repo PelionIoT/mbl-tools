@@ -13,11 +13,13 @@
 
     {{ macros.avahi_discovery() | indent }}
 
+    {{ macros.create_python_environment(venv_name) | indent }}
+
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
     {{ macros.install_docker() | indent }}
 
-    {{ macros.build_helloworld() | indent }}
+    {{ macros.build_test_images(venv_name) | indent }}
 
     - path: ci/lava/tests/helloworld-update.yaml
       repository: https://github.com/ARMmbed/mbl-core.git

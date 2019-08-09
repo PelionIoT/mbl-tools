@@ -11,6 +11,10 @@
     namespace: lxc
     definitions:
 
+    {{ macros.avahi_discovery() | indent }}
+
+    {{ macros.create_python_environment(venv_name) | indent }}
+
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
     - path: ci/lava/tests/mbl-cli-basic-commands.yaml
