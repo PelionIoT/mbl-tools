@@ -68,7 +68,7 @@ if [ $RELEASE -eq 1 ]; then
     echo "* commit armmbed/mbl-manifest/default.xml with changes done by manifest script"
     echo "* edit/commit armmbed/mbl-tools/maintenance/release.xml to default to mbl-os-x.y"
     echo "* edit/commit armmbed/mbl-jenkins/mbl-pipeline to use mbl-os-x.y"
-    echo "* edit/commit armmbed/meta-mbl/meta-mbl-distro/conf/distro/mbl.conf to set DISTRO_VERSION"
+    echo "* edit/commit armmbed/meta-mbl/meta-mbl-distro/conf/distro/include/mbl-distro.inc to set DISTRO_VERSION"
     echo "$ repo forall -c push --set-upstream $REMOTE mbl-os-x.y"
     echo "* github: create the PRs/test and get them merged"
     echo ""

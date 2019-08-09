@@ -93,11 +93,13 @@ all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl imx6u
 
 default_manifest="default.xml"
 default_manifest_repo="git@github.com:ARMmbed/mbl-manifest.git"
-default_distro="mbl"
+default_distro="mbl-development"
 default_images="mbl-image-development"
+default_production_distro="mbl-production"
+default_production_images="mbl-image-production"
 default_accept_eula_machines=""
 default_lic_cmp_build_tag=""
-default_mcc_destdir="build-mbl"
+default_mcc_destdir="build-$default_distro"
 
 # Test if a machine name appears in the all_machines list.
 #
@@ -146,7 +148,7 @@ bitbake_env_setup() {
   set +u
   set +e
   # shellcheck disable=SC1091
-  MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
+  MACHINE="$machine" DISTRO="$distro" . setup-environment "build-$distro"
   # shellcheck disable=SC2181
   if [ $? -ne 0 ]; then
       exit 1
@@ -229,7 +231,7 @@ setup_archiver()
 {
   local path="$1"
   local archiver="$2"
-  local name="build-mbl-archiver"
+  local name="build-$distro-archiver"
   local custom_data=""
 
   ## Setup the yocto source archiver
@@ -361,7 +363,7 @@ find_license_manifest_dir()
   local image=${1:?Missing image parameter of ${FUNCNAME[0]}}
   local machine=${2:?Missing machine parameter of ${FUNCNAME[0]}}
 
-  local licdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc/deploy/licenses"
+  local licdir="$builddir/machine-$machine/mbl-manifest/build-$distro/tmp/deploy/licenses"
   local license_manifest_dir_pattern="${image}-${machine}-*"
 
   local license_manifest_dir
@@ -475,11 +477,14 @@ OPTIONAL parameters:
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
   --[no-]compress       Enable image artifact compression, default enabled.
   --build-tag TAG       Specify a unique version tag to identify the build.
+  --distro DISTRO       Specify the DISTRO to be set. Default $default_distro.
   --downloaddir DIR     Use DIR to store downloaded packages.
   --external-manifest PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
-  --image IMAGE         Select an alternative image.  Default $default_images.
+  --image IMAGE         Select an alternative image.  Default $default_images when
+                        --distro $default_distro and default $default_production_images
+                        when --distro $default_production_distro.
                         This option can be repeated to add multiple images.
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
@@ -521,7 +526,6 @@ EOF
 
 manifest_repo=""
 url=""
-distro="$default_distro"
 mcc_final_destdir="$default_mcc_destdir"
 flag_compress=1
 flag_archiver=""
@@ -534,7 +538,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,distro:,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -591,6 +595,10 @@ while [ $# -gt 0 ]; do
 
   --parent-command-line)
       opt_prev=parent_command_line
+    ;;
+
+  --distro)
+    opt_prev=distro
     ;;
 
   --downloaddir)
@@ -720,13 +728,19 @@ else
   exit 3
 fi
 
-if [ -z "${images:-}" ]; then
-  images="$default_images"
+if [ -z "${distro:-}" ]; then
+  distro="$default_distro"
 fi
 
-if [[ ${images} == *"mbl-image-production"* ]]; then
-    printf "error: mbl-image-production not supported in this release.\n" >&2
+if [ -z "${images:-}" ]; then
+  if [ "${distro:-}" ==  "$default_distro" ]; then
+      images="$default_images"
+  elif [ "${distro:-}" ==  "$default_production_distro" ]; then
+      images="$default_production_images"
+  else
+    printf "error: missing --image IMAGE parameter.\n" >&2
     exit 3
+  fi
 fi
 
 if [ -z "${machines:-}" ]; then
@@ -889,7 +903,7 @@ while true; do
        set +u
        set +e
        # shellcheck disable=SC1091
-       MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
+       MACHINE="$machine" DISTRO="$distro" . setup-environment "build-$distro"
        # shellcheck disable=SC2181
        if [ $? -ne 0 ]; then
            exit 1
@@ -918,7 +932,7 @@ while true; do
        (
        bitbake_env_setup "$machine"
        if [ -n "${build_tag:-}" ]; then
-         define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/meta-mbl-distro/conf/distro/mbl.conf" \
+         define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/meta-mbl-distro/conf/distro/include/mbl-distro.inc" \
                      "DISTRO_VERSION" "$build_tag"
        fi
        if [ "${flag_binary_release}" -eq 1 ]; then
@@ -947,6 +961,7 @@ while true; do
        # quoted because it will form multiple options rather than one
        # option. However ideally each option in the list should be
        # quoted.
+       printf "\nCalling: bitbake %s\n\n" "$images"
        # shellcheck disable=SC2086
        bitbake $images
       )
@@ -957,7 +972,7 @@ while true; do
   artifact)
     if [ -n "${outputdir:-}" ]; then
       for machine in $machines; do
-        bbtmpdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc"
+        bbtmpdir="$builddir/machine-$machine/mbl-manifest/build-$distro/tmp"
         machinedir="$outputdir/machine/$machine"
         for image in $images; do
           imagedir="$machinedir/images/$image"
@@ -1017,7 +1032,7 @@ while true; do
 
           # Dot graphs
           mkdir -p "$imagedir/dot/"
-          bh_path="$builddir/machine-$machine/mbl-manifest/build-mbl/buildhistory/images/${machine//-/_}/glibc/$image"
+          bh_path="$builddir/machine-$machine/mbl-manifest/build-$distro/buildhistory/images/${machine//-/_}/glibc/$image"
           for path in "$bh_path/"*.dot; do
             if [ -e "$path" ]; then
               write_info "save artifact %s\n" "$(basename "$path")"
