@@ -36,7 +36,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     wget \
     xterm \
-    xz-utils
+    xz-utils \
+    parted
 
 RUN apt-get update && apt-get install gosu
 RUN pip3 install dohq-artifactory && pip3 install jinja2
