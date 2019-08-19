@@ -6,7 +6,7 @@
 {% block testplan %}
 - test:
     timeout:
-      minutes: 20
+      minutes: 30
     namespace: target
     definitions:
     {{ macros.install_test_dependencies() | indent }}
