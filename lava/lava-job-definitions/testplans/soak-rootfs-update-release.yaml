@@ -1,0 +1,61 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "Release 0.9.0 soak test - RootFS update" %}
+{% set job_timeout = 43200 %}
+{% set lxc_creation = true %}
+{% set lxc_name = "release-rootfs-soak-update-lxc" %}
+{% set iterations = 10 %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 30
+    namespace: lxc
+    definitions:
+
+    {{ macros.install_mbl_cli(venv_name) | indent }}
+
+    {{ macros.avahi_discovery("pre") | indent }}
+
+    {% for iteration in range(iterations) %}
+    {% if iteration is divisibleby 2 %}
+        {% set rootfs = "rootfs1" %}
+    {% else %}
+        {% set rootfs = "rootfs2" %}
+    {% endif %}
+    {{ macros.rootfs_update("UPDATE", rootfs, image_url, "MBL-CLI", venv_name, iteration) | indent }}
+
+- boot:
+    namespace: target
+    method: minimal
+    # We don't power cycle because the rootfs update has rebooted the DUT
+    reset: false
+    auto_login:
+        login_prompt: "mbed-linux-os-(.*) login:"
+        username: root
+    prompts:
+        - "root@mbed-linux-os-(.*):~#"
+    timeout:
+        minutes: 5
+    failure-retry: 3
+
+- test:
+   timeout:
+      minutes: 4350 # 4320 minutes are three days, we give some slack to it
+   namespace: lxc
+   definitions:
+
+    {% if iteration is divisibleby 2 %}
+        {% set rootfs = "rootfs2" %}
+    {% else %}
+        {% set rootfs = "rootfs1" %}
+    {% endif %}
+    {{ macros.rootfs_update("POST_CHECK", rootfs, image_url, "MBL-CLI", venv_name, iteration) | indent }}
+
+    {{ macros.avahi_discovery("post", iteration) | indent }}
+
+    # 258600 seconds are 2 days, 23 hours and 50 minutes.
+    {{ macros.sleep(258600, iteration) | indent }}
+
+    {% endfor %}
+{% endblock testplan %}
