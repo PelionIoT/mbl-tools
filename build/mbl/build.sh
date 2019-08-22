@@ -506,6 +506,7 @@ OPTIONAL parameters:
                         Specify the command line that was used to invoke the
                         script that invokes build.sh. This is written to
                         buildinfo.txt in the output directory.
+  --root-passwd-file    The file containing the root user password in plain text.
   --manifest-repo URL   Name the manifest URL to clone. Default ${default_manifest_repo}.
   --url           URL   Name the manifest URL to clone. Default ${default_manifest_repo}.
                         Deprecated. Use --manifest-repo instead.
@@ -538,7 +539,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,distro:,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,distro:,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,root-passwd-file:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -655,6 +656,10 @@ while [ $# -gt 0 ]; do
     ;;
   -o | --outputdir)
     opt_prev=outputdir
+    ;;
+
+  --root-passwd-file)
+    opt_prev=root_passwd_file
     ;;
 
   --url)
@@ -922,6 +927,12 @@ while true; do
           base="$(basename "$file")"
           cp "$file" "$builddir/machine-$machine/mbl-manifest/$mcc_final_destdir/$base"
         done
+      done
+    fi
+
+    if [ -n "${root_passwd_file:-}" ]; then
+      for machine in $machines; do
+          cp "$root_passwd_file" "$builddir/machine-$machine/mbl-manifest/build-$distro/mbl_root_passwd_file"
       done
     fi
     push_stages build
