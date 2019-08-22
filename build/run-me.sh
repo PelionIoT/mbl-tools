@@ -86,6 +86,7 @@ OPTIONAL parameters:
   -o, --outputdir PATH  Specify a directory to store non-interactively built
                         artifacts. Note: Will not be updated by builds in
                         interactive mode.
+  --root-passwd-file    The file containing the root user password in plain text.
   --tty                 Enable tty creation (default).
   --no-tty              Disable tty creation.
   -x                    Enable shell debugging in this script.
@@ -103,7 +104,7 @@ flag_tty="-t"
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+ho:x -l builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,mcc-destdir:,mbl-tools-version:,outputdir:,tty,no-tty -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+ho:x -l builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,mcc-destdir:,mbl-tools-version:,outputdir:,root-passwd-file:,tty,no-tty -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -157,6 +158,10 @@ while [ $# -gt 0 ]; do
 
   -o | --outputdir)
     opt_prev=outputdir
+    ;;
+
+  --root-passwd-file)
+    opt_prev=root_passwd_file
     ;;
 
   --tty)
@@ -213,6 +218,12 @@ if [ -n "${inject_mcc_files:-}" ]; then
     cp "$file" "$builddir/inject-mcc/$base"
     build_args="${build_args:-} --inject-mcc=$builddir/inject-mcc/$base"
   done
+fi
+
+if [ -n "${root_passwd_file:-}" ]; then
+  base="$(basename "$root_passwd_file")"
+  cp "$root_passwd_file" "$builddir/$base"
+  build_args="${build_args:-} --root-passwd-file=$builddir/$base"
 fi
 
 build_script=$(build_script_for_project "$project")
