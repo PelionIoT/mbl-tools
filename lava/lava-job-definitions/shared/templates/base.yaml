@@ -49,6 +49,8 @@ protocols:
 
 {%    set prompts = prompts|default(["root@mbed-linux-os(.*):~#"], true) %}
 
+{%    set passwords = passwords|default([], true) %}
+
 
 # Deploy and boot the target
 {% include "shared/templates/" + device_type + "-deploy-boot.yaml" with context %}
