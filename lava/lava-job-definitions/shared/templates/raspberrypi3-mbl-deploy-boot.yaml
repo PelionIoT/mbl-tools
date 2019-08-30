@@ -14,14 +14,14 @@ actions:
       minutes: 5
     to: tftp
     kernel:
-      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/zImage
+      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/deploy/zImage
       type: zimage
     nfsrootfs:
-      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/raspbian_rootfs.tar.xz
+      url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/deploy/raspbian_rootfs.tar.xz
       compression: xz
     os: oe
     dtb:
-      url: "http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/mbl-os-0.5.177/{{ dtb_filename }}"
+      url: "http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/RPI3/deploy/{{ dtb_filename }}"
     preseed:
       url: "{{ image_url }}"
 
@@ -32,12 +32,12 @@ actions:
     commands: nfs
     failure_retry: 3
     auto_login:
-      login_prompt: "login:"
+      login_prompt: "lava-flash-utility login:"
       username: root
       password_prompt: 'Password:'
       password: root
     prompts:
-    - "root@raspberrypi3(.*)"
+    - "root@lava-flash-utility:"
     timeout:
       minutes: 5
 
@@ -65,10 +65,12 @@ actions:
           - ifconfig
           - ifconfig eth0 up
           - dir=$(cat /proc/cmdline | awk -F"lava_dir=" '{ print $2 }' | cut -d"/" -f1,2)
-          - addr=http://${ip}/tftp/${dir}/preseed/mbl-image-development-raspberrypi3-mbl.wic.gz
-          - wget -nv -O /tmp/mbl-image-development-raspberrypi3-mbl.wic.gz ${addr}
+          - image_name=$(cat /proc/cmdline | awk -F"lava_dir=" '{ print $2 }' | cut -d"/" -f4 |awk -F"ip=" '{print $1 }')
+          - addr=http://${ip}/tftp/${dir}/preseed/${image_name}
+          - wget -nv -O /tmp/${image_name} ${addr}
           # Flash the SD card
-          - bmaptool -q copy --nobmap /tmp/mbl-image-development-raspberrypi3-mbl.wic.gz ${part}
+          - bmaptool -q copy --nobmap /tmp/${image_name} ${part}
+
 
 # Reboot on (just flashed) SDCARD, nothing to do (minimal method)
 - boot:
@@ -84,6 +86,9 @@ actions:
     auto_login:
       login_prompt:  "{{ login_prompt }}"
       username: root
+{% for password in passwords %}
+      {{ password }}
+{% endfor %}
     prompts:
 {% for prompt in prompts %}
       - "{{ prompt }}"
