@@ -32,12 +32,12 @@ actions:
     commands: nfs
     failure_retry: 3
     auto_login:
-      login_prompt: "login:"
+      login_prompt: "lava-flash-utility login:"
       username: root
       password_prompt: 'Password:'
       password: root
     prompts:
-    - "root@raspberrypi3(.*)"
+    - "root@lava-flash-utility:"
     timeout:
       minutes: 5
 
