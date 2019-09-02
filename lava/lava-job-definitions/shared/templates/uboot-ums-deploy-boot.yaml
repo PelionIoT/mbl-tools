@@ -16,9 +16,12 @@ actions:
     auto_login:
       login_prompt: "{{ login_prompt }}"
       username: root
+{% for password in passwords %}
+      {{ password }}
+{% endfor %}
     prompts:
 {% for prompt in prompts %}
       - "{{ prompt }}"
 {% endfor %}
     timeout:
-      minutes: 15
+      minutes: 60

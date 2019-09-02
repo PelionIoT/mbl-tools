@@ -24,6 +24,12 @@
     {{ macros.provision_mbl(venv_name) | indent }}
 
     {% for iteration in range(iterations) %}
+- test:
+    timeout:
+      minutes: 750 # 720 minutes is half day, we give some slack to it
+    namespace: lxc
+    definitions:
+
     {% if iteration is divisibleby 2 %}
         {% set rootfs = "rootfs1" %}
     {% else %}
