@@ -10,10 +10,10 @@
       minutes: 10
     namespace: lxc
     definitions:
-    
+
     {{ macros.avahi_discovery() | indent }}
 
-    {{ macros.create_python_environment(venv_name) | indent }}
+    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 

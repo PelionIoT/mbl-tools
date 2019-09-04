@@ -13,7 +13,7 @@
     namespace: lxc
     definitions:
 
-    {{ macros.create_python_environment(venv_name) | indent }}
+    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 

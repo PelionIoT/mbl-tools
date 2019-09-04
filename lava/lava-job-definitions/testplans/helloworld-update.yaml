@@ -13,13 +13,13 @@
 
     {{ macros.avahi_discovery() | indent }}
 
-    {{ macros.create_python_environment(venv_name) | indent }}
+    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
     {{ macros.install_docker() | indent }}
 
-    {{ macros.build_test_images(venv_name) | indent }}
+    {{ macros.build_tutorial_images(venv_name, host_tutorials_dir) | indent }}
 
     - path: ci/lava/tests/helloworld-update.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
@@ -32,4 +32,6 @@
       {% endif %}
       parameters:
           virtual_env: "{{ venv_name }}"
+          host_tutorials_dir: "{{ host_tutorials_dir }}"
+          dut_tutorials_dir: "{{ dut_tutorials_dir }}"
 {% endblock testplan %}

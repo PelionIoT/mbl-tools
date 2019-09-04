@@ -9,3 +9,4 @@
   {% endif %}
   parameters:
       virtual_env: "{{ venv_name }}"
+      host_download_dir: "{{ host_download_dir }}"

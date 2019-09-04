@@ -9,3 +9,5 @@
   {% endif %}
   parameters:
       virtual_env: "{{ venv_name }}"
+      dut_tutorials_dir: "{{ dut_tutorials_dir }}"
+      host_tutorials_dir: "{{ host_tutorials_dir }}"

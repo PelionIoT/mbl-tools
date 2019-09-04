@@ -1,6 +1,6 @@
-- path: ci/lava/tests/build-test-images.yaml
+- path: ci/lava/tests/build-tutorial-images.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
-  name: build-test-images
+  name: build-tutorial-images
   from: git
   history: False
   branch: "{{ mbl_branch }}"
@@ -10,3 +10,4 @@
   parameters:
      device: "{{ device_type }}"
      virtual_env: "{{ venv_name }}"
+     host_tutorials_dir: "{{ host_tutorials_dir }}"
