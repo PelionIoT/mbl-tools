@@ -59,7 +59,6 @@ class Bitbake(object):
         self.shell = bash()
         self._check_environment()
 
-
     def setup_environment(self):
         """Set up the Bitbake environment."""
         self.run_command("cd {}".format(self.builddir))
