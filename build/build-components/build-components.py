@@ -66,7 +66,6 @@ def _parse_args():
 
 def main():
     """Script entry point."""
-
     args = _parse_args()
 
     # Set tup the Bitbake environemnt
