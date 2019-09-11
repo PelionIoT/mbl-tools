@@ -983,7 +983,8 @@ while true; do
   artifact)
     if [ -n "${outputdir:-}" ]; then
       for machine in $machines; do
-        bbtmpdir="$builddir/machine-$machine/mbl-manifest/build-$distro/tmp"
+        bbbuilddir="$builddir/machine-$machine/mbl-manifest/build-$distro"
+        bbtmpdir="${bbbuilddir}/tmp"
         machinedir="$outputdir/machine/$machine"
         for image in $images; do
           imagedir="$machinedir/images/$image"
@@ -1063,6 +1064,10 @@ while true; do
           # License manifests
           artifact_image_manifests "$image" "$machine"
         done
+
+        # local.conf
+        write_info "save artifact local.conf\n"
+        cp "${bbbuilddir}/conf/local.conf" "$machinedir"
 
         # ... the license information...
         write_info "save artifact licenses\n"

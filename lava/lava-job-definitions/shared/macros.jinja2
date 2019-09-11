@@ -6,12 +6,16 @@
     {% include "shared/actions/install-docker.yaml" %}
 {% endmacro %}
 
-{% macro install_mbl_cli(venv_name) %}
-    {% include "shared/actions/install-mbl-cli.yaml" %}
+{% macro create_python_environment(venv_name, host_download_dir) %}
+    {% include "shared/actions/create-python-environment.yaml" %}
 {% endmacro %}
 
-{% macro install_test_dependencies() %}
-    {% include "shared/actions/install-test-dependencies.yaml" %}
+{% macro create_python_environment_on_device(venv_name, host_download_dir, dut_download_dir) %}
+    {% include "shared/actions/create-python-environment-on-device.yaml" %}
+{% endmacro %}
+
+{% macro install_mbl_cli(venv_name) %}
+    {% include "shared/actions/install-mbl-cli.yaml" %}
 {% endmacro %}
 
 {% macro provision_mbl(venv_name) %}
@@ -20,10 +24,6 @@
 
 {% macro enable_wifi(venv_name) %}
     {% include "shared/actions/enable-wifi.yaml" %}
-{% endmacro %}
-
-{% macro restart_mbl_cloud_client() %}
-    {% include "shared/actions/restart-mbl-cloud-client.yaml" %}
 {% endmacro %}
 
 {% macro delete_certificate(venv_name) %}
@@ -39,7 +39,7 @@
     {% include "shared/tests/avahi-discovery.yaml" %}
 {% endmacro %}
 
-{% macro core_component(component_name, setup, teardown) %}
+{% macro core_components(venv_name, dut_tutorials_dir, host_tutorials_dir) %}
     {% include "shared/tests/core-component.yaml" %}
 {% endmacro %}
 
@@ -47,6 +47,7 @@
     {% include "shared/tests/rootfs-update.yaml" %}
 {% endmacro %}
 
-{% macro build_helloworld() %}
-    {% include "shared/tests/build-helloworld.yaml" %}
+{% macro build_tutorial_images(venv_name, host_tutorials_dir) %}
+    {% include "shared/tests/build-tutorial-images.yaml" %}
 {% endmacro %}
+
