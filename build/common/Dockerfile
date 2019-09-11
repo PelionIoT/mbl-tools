@@ -71,4 +71,4 @@ COPY poky-test/build-poky.py \
      poky-test/poky-bitbake-wrapper.sh ./
 
 # Scripts used to run bitbake commands
-COPY common/bitbake_utils.py ./
+COPY common/bitbake_util.py ./
