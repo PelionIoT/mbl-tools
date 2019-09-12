@@ -43,24 +43,10 @@ def _parse_args():
         default="mbl-development",
         required=False,
     )
-    parser.add_argument(
-        "--parent-command-line",
-        metavar="STRING",
-        help=(
-            "Specify the command line that was used to invoke the"
-            "script that invokes build.sh."
-        ),
-        required=False,
-    )
-    parser.add_argument(
-        "--mbl-tools-version",
-        metavar="STRING",
-        help="Specify the version of mbl-tools that this script came from.",
-        required=False,
-    )
 
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
     file_util.ensure_is_directory(args.builddir)
+    file_util.ensure_is_directory(args.outputdir)
     return args
 
 
