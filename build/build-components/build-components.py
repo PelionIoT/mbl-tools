@@ -78,11 +78,10 @@ def main():
     bitbake.setup_environment()
 
     # Build the components
+    components = "virtual/atf optee-os virtual/bootloader virtual/kernel"
     bitbake_build_commands = [
-        "bitbake -c cleansstate virtual/atf",
-        "bitbake virtual/atf",
-        "bitbake -c cleansstate virtual/kernel",
-        "bitbake virtual/kernel",
+        "bitbake -c cleansstate {}".format(components),
+        "bitbake {}".format(components),
     ]
     bitbake.run_commands(bitbake_build_commands)
 
