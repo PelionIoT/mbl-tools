@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """
-Script to build BL2, BL3 and fitImage components.
+Script to build BL2, BL3 and fitImage and create the update components.
 
 The script uses the bitbake_util module to run custom commands in a
 preexistent bitbake environemnt.
