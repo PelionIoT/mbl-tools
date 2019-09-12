@@ -1061,6 +1061,14 @@ while true; do
             fi
           done
 
+          # Images Sign Keys
+          mkdir -p "$imagedir/keys/"
+          shopt -s nullglob
+          for file in "$bbtmpdir/deploy/images/$machine/"*.{pem,crt,key} ; do
+              write_info "save artifact %s\n" "$(basename "$file")"
+              cp "$file" "$imagedir/keys/"
+          done
+
           # License manifests
           artifact_image_manifests "$image" "$machine"
         done
