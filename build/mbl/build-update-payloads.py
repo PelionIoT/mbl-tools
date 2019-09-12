@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """
-Script to build BL2, BL3 and fitImage and create the update components.
+Script to build BL2, BL3 and fitImage and create the update payloads.
 
 The script uses the bitbake_util module to run custom commands in a
 preexistent bitbake environemnt.
@@ -63,11 +63,11 @@ def main():
     )
     bitbake.setup_environment()
 
-    # Build the components
-    components = "virtual/atf optee-os virtual/bootloader virtual/kernel"
+    # Build the packages
+    packagess = "virtual/atf optee-os virtual/bootloader virtual/kernel"
     bitbake_build_commands = [
-        "bitbake -c cleansstate {}".format(components),
-        "bitbake {}".format(components),
+        "bitbake -c cleansstate {}".format(packages),
+        "bitbake {}".format(packages),
     ]
     bitbake.run_commands(bitbake_build_commands)
 
