@@ -27,8 +27,8 @@ cleanup() {
 build_script_for_project() {
     project=${1:?}
     case "$1" in
-        build-components)
-            printf "%s\n" "build-components.py"
+        build-update-payloads)
+            printf "%s\n" "build-update-payloads.py"
             ;;
         mbl)
             printf "%s\n" "build.sh"
@@ -46,7 +46,7 @@ build_script_for_project() {
 dockerfile_for_project() {
     project=${1:?}
     case "$1" in
-        build-components)
+        build-update-payloads)
             printf "%s\n" "common/Dockerfile"
             ;;
         mbl)
