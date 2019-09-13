@@ -1068,6 +1068,7 @@ while true; do
               write_info "save artifact %s\n" "$(basename "$file")"
               cp "$file" "$imagedir/keys/"
           done
+          shopt -u nullglob
 
           # License manifests
           artifact_image_manifests "$image" "$machine"
