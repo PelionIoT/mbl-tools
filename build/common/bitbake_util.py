@@ -92,7 +92,6 @@ class Bitbake(object):
             quote(self.init_env_file),
             quote(self.distro),
         )
-        print(command)
         self.run_command(command)
 
     def run_command(self, command, timeout=None, stdout=True):
