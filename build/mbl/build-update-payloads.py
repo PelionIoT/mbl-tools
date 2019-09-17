@@ -57,7 +57,6 @@ def main():
     # Set tup the Bitbake environemnt
     bitbake = Bitbake(
         builddir=args.builddir,
-        outputdir=args.outputdir,
         machine=args.machine,
         distro=args.distro,
     )
