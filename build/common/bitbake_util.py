@@ -2,7 +2,7 @@
 # Copyright (c) 2019, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
-"""Provides utilities for running command in a bitbake environment."""
+"""Provides utilities for running commands in a bitbake environment."""
 
 import sys
 from pathlib import Path
