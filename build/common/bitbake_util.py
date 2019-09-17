@@ -136,7 +136,7 @@ class Bitbake(object):
                         file=sys.stderr,
                     )
             else:
-                print("{} doesn't exists. Skipping.".format(obj_path))
+                print("{} doesn't exist. Skipping.".format(obj_path))
 
     # Private methods
     def _check_environment(self):
