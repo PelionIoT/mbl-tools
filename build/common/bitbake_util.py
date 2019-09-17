@@ -30,7 +30,7 @@ class BitbakeInvalidDirectoryError(BitbakeError):
         """
         super().__init__(
             "Directory {} doesn't exist or invalid."
-            "Please specify a valid build Bitbake directory".format(obj)
+            "Please specify a valid Bitbake build directory".format(obj)
         )
 
 
