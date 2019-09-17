@@ -162,4 +162,5 @@ class Bitbake(object):
         # init_env_file should be always specified
         assert isinstance(self.init_env_file, str) and self.init_env_file
         # env_variables is optional
-        assert isinstance(self.env_variables, dict)
+        if self.env_variables:
+            assert isinstance(self.env_variables, dict)
