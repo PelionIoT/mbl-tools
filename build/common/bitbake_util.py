@@ -110,14 +110,10 @@ class Bitbake(object):
         * output (str): output of the specified command
 
         """
-<<<<<<< HEAD
+        print('Running "{}"...'.format(command))
         output = self._shell.run_command(
             command, timeout=timeout, async_=False
         )
-=======
-        print('Running "{}"...'.format(command))
-        output = self.shell.run_command(command, timeout=timeout, async_=False)
->>>>>>> Create build-components project
         if stdout:
             print(output)
         print("Done!")
