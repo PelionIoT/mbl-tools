@@ -110,11 +110,13 @@ class Bitbake(object):
         * output (str): output of the specified command
 
         """
+        print('Running "{}"...'.format(command))
         output = self._shell.run_command(
             command, timeout=timeout, async_=False
         )
         if stdout:
             print(output)
+        print("Done!")
         return output
 
     def run_commands(self, commands, timeout=None, stdout=True):
