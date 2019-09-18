@@ -70,6 +70,7 @@ COPY poky-test/build-poky.py \
      common/file_util.py \
      poky-test/poky-bitbake-wrapper.sh ./
 
+
 # Scripts used to build BL2/BL3/fitImage components
 COPY common/bitbake_util.py \
      mbl/build-update-payloads.py ./
