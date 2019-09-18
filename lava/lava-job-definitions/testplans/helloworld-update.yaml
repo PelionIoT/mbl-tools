@@ -19,7 +19,7 @@
 
     {{ macros.install_docker() | indent }}
 
-    {{ macros.build_tutorial_images(venv_name, host_tutorials_dir) | indent }}
+    {{ macros.build_tutorial_images(venv_name, host_tutorials_dir, app_payload_version) | indent }}
 
     - path: ci/lava/tests/helloworld-update.yaml
       repository: https://github.com/ARMmbed/mbl-core.git

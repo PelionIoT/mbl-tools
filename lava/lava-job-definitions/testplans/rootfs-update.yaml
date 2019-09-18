@@ -17,7 +17,7 @@
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, "MBL-CLI", venv_name) | indent }}
+    {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, "MBL-CLI", venv_name, rootfs_payload_version) | indent }}
 
 - boot:
     namespace: target
@@ -39,7 +39,7 @@
    namespace: lxc
    definitions:
 
-    {{ macros.rootfs_update("POST_CHECK", "rootfs2", image_url, "MBL-CLI", venv_name) | indent }}
+    {{ macros.rootfs_update("POST_CHECK", "rootfs2", image_url, "MBL-CLI", venv_name, rootfs_payload_version) | indent }}
 
     {{ macros.avahi_discovery("post") | indent }}
 {% endblock testplan %}
