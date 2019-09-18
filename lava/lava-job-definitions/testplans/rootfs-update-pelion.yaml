@@ -21,9 +21,9 @@
 
     {{ macros.provision_mbl(venv_name) | indent }}
 
-    {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, "PELION", venv_name) | indent }}
+    {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, "PELION", venv_name, rootfs_payload_version) | indent }}
 
-    {{ macros.rootfs_update("POST_CHECK", "rootfs2", image_url, "PELION", venv_name) | indent }}
+    {{ macros.rootfs_update("POST_CHECK", "rootfs2", image_url, "PELION", venv_name, rootfs_payload_version) | indent }}
 
     {{ macros.avahi_discovery("post") | indent }}
 
