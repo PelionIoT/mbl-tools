@@ -43,11 +43,11 @@
     {% include "shared/tests/core-component.yaml" %}
 {% endmacro %}
 
-{% macro rootfs_update(test_stage, rootfs, image_url, update_method, venv_name, iteration="") %}
+{% macro rootfs_update(test_stage, rootfs, image_url, update_method, venv_name, rootfs_payload_version, iteration="") %}
     {% include "shared/tests/rootfs-update.yaml" %}
 {% endmacro %}
 
-{% macro build_tutorial_images(venv_name, host_tutorials_dir) %}
+{% macro build_tutorial_images(venv_name, host_tutorials_dir, app_payload_version) %}
     {% include "shared/tests/build-tutorial-images.yaml" %}
 {% endmacro %}
 
