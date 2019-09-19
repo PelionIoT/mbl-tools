@@ -365,16 +365,13 @@ find_license_manifest_dir()
 
   local licdir="$builddir/machine-$machine/mbl-manifest/build-$distro/tmp/deploy/licenses"
   local license_manifest_dir_pattern="${image}-${machine}-*"
-
+  # find the last modified license manifest directory as we could possibly have
+  # multiple license directories after multiple build runs
   local license_manifest_dir
-  license_manifest_dir=$(find "$licdir" -maxdepth 1 -type d -name "$license_manifest_dir_pattern")
-  local count
-  count=$(printf "%s" "$license_manifest_dir" | wc -w)
-  if [ "$count" -ne 1 ]; then
-    printf "error: found unexpected number of files matching \"%s\" in %s (%d)" \
+  if ! license_manifest_dir=$(find "$licdir" -maxdepth 1 -type d -name "$license_manifest_dir_pattern" -print0 | xargs -r -0 ls -1 -t -d | head -1); then
+    printf "error: failed to find any directories matching \"%s\" in %s\n" \
       "$license_manifest_dir_pattern" \
       "$licdir" \
-      "$count" \
       1>&2
     return 1
   fi
