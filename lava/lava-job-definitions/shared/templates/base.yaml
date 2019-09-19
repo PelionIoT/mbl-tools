@@ -23,6 +23,7 @@ tags:
 {% set app_payload_version = "1" %}
 {% set rootfs_payload_version = "1" %}
 
+{% set treasure_database = treasure_database|default("mbl_lava_db", true)  %}
 metadata:
     build-url: "{{ build_url }}"
     build-tag: "{{ build_tag }}"
