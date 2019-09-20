@@ -28,6 +28,9 @@ metadata:
     build-tag: "{{ build_tag }}"
     testplan: "{{ job_name }}"
     mbl-branch: "{{ mbl_branch }}"
+{% if treasure_database %}
+    td-database: "{{ treasure_database }}"
+{% endif %}
 
 priority: medium
 visibility: public

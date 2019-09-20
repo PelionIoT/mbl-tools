@@ -60,6 +60,7 @@ class LAVATemplates(object):
         device_type,
         callback_domain,
         callback_port,
+        treasure_database,
     ):
         """Process templates rendering them with the right values."""
         lava_jobs = []
@@ -76,6 +77,7 @@ class LAVATemplates(object):
                 device_type=device_type,
                 callback_domain=callback_domain,
                 callback_port=callback_port,
+                treasure_database=treasure_database,
                 tags={},
             )
             lava_jobs.append(lava_job)
@@ -304,6 +306,13 @@ def _parse_arguments(cli_args):
         required=False,
     )
     parser.add_argument(
+        "--treasure-database",
+        help="Name of the treasure data database to store the results in.",
+        dest="treasure_database",
+        default="",
+        required=False,
+    )
+    parser.add_argument(
         "--debug",
         help="Enable debug messages",
         action="store_true",
@@ -379,6 +388,7 @@ def _main(args):
             args.device_type,
             args.callback_domain,
             args.callback_port,
+            args.treasure_database,
         )
 
         # Instantiate a LAVA server
