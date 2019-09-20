@@ -22,7 +22,7 @@
 
     {{ macros.install_docker() | indent }}
 
-    {{ macros.build_tutorial_images(venv_name, host_tutorials_dir) | indent }}
+    {{ macros.build_tutorial_images(venv_name, host_tutorials_dir, app_payload_version) | indent }}
 
     {{ macros.core_components(venv_name, dut_tutorials_dir, host_tutorials_dir) | indent }}
 
