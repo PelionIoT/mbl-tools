@@ -36,7 +36,7 @@
         {% set rootfs = "rootfs2" %}
     {% endif %}
 
-    {{ macros.rootfs_update("UPDATE", rootfs, image_url, "PELION", venv_name, iteration) | indent }}
+    {{ macros.rootfs_update("UPDATE", rootfs, image_url, "PELION", venv_name, rootfs_payload_version, iteration) | indent }}
 
     {% if iteration is divisibleby 2 %}
         {% set rootfs = "rootfs2" %}
@@ -44,7 +44,7 @@
         {% set rootfs = "rootfs1" %}
     {% endif %}
 
-    {{ macros.rootfs_update("POST_CHECK", rootfs, image_url, "PELION", venv_name, iteration) | indent }}
+    {{ macros.rootfs_update("POST_CHECK", rootfs, image_url, "PELION", venv_name, rootfs_payload_version, iteration) | indent }}
 
     {{ macros.avahi_discovery("post", iteration) | indent }}
 
