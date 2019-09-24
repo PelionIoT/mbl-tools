@@ -72,11 +72,10 @@ MANDATORY parameters:
   --builddir PATH       Specify the root of the build tree.
 
 OPTIONAL parameters:
-  --boot-rot-key PATH   Path to the secure world root of trust private key
-                        certificate. If this option is not used, either a new
-                        certificate will be generated, or a certificate
-                        generated for a previous build in the same work area
-                        will be used.
+  --boot-rot-key PATH   Path to the secure world root of trust private key. If
+                        this option is not used, either a new key will be
+                        generated, or a key generated for a previous build in
+                        the same work area will be used.
   --downloaddir PATH    Use PATH to store Yocto downloaded sources.
   --external-manifest PATH
                         Specify an external manifest file.
