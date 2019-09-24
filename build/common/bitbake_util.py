@@ -86,8 +86,9 @@ class Bitbake(object):
         env_vars = self._build_env_variables_string()
         if env_vars:
             env_vars = quote(env_vars)
-        command = "{} MACHINE={} . {} build-{}".format(
+        command = "{} DISTRO={} MACHINE={} . {} build-{}".format(
             env_vars,
+            quote(self.distro),
             quote(self.machine),
             quote(self.init_env_file),
             quote(self.distro),
