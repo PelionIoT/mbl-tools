@@ -72,6 +72,11 @@ MANDATORY parameters:
   --builddir PATH       Specify the root of the build tree.
 
 OPTIONAL parameters:
+  --boot-rot-key PATH   Path to the secure world root of trust private key
+                        certificate. If this option is not used, either a new
+                        certificate will be generated, or a certificate
+                        generated for a previous build in the same work area
+                        will be used.
   --downloaddir PATH    Use PATH to store Yocto downloaded sources.
   --external-manifest PATH
                         Specify an external manifest file.
@@ -81,6 +86,15 @@ OPTIONAL parameters:
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys.  Mandatory if passing
                         --mcc-destdir parameter.
+  --kernel-rot-crt PATH Path to the normal world root of trust public key
+                        certificate. If this option is not used, either a new
+                        certificate will be generated, or a certificate
+                        generated for a previous build in the same work area
+                        will be used.
+  --kernel-rot-key PATH Path to the normal world root of trust private key. If
+                        this option is not used, either a new key will be
+                        generated, or a key generated for a previous build in
+                        the same work area will be used.
   --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
                         passed with --inject-mcc should be copied to.
   --mbl-tools-version STRING
@@ -110,7 +124,7 @@ flag_tty="-t"
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+ho:x -l builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,mcc-destdir:,mbl-tools-version:,outputdir:,root-passwd-file:,tty,no-tty -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+ho:x -l boot-rot-key:,builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,kernel-rot-crt:,kernel-rot-key:,mcc-destdir:,mbl-tools-version:,outputdir:,root-passwd-file:,tty,no-tty -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -125,6 +139,10 @@ while [ $# -gt 0 ]; do
     continue
   fi
   case $1 in
+  --boot-rot-key)
+    opt_prev=boot_rot_key
+    ;;
+
   --builddir)
     opt_prev=builddir
     ;;
@@ -152,6 +170,14 @@ while [ $# -gt 0 ]; do
 
   --inject-mcc)
     opt_append=inject_mcc_files
+    ;;
+
+  --kernel-rot-crt)
+    opt_prev=kernel_rot_crt
+    ;;
+
+  --kernel-rot-key)
+    opt_prev=kernel_rot_key
     ;;
 
   --mcc-destdir)
@@ -224,6 +250,24 @@ if [ -n "${inject_mcc_files:-}" ]; then
     cp "$file" "$builddir/inject-mcc/$base"
     build_args="${build_args:-} --inject-mcc=$builddir/inject-mcc/$base"
   done
+fi
+
+if [ -n "${boot_rot_key:-}" ]; then
+  mkdir -p "$builddir/inject-keys"
+  cp "$boot_rot_key" "$builddir/inject-keys/rot_key.pem"
+  build_args="${build_args:-} --inject-key=$builddir/inject-keys/rot_key.pem"
+fi
+
+if [ -n "${kernel_rot_crt:-}" ]; then
+  mkdir -p "$builddir/inject-keys"
+  cp "$kernel_rot_crt" "$builddir/inject-keys/mbl-fit-rot-key.crt"
+  build_args="${build_args:-} --inject-key=$builddir/inject-keys/mbl-fit-rot-key.crt"
+fi
+
+if [ -n "${kernel_rot_key:-}" ]; then
+  mkdir -p "$builddir/inject-keys"
+  cp "$kernel_rot_key" "$builddir/inject-keys/mbl-fit-rot-key.key"
+  build_args="${build_args:-} --inject-key=$builddir/inject-keys/mbl-fit-rot-key.key"
 fi
 
 if [ -n "${root_passwd_file:-}" ]; then
