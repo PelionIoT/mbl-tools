@@ -524,7 +524,6 @@ Useful STAGE names:
 EOF
 }
 
-set -x
 manifest_repo=""
 url=""
 mcc_final_destdir="$default_mcc_destdir"
