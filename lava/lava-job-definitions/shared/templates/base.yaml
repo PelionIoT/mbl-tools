@@ -37,7 +37,7 @@ visibility: public
 
 timeouts:
   job:
-    minutes: {{ job_timeout|default(50) }}
+    minutes: {{ job_timeout|default(120) }}
   action:
     minutes: 15
   connection:
