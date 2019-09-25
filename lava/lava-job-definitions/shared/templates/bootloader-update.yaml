@@ -1,0 +1,27 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = component_name + " update via " + update_method %}
+{% set lxc_creation = true %}
+{% set lxc_name = component_name + "-update-" + update_method + "-lxc" %}
+{% set payloads_url = pipeline_data["payloads_url"] %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 30
+    namespace: lxc
+    definitions:
+
+    {{ macros.avahi_discovery() | indent }}
+
+    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
+
+    {{ macros.install_mbl_cli(venv_name) | indent }}
+
+    {% set payload_url = "/".join([payloads_url,
+                                   component_name + "_payload.tar",
+                                   component_name + "_payload.tar",]) %}
+
+    {{ macros.boot_component_update(venv_name, component_name, payload_url, update_method) | indent }}
+
+{% endblock testplan %}
