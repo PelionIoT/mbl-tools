@@ -93,6 +93,7 @@ class TestLAVATemplates(object):
             "imx7s-warp-mbl",
             "callback.domain",
             "callback.port",
+            "treasure_database",
         )
 
         # Check the results
@@ -104,10 +105,12 @@ class TestLAVATemplates(object):
             mbl_revisions={"mbl-core": "12345"},
             image_url="img_url",
             notify_user="notify_user",
+            tags={},
             notify_emails=["notify_emails"],
             device_type="imx7s-warp-mbl",
             callback_domain="callback.domain",
             callback_port="callback.port",
+            treasure_database="treasure_database",
         )
         lt._dump_job.assert_called_with(
             "some yaml string", "imx7s-warp-mbl", "lava_template_name"
@@ -339,9 +342,15 @@ class TestParseArguments(object):
         cli_args.extend(["--lava-token", "lava_token"])
         cli_args.extend(["--device-type", "imx7s-warp-mbl"])
         cli_args.extend(["--mbl-branch", "master"])
-        cli_args.extend(["--mbl-revisions", "mbl-core:12345"])
+        cli_args.extend(
+            ["--mbl-revisions", "mbl-core=12345", "mbl-cli=mbl-os-0.5"]
+        )
+        cli_args.extend(["--pipeline-data", "key1=value1", "key2=value2"])
         cli_args.extend(["--template-names", "helloworld-template.yaml"])
         cli_args.extend(["--image-url", "http://image.url/image.wic.gz"])
+        cli_args.extend(["--lava-callback-domain", "http://callback"])
+        cli_args.extend(["--lava-callback-port", "8080"])
+        cli_args.extend(["--treasure-database", "mbl_db"])
 
         # Call the method under test
         args = _parse_arguments(cli_args)
@@ -357,10 +366,17 @@ class TestParseArguments(object):
         assert args.image_url == "http://image.url/image.wic.gz"
 
         # Optional args
-        assert args.mbl_revisions == {"mbl-core": "12345"}
+        assert args.mbl_revisions == {
+            "mbl-core": "12345",
+            "mbl-cli": "mbl-os-0.5",
+        }
+        assert args.pipeline_data == {"key1": "value1", "key2": "value2"}
         assert args.build_tag is None
         assert args.build_url is None
         assert args.template_path == "lava-job-definitions"
+        assert args.callback_domain == "http://callback"
+        assert args.callback_port == "8080"
+        assert args.treasure_database == "mbl_db"
         assert args.notify_user is False
         assert args.notify_emails == []
         assert args.debug is False
@@ -388,21 +404,15 @@ class TestParseArguments(object):
         assert args.notify_user == "lava_username"
 
 
-def test_repo_revision_list():
-    """ Test repo_revision_list() function.
+def test_key_value_list():
+    """ Test key_value_data_list() function.
 
     This is used as type in argparse in order to convert a string with format
-    "name1:sha1,name2:tag" into a dictionary"
+    "name1=sha1 name2=tag" into a dictionary"
     """
-    revisions_argument = (
-        "mbl-core:a7f9b77c16a3aa80daa4e378659226f628326a95,"
-        "mbl-cli:mbl-os-0.6.1",
-    )
-    expected_result = {
-        "mbl-core": "a7f9b77c16a3aa80daa4e378659226f628326a95",
-        "mbl-cli": "mbl-os-0.6.1",
-    }
-    result = repo_revision_list(revisions_argument)
+    args = "key1=value"
+    expected_result = {"key1": "value"}
+    result = key_value_data(args)
     assert result == expected_result
 
 
@@ -433,9 +443,15 @@ def test__main(monkeypatch):
     cli_args.extend(["--lava-token", "lava_token"])
     cli_args.extend(["--device-type", "imx7s-warp-mbl"])
     cli_args.extend(["--mbl-branch", "master"])
-    cli_args.extend(["--mbl-revisions", "mbl-core:12345"])
+    cli_args.extend(
+        ["--mbl-revisions", "mbl-core=12345", "mbl-cli=mbl-os-0.5"]
+    )
+    cli_args.extend(["--pipeline-data", "key1=value1", "key2=value2"])
     cli_args.extend(["--template-names", "helloworld-template.yaml"])
     cli_args.extend(["--image-url", "http://image.url/image.wic.gz"])
+    cli_args.extend(["--lava-callback-domain", "http://callback"])
+    cli_args.extend(["--lava-callback-port", "8080"])
+    cli_args.extend(["--treasure-database", "mbl_db"])
 
     mock_process = MagicMock(return_value=["job1", "job2"])
     monkeypatch.setattr(LAVATemplates, "process", mock_process)
@@ -454,10 +470,13 @@ def test__main(monkeypatch):
         "lava_username build",
         "-",
         "master",
-        {"mbl-core": "12345"},
+        {"mbl-core": "12345", "mbl-cli": "mbl-os-0.5"},
         False,
         [],
         "imx7s-warp-mbl",
+        "http://callback",
+        "8080",
+        "mbl_db",
     )
     mock_connect.assert_called_once_with()
     mock_submit_job.assert_has_calls(

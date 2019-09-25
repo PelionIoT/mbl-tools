@@ -55,6 +55,7 @@ class LAVATemplates(object):
         build_url,
         mbl_branch,
         mbl_revisions,
+        pipeline_data,
         notify_user,
         notify_emails,
         device_type,
@@ -72,6 +73,7 @@ class LAVATemplates(object):
                 build_url=build_url,
                 mbl_branch=mbl_branch,
                 mbl_revisions=mbl_revisions,
+                pipeline_data=pipeline_data,
                 notify_user=notify_user,
                 notify_emails=notify_emails,
                 device_type=device_type,
@@ -196,19 +198,31 @@ class LAVAServer(object):
         return job_info_url
 
 
-def repo_revision_list(string):
-    """Parse the string to create a dictionary of repos and revisions."""
-    value = {}
-    # The format shoudl be: repo1-name:sha1,repo2-name:tagname
-    # There is no need to wrap it in a try-except block as argparse will take
-    # care of it in case of Exception
-    for data in string.split(","):
-        repo_name, repo_revision = data.split(":")
-        if not repo_revision:
-            msg = "revision for {} is empty".format(repo_name)
+def key_value_data(string):
+    """Validate the string to be in the form key=value."""
+    if string:
+        key, value = string.split("=")
+        if not (key and value):
+            msg = "{} not in 'key=value' format.".format(string)
             raise argparse.ArgumentTypeError(msg)
-        value[repo_name] = repo_revision
-    return value
+        return {key: value}
+    return {}
+
+
+class StoreDictKeyPair(argparse.Action):
+    """Class for storing key/pair values in a dictionary."""
+
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        """Initialise the class."""
+        self._nargs = nargs
+        super().__init__(option_strings, dest, nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """Store data into the namespace."""
+        values_dict = {}
+        for item in values:
+            values_dict.update(item)
+        setattr(namespace, self.dest, values_dict)
 
 
 def _parse_arguments(cli_args):
@@ -262,12 +276,26 @@ def _parse_arguments(cli_args):
     )
     # Optional arguments
     parser.add_argument(
+        "--pipeline-data",
+        help="Custom data to pass into the LAVA pipeline\n(E.g.: "
+        "key1=value1 key2=value2)",
+        dest="pipeline_data",
+        nargs="+",
+        metavar="key=value",
+        type=key_value_data,
+        action=StoreDictKeyPair,
+        default="",
+    )
+    parser.add_argument(
         "--mbl-revisions",
-        help="Revisions (SHA1 or tag) of MBL repositories\n(E.g.: mbl-core:"
-        "39e05108fd70fc2c207e6673cbebb8b088d6b5f0,mbl-cli:mbl-os-0.6.0)",
-        type=repo_revision_list,
+        help="Revisions (SHA1 or tag) of MBL repositories\n(E.g.: mbl-core="
+        "39e05108fd70fc2c207e6673cbebb8b088d6b5f0 mbl-cli=mbl-os-0.6.0)",
         dest="mbl_revisions",
-        default={},
+        nargs="+",
+        metavar="key=value",
+        type=key_value_data,
+        action=StoreDictKeyPair,
+        default="",
     )
     parser.add_argument("--build-tag", help="Build tag", dest="build_tag")
     parser.add_argument("--build-url", help="Build url", dest="build_url")
@@ -296,21 +324,18 @@ def _parse_arguments(cli_args):
         help="Notification callback domain",
         dest="callback_domain",
         default="",
-        required=False,
     )
     parser.add_argument(
         "--lava-callback-port",
         help="Notification callback port",
         dest="callback_port",
         default="",
-        required=False,
     )
     parser.add_argument(
         "--treasure-database",
         help="Name of the treasure data database to store the results in.",
         dest="treasure_database",
         default="",
-        required=False,
     )
     parser.add_argument(
         "--debug",
@@ -383,6 +408,7 @@ def _main(args):
             args.build_url,
             args.mbl_branch,
             args.mbl_revisions,
+            args.pipeline_data,
             args.notify_user,
             args.notify_emails,
             args.device_type,
