@@ -51,6 +51,7 @@ def warning(message):
 
     """
     warnings.warn(message, stacklevel=2)
+    sys.stderr.flush()
 
 
 def _create_workarea(workdir, manifest_repo, branch, manifest):
