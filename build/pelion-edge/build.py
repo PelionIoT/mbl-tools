@@ -39,6 +39,7 @@ DEFAULT_MANIFEST_REPO = (
 
 DEFAULT_IMAGE = "console-image"
 
+TMP_DIR_NAME = "tmp-glibc"
 
 def warning_on_one_line(
     message, category, filename, lineno, file=None, line=None
@@ -78,7 +79,7 @@ def _create_workarea(workdir, manifest_repo, branch):
 
 def _build(workdir, image):
     """
-    Kick off a build of the workarea.
+    Kick off a build of the image in the workarea.
 
     Args:
     * workdir (Path): top level of work area.
@@ -93,7 +94,7 @@ def _build(workdir, image):
     )
 
 
-def _save_artifacts(workdir, outputdir):
+def _save_artifacts(workdir, outputdir, image):
     """
     Save artifacts to the output directory.
 
@@ -104,7 +105,7 @@ def _save_artifacts(workdir, outputdir):
     if outputdir:
         # Save artifact from deploy/images directory
         shutil.copytree(
-            workdir / "poky" / "console-image" / "tmp" / "deploy" / "images",
+            workdir / "poky" / image / TMP_DIR_NAME / "deploy" / "images",
             outputdir / "images",
             symlinks=True,
             ignore=shutil.ignore_patterns("*.cpio.gz", "*.wic"),
@@ -112,7 +113,7 @@ def _save_artifacts(workdir, outputdir):
 
         # Save licenses info from deploy/licenses directory
         licenses_path = (
-            workdir / "poky" / "console-image" / "tmp" / "deploy" / "licenses"
+            workdir / "poky" / image / TMP_DIR_NAME / "deploy" / "licenses"
         )
         output_license_file = outputdir / "licenses.tar.gz"
         with tarfile.open(output_license_file, "w:gz") as tar:
@@ -319,7 +320,10 @@ def _parse_args():
         required=False,
     )
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
+
+    if len(unknown) > 0:
+        warning("unsupported arguments: {}".format(unknown))
 
     if len(args.inject_mcc) < 3:
         print("build.py: error: 3 of the following arguments are required: --inject-mcc")
@@ -366,7 +370,7 @@ def main():
 
     _set_up_bitbake_ssh(args.builddir)
     _build(args.builddir, args.image)
-    _save_artifacts(args.builddir, args.outputdir)
+    _save_artifacts(args.builddir, args.outputdir, args.image)
 
 
 if __name__ == "__main__":
