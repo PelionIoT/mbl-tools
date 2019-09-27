@@ -58,6 +58,7 @@ def warning(message):
     * message: warning's message
     """
     warnings.warn(message, stacklevel=2)
+    sys.stderr.flush()
 
 
 def _create_workarea(workdir, manifest_repo, branch):
@@ -138,7 +139,7 @@ def _inject_mcc(workdir, path):
 
     """
     name = pathlib.Path(path).name
-    print("Injecting mcc: {}".format(pathlib.Path(path).name))
+    print("Injecting mcc: {}".format(pathlib.Path(path).name),flush=True)
     if name == 'upgradeCA.cert':
         shutil.copy(
             path,
@@ -170,7 +171,7 @@ def _inject_key(workdir, path, image):
 
     """
     name = pathlib.Path(path).name
-    print("Injecting key: {}".format(name))
+    print("Injecting key: {}".format(name),flush=True)
     if name == 'rot_key.pem':
         pathlib.Path("{}/poky/meta-pelion-edge/recipes-bsp/atf/files".format(workdir)).mkdir(parents=True, exist_ok=True)
         shutil.copy(
