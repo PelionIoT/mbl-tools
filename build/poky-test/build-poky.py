@@ -51,6 +51,7 @@ def warning(message):
 
     """
     warnings.warn(message, stacklevel=2)
+    sys.stderr.flush()
 
 
 def _create_workarea(workdir, manifest_repo, branch, manifest):
@@ -334,7 +335,10 @@ def _parse_args():
         required=False,
     )
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
+
+    if len(unknown) > 0:
+        warning("unsupported arguments: {}".format(unknown))
 
     file_util.ensure_is_directory(args.builddir)
 
