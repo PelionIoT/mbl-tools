@@ -37,6 +37,8 @@ DEFAULT_MANIFEST_REPO = (
     "ssh://git@github.com/armPelionEdge/manifest-pelion-os-edge"
 )
 
+DEFAULT_IMAGE = "console-image"
+
 
 def warning_on_one_line(
     message, category, filename, lineno, file=None, line=None
@@ -74,7 +76,7 @@ def _create_workarea(workdir, manifest_repo, branch):
     subprocess.run(["repo", "sync", "-j", "16"], cwd=workdir, check=True)
 
 
-def _build(workdir):
+def _build(workdir, image):
     """
     Kick off a build of the workarea.
 
@@ -85,7 +87,7 @@ def _build(workdir):
         [
             SCRIPTS_DIR / "bitbake-wrapper.sh",
             workdir,
-            "console-image",
+            image,
         ],
         check=True,
     )
@@ -157,7 +159,7 @@ def _inject_mcc(workdir, path):
             / "files",
         )
 
-def _inject_key(workdir, path):
+def _inject_key(workdir, path, image):
     """
     Add keys into the build.
 
@@ -180,11 +182,12 @@ def _inject_key(workdir, path):
             / "files",
         )
     else:
+        pathlib.Path("{}/poky/{}".format(workdir, image)).mkdir(parents=True, exist_ok=True)
         shutil.copy(
             path,
             workdir
             / "poky"
-            / "build",
+            / image,
         )
 
 def _set_up_git():
@@ -263,6 +266,12 @@ def _parse_args():
             '"{}"'.format(DEFAULT_MANIFEST_REPO)
         ),
         default=DEFAULT_MANIFEST_REPO,
+    )
+    parser.add_argument(
+        "--image",
+        metavar="STRING",
+        help="bitbake image to build",
+        default=DEFAULT_IMAGE,
     )
     parser.add_argument(
         "--inject-mcc",
@@ -353,10 +362,10 @@ def main():
     for path in args.inject_mcc:
         _inject_mcc(args.builddir, path)
     for path in args.inject_key:
-        _inject_key(args.builddir, path)
+        _inject_key(args.builddir, path, args.image)
 
     _set_up_bitbake_ssh(args.builddir)
-    _build(args.builddir)
+    _build(args.builddir, args.image)
     _save_artifacts(args.builddir, args.outputdir)
 
 
