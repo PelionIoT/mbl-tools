@@ -3,6 +3,9 @@
 {% set job_name = "Pelion Edge Boot" %}
 {% set lxc_creation = false %}
 {% set image_name = "console-image-raspberrypi3-mbl.wic.gz" %}
+{% set login_prompt = "raspberrypi3 login:" %}
+{% set passwords = ['password_prompt: "Password:"', 'password: redmbed', '# For password change:', 'login_commands:', '- ch0colateMonk3y', '- ch0colateMonk3y'] %}
+{% set prompts = ['root@raspberrypi3(.*):', 'New password:', 'Re-enter new password:'] %}
 
 {% block testplan %}
 - test:
