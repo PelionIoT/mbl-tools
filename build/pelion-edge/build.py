@@ -41,6 +41,7 @@ DEFAULT_IMAGE = "console-image"
 
 TMP_DIR_NAME = "tmp-glibc"
 
+
 def warning_on_one_line(
     message, category, filename, lineno, file=None, line=None
 ):
@@ -86,12 +87,7 @@ def _build(workdir, image):
     * workdir (Path): top level of work area.
     """
     subprocess.run(
-        [
-            SCRIPTS_DIR / "bitbake-wrapper.sh",
-            workdir,
-            image,
-        ],
-        check=True,
+        [SCRIPTS_DIR / "bitbake-wrapper.sh", workdir, image], check=True
     )
 
 
@@ -139,8 +135,8 @@ def _inject_mcc(workdir, path):
 
     """
     name = pathlib.Path(path).name
-    print("Injecting mcc: {}".format(pathlib.Path(path).name),flush=True)
-    if name == 'upgradeCA.cert':
+    print("Injecting mcc: {}".format(pathlib.Path(path).name), flush=True)
+    if name == "upgradeCA.cert":
         shutil.copy(
             path,
             workdir
@@ -161,6 +157,7 @@ def _inject_mcc(workdir, path):
             / "files",
         )
 
+
 def _inject_key(workdir, path, image):
     """
     Add keys into the build.
@@ -171,9 +168,11 @@ def _inject_key(workdir, path, image):
 
     """
     name = pathlib.Path(path).name
-    print("Injecting key: {}".format(name),flush=True)
-    if name == 'rot_key.pem':
-        pathlib.Path("{}/poky/meta-pelion-edge/recipes-bsp/atf/files".format(workdir)).mkdir(parents=True, exist_ok=True)
+    print("Injecting key: {}".format(name), flush=True)
+    if name == "rot_key.pem":
+        pathlib.Path(
+            "{}/poky/meta-pelion-edge/recipes-bsp/atf/files".format(workdir)
+        ).mkdir(parents=True, exist_ok=True)
         shutil.copy(
             path,
             workdir
@@ -184,13 +183,11 @@ def _inject_key(workdir, path, image):
             / "files",
         )
     else:
-        pathlib.Path("{}/poky/{}".format(workdir, image)).mkdir(parents=True, exist_ok=True)
-        shutil.copy(
-            path,
-            workdir
-            / "poky"
-            / image,
+        pathlib.Path("{}/poky/{}".format(workdir, image)).mkdir(
+            parents=True, exist_ok=True
         )
+        shutil.copy(path, workdir / "poky" / image)
+
 
 def _set_up_git():
     """Initialize a sane git setup."""
@@ -327,18 +324,39 @@ def _parse_args():
         warning("unsupported arguments: {}".format(unknown))
 
     if len(args.inject_mcc) < 3:
-        print("build.py: error: 3 of the following arguments are required: --inject-mcc")
-        print("expecting - upgradeCA.cert, mbed_cloud_dev_credentials.c & update_default_resources.c")
-        print("  E.g. - manifest-tool cert create -C UK -S CAMBS -L Cambridge -O arm.com -U arm -V 90 -K upgradeCA.key -o upgradeCA.cert")
-        print("  E.g. - https://os.mbed.com/docs/mbed-linux-os/v0.5/getting-started/preparing-device-management-sources.html")
+        print(
+            "build.py: error: 3 of the following arguments are required: "
+            "--inject-mcc"
+        )
+        print(
+            "expecting - upgradeCA.cert, mbed_cloud_dev_credentials.c & "
+            "update_default_resources.c"
+        )
+        print(
+            "  E.g. - manifest-tool cert create -C UK -S CAMBS -L Cambridge "
+            "-O arm.com -U arm -V 90 -K upgradeCA.key -o upgradeCA.cert"
+        )
+        print(
+            "  E.g. - https://os.mbed.com/docs/mbed-linux-os/v0.5/"
+            "getting-started/preparing-device-management-sources.html"
+        )
         exit(2)
 
     if len(args.inject_key) < 3:
-        print("build.py: error: 3 of the following arguments are required: --inject-key")
-        print("expecting - rot_key.pem, mbl-fit-rot-key.key & mbl-fit-rot-key.crt")
+        print(
+            "build.py: error: 3 of the following arguments are required: "
+            "--inject-key"
+        )
+        print(
+            "expecting - rot_key.pem, mbl-fit-rot-key.key & "
+            "mbl-fit-rot-key.crt"
+        )
         print("  E.g. - openssl genrsa 2048 > boot-keys/rot_key.pem")
         print("  E.g. - openssl genrsa 2048 > boot-keys/mbl-fit-rot-key.key")
-        print("  E.g. - openssl req -batch -new -x509 -key boot-keys/mbl-fit-rot-key.key > boot-keys/mbl-fit-rot-key.crt")
+        print(
+            "  E.g. - openssl req -batch -new -x509 -key "
+            "boot-keys/mbl-fit-rot-key.key > boot-keys/mbl-fit-rot-key.crt"
+        )
         exit(2)
 
     file_util.ensure_is_directory(args.builddir)
