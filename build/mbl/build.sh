@@ -345,8 +345,6 @@ create_license_report()
   local machines=${5:?Missing machines parameter of ${FUNCNAME[0]}}
   local image=${6:?Missing images parameter of ${FUNCNAME[0]}}
 
-
-
   "./license_diff_report.py" "$build_tag" \
                              --lics-to-review "$build_lic_paths" \
                              --lics-to-compare "$prev_artifact_tag" \
