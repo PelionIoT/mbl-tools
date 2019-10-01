@@ -57,6 +57,7 @@ def warning(message):
 
     Args:
     * message: warning's message
+
     """
     warnings.warn(message, stacklevel=2)
     sys.stderr.flush()
@@ -70,6 +71,7 @@ def _create_workarea(workdir, manifest_repo, branch):
     * workdir (Path): top level of work area.
     * manfiest_repo (str): URI of repo containing the project manifest.
     * branch (str): branch of repo containing the project manifest.
+
     """
     subprocess.run(
         ["repo", "init", "-u", manifest_repo, "-b", branch],
@@ -85,6 +87,7 @@ def _build(workdir, image):
 
     Args:
     * workdir (Path): top level of work area.
+
     """
     subprocess.run(
         [SCRIPTS_DIR / "bitbake-wrapper.sh", workdir, image], check=True
@@ -98,6 +101,7 @@ def _save_artifacts(workdir, outputdir, image):
     Args:
     * workdir (Path): top level of work area.
     * outputdir (Path): output directory where to save artifacts.
+
     """
     if outputdir:
         # Save artifact from deploy/images directory
@@ -205,6 +209,7 @@ def _set_up_bitbake_ssh(workdir):
 
     Args:
     * workdir (Path): top level of work area.
+
     """
     localconf_path = (
         workdir / "poky" / "meta-pelion-edge" / "conf" / "local.conf.sample"
@@ -225,6 +230,7 @@ def _set_up_download_dir(download_dir):
 
     Args:
     * download_dir (Path): directory to use for BitBake's downloads.
+
     """
     if download_dir:
         os.environ["DL_DIR"] = str(pathlib.Path(download_dir).resolve())
@@ -238,6 +244,7 @@ def _str_to_resolved_path(path_str):
 
     Args:
     * path_str (str): string to convert to a Path object.
+
     """
     return pathlib.Path(path_str).resolve(strict=False)
 
