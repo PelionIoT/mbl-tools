@@ -504,7 +504,12 @@ OPTIONAL parameters:
                         Specify the command line that was used to invoke the
                         script that invokes build.sh. This is written to
                         buildinfo.txt in the output directory.
-  --root-passwd-file    The file containing the root user password in plain text.
+  --root-passwd-file PATH
+                        The file containing the root user password in plain text.
+  --ssh-auth-keys PATH
+                        Path to the SSH Authorized Keys file to be installed
+                        in the target rootfs at /home/user/.ssh/authorized_keys.
+                        The filename must be prefixed with "user_".
   --manifest-repo URL   Name the manifest URL to clone. Default ${default_manifest_repo}.
   --url           URL   Name the manifest URL to clone. Default ${default_manifest_repo}.
                         Deprecated. Use --manifest-repo instead.
@@ -538,7 +543,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,distro:,downloaddir:,external-manifest:,help,image:,inject-key:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,root-passwd-file:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,distro:,downloaddir:,external-manifest:,help,image:,inject-key:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,root-passwd-file:,ssh-auth-keys:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -663,6 +668,10 @@ while [ $# -gt 0 ]; do
 
   --root-passwd-file)
     opt_prev=root_passwd_file
+    ;;
+
+  --ssh-auth-keys)
+    opt_append=ssh_auth_keys
     ;;
 
   --url)
@@ -945,6 +954,15 @@ while true; do
     if [ -n "${root_passwd_file:-}" ]; then
       for machine in $machines; do
           cp "$root_passwd_file" "$builddir/machine-$machine/mbl-manifest/build-$distro/mbl_root_passwd_file"
+      done
+    fi
+
+    if [ -n "${ssh_auth_keys:-}" ]; then
+      for machine in $machines; do
+        for file in $ssh_auth_keys; do
+          base="$(basename "$file")"
+          cp "$file" "$builddir/machine-$machine/mbl-manifest/build-$distro/$base"
+        done
       done
     fi
     push_stages build

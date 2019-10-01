@@ -25,7 +25,7 @@
     {% else %}
         {% set rootfs = "rootfs2" %}
     {% endif %}
-    {{ macros.rootfs_update("UPDATE", rootfs, image_url, "MBL-CLI", venv_name, rootfs_payload_version. iteration) | indent }}
+    {{ macros.rootfs_update("UPDATE", rootfs, image_url, "MBL-CLI", venv_name, rootfs_payload_version, iteration) | indent }}
 
 - boot:
     namespace: target

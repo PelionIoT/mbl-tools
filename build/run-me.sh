@@ -127,7 +127,12 @@ OPTIONAL parameters:
   -o, --outputdir PATH  Specify a directory to store non-interactively built
                         artifacts. Note: Will not be updated by builds in
                         interactive mode.
-  --root-passwd-file    The file containing the root user password in plain text.
+  --root-passwd-file PATH
+                        The file containing the root user password in plain text.
+  --ssh-auth-keys PATH
+                        Path to the SSH Authorized Keys file to be installed
+                        in the target rootfs at /home/user/.ssh/authorized_keys.
+                        The filename must be prefixed with "user_".
   --tty                 Enable tty creation (default).
   --no-tty              Disable tty creation.
   -x                    Enable shell debugging in this script.
@@ -145,7 +150,7 @@ flag_tty="-t"
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+ho:x -l boot-rot-key:,builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,kernel-rot-crt:,kernel-rot-key:,mcc-destdir:,mbl-tools-version:,outputdir:,root-passwd-file:,tty,no-tty -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+ho:x -l boot-rot-key:,builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,kernel-rot-crt:,kernel-rot-key:,mcc-destdir:,mbl-tools-version:,outputdir:,root-passwd-file:,ssh-auth-keys:,tty,no-tty -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -215,6 +220,10 @@ while [ $# -gt 0 ]; do
 
   --root-passwd-file)
     opt_prev=root_passwd_file
+    ;;
+
+  --ssh-auth-keys)
+    opt_append=ssh_auth_keys
     ;;
 
   --tty)
@@ -295,6 +304,16 @@ if [ -n "${root_passwd_file:-}" ]; then
   base="$(basename "$root_passwd_file")"
   cp "$root_passwd_file" "$builddir/$base"
   build_args="${build_args:-} --root-passwd-file=$builddir/$base"
+fi
+
+if [ -n "${ssh_auth_keys:-}" ]; then
+  mkdir -p "$builddir/ssh-auth-keys"
+  for file in ${ssh_auth_keys:-}; do
+    base="$(basename "$file")"
+    user="$(sed 's/_.*//' <<<"$base")"
+    cp "$file" "$builddir/ssh-auth-keys/${user}_authorized_keys"
+    build_args="${build_args:-} --ssh-auth-keys=$builddir/ssh-auth-keys/${user}_authorized_keys"
+  done
 fi
 
 build_script=$(build_script_for_project "$project")
