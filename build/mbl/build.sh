@@ -479,6 +479,8 @@ OPTIONAL parameters:
   --external-manifest PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
+  --inject-key PATH     Add a file to the list of keys/certificates to be
+                        injected into the build.
   --image IMAGE         Select an alternative image.  Default $default_image when
                         --distro $default_distro and default $default_production_image
                         when --distro $default_production_distro.
@@ -536,7 +538,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,distro:,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,root-passwd-file:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,distro:,downloaddir:,external-manifest:,help,image:,inject-key:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,root-passwd-file:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -614,6 +616,10 @@ while [ $# -gt 0 ]; do
 
   --image)
     opt_prev=image
+    ;;
+
+  --inject-key)
+    opt_append=inject_key_files
     ;;
 
   --inject-mcc)
@@ -918,6 +924,15 @@ while true; do
     ;;
 
   inject)
+    if [ -n "${inject_key_files:-}" ]; then
+      for machine in $machines; do
+        for file in $inject_key_files; do
+          base="$(basename "$file")"
+          cp "$file" "$builddir/machine-$machine/mbl-manifest/build-$distro/$base"
+        done
+      done
+    fi
+
     if [ -n "${inject_mcc_files:-}" ]; then
       for machine in $machines; do
         for file in $inject_mcc_files; do
