@@ -98,7 +98,7 @@ default_image="mbl-image-development"
 default_production_distro="mbl-production"
 default_production_image="mbl-image-production"
 default_accept_eula_machines=""
-default_lic_cmp_build_tag=""
+default_lic_cmp_artifact_path=""
 default_mcc_destdir="build-$default_distro"
 
 # Test if a machine name appears in the all_machines list.
@@ -337,15 +337,20 @@ create_license_report()
   set +u
   set +e
   local build_lic_paths=${1:?Missing license-paths parameter of ${FUNCNAME[0]}}
-  local prev_build_tag="$2"
+  # Assumption the path is of format: CONTEXT/mbed-linux/BUILD/BUILD-TAG
+  local prev_artifact_tag="${2##*/}"      # Extract BUILD-TAG
+  local prev_artifact_context="${2%%/*}"  # Extract CONTEXT
   local api_key="$3"
   local html_output_dir=${4:?Missing html_output_dir parameter of ${FUNCNAME[0]}}
   local machines=${5:?Missing machines parameter of ${FUNCNAME[0]}}
   local image=${6:?Missing images parameter of ${FUNCNAME[0]}}
 
+
+
   "./license_diff_report.py" "$build_tag" \
                              --lics-to-review "$build_lic_paths" \
-                             --lics-to-compare "$prev_build_tag" \
+                             --lics-to-compare "$prev_artifact_tag" \
+                             --build-context "$prev_artifact_context" \
                              --images "$image" \
                              --machines "$machines" \
                              --apikey "$api_key" \
@@ -491,6 +496,9 @@ OPTIONAL parameters:
   --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
                         passed with --inject-mcc should be copied to.
   --licenses            Collect extra build license info. Default disabled.
+  --licenses-artifact-path PATH
+                        Artifact path to compare the licenses against, e.g.
+                        isg-mbed-linux-release/mbed-linux/mbl-os-0.7.0/mbl-os-0.7.0_build5
   --local-conf-data STRING
                         Data to append to local.conf.
   --manifest MANIFEST   Name the manifest file. Default ${default_manifest}.
@@ -538,7 +546,7 @@ flag_interactive_mode=0
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,distro:,downloaddir:,external-manifest:,help,image:,inject-key:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,root-passwd-file:,url: -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,distro:,downloaddir:,external-manifest:,help,image:,inject-key:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-artifact-path:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,root-passwd-file:,url: -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -638,8 +646,8 @@ while [ $# -gt 0 ]; do
     flag_licenses=1
     ;;
 
-  --licenses-buildtag)
-    opt_prev=lic_cmp_build_tag
+  --licenses-artifact-path)
+    opt_prev=lic_cmp_artifact_path
     ;;
 
   --local-conf-data)
@@ -697,8 +705,8 @@ if [ "$flag_licenses" -eq 1 ]; then
   fi
 fi
 
-if [ -z "${lic_cmp_build_tag:-}" ]; then
-  lic_cmp_build_tag="$default_lic_cmp_build_tag"
+if [ -z "${lic_cmp_artifact_path:-}" ]; then
+  lic_cmp_artifact_path="$default_lic_cmp_artifact_path"
 fi
 
 if [ -z "${branch:-}" ]; then
@@ -1095,7 +1103,7 @@ while true; do
           done
 
             create_license_report "$build_lic_paths" \
-                                  "$lic_cmp_build_tag" \
+                                  "$lic_cmp_artifact_path" \
                                   "$artifactory_api_key" \
                                   "$outputdir" \
                                   "$machines" \
