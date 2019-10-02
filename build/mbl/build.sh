@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2018-2019, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -510,6 +510,8 @@ OPTIONAL parameters:
                         Specify the command line that was used to invoke the
                         script that invokes build.sh. This is written to
                         buildinfo.txt in the output directory.
+  --repo-host NAME      Add a trusted git repository host to the build
+                        environment. Can be specified multiple times.
   --root-passwd-file PATH
                         The file containing the root user password in plain text.
   --ssh-auth-keys PATH
@@ -544,12 +546,30 @@ local_conf_data=""
 flag_licenses=0
 flag_binary_release=0
 flag_interactive_mode=0
+repo_hosts=""
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,distro:,downloaddir:,external-manifest:,help,image:,inject-key:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-artifact-path:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,root-passwd-file:,ssh-auth-keys:,url: -n "$(basename "$0")" -- "$@")
+args_list="accept-eula:,archive-source,artifactory-api-key:"
+args_list="${args_list},binary-release,branch:,builddir:,build-tag:"
+args_list="${args_list},compress"
+args_list="${args_list},distro:,downloaddir:"
+args_list="${args_list},external-manifest:"
+args_list="${args_list},help"
+args_list="${args_list},image:,inject-key:,inject-mcc:"
+args_list="${args_list},jobs:"
+args_list="${args_list},licenses,licenses-artifact-path:,local-conf-data:"
+args_list="${args_list},machine:,manifest:,manifest-repo:,mbl-tools-version:"
+args_list="${args_list},mcc-destdir:"
+args_list="${args_list},no-compress"
+args_list="${args_list},outputdir:"
+args_list="${args_list},parent-command-line:"
+args_list="${args_list},repo-host:,root-passwd-file:"
+args_list="${args_list},ssh-auth-keys:"
+args_list="${args_list},url:"
+args=$(getopt -o+hj:o:x -l $args_list -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -670,6 +690,10 @@ while [ $# -gt 0 ]; do
     ;;
   -o | --outputdir)
     opt_prev=outputdir
+    ;;
+
+  --repo-host)
+    opt_append=repo_hosts
     ;;
 
   --root-passwd-file)
@@ -814,7 +838,7 @@ if empty_stages_p; then
 fi
 
 "$execdir/git-setup.sh"
-"$execdir/ssh-setup.sh"
+"$execdir/ssh-setup.sh" $repo_hosts
 
 while true; do
   if empty_stages_p; then
