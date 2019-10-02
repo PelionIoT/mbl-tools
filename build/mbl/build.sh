@@ -546,6 +546,7 @@ local_conf_data=""
 flag_licenses=0
 flag_binary_release=0
 flag_interactive_mode=0
+repo_hosts=""
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
