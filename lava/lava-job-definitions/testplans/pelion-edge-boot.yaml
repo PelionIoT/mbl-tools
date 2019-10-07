@@ -22,6 +22,11 @@
         run:
           steps:
             - uname -a
+            - if [ $? -eq 0 ]; then
+            -   echo "<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=pelion-edge-boot RESULT=pass>"
+            - else
+            -   echo "<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=pelion-edge-boot RESULT=fail>"
+            - fi
       name: uname
       path: inline/uname.yaml
 {% endblock testplan %}
