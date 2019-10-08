@@ -1,0 +1,80 @@
+# Deploy and boot the lxc container
+{% include "shared/templates/lxc-deploy-boot.yaml" with context %}
+
+
+- boot:
+    namespace: recovery
+    timeout:
+      minutes: 5
+    method: recovery
+    commands: recovery
+
+- deploy:
+     timeout:
+       minutes: 10
+     to: recovery
+     namespace: recovery
+     connection: lxc
+     images:
+       bootbomb:
+         url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/pico-recovery/{{bootbomb_filename}}
+       imx_loader:
+         url: http://artifactory-proxy.mbed-linux.arm.com/artifactory/isg-mbed-linux/lava/pico-recovery/imx-usb-loader_0-git20181105.4aa98090-1_amd64.deb
+       mbl-image:
+         url: {{ image_url }}
+       bmap-file:
+         url: {{ image_url.replace(".gz", ".bmap") }}
+     os: debian
+
+- test:
+     namespace: lxc
+     connection: lxc
+     timeout:
+       minutes: 10
+     definitions:
+     - from: inline
+       name: flash-image
+       path: inline/flash-image.yaml
+       repository:
+         metadata:
+           format: Lava-Test Test Definition 1.0
+           name: flash-image
+           description: "Flash image to board in recovery mode"
+           os:
+           - oe
+         run:
+           steps:
+           - cd /lava-lxc
+           - dpkg -i imx-usb-loader_0-git20181105.4aa98090-1_amd64.deb
+           - lsusb
+           - DEVICE_PATH=$(grep 15a2 /sys/bus/usb/devices/*/idVendor |grep "$LAVA_STORAGE_INFO_0_SATA" |awk '{split($0,a,"/idVendor"); print a[1]}')
+           - BUSNUM=$(cat $DEVICE_PATH/busnum)
+           - DEVICENUM=$(cat $DEVICE_PATH/devnum)
+           - imx_usb --bus=$BUSNUM --device=$DEVICENUM {{ bootbomb_filename }}
+           - BLOCK_DEVICE=$(readlink /sys/class/block/sd* |grep $LAVA_STORAGE_INFO_0_SATA |awk '/[b-z]$/{print $1}' |awk '{n=split($0,a,"/"); print a[n]}')
+           - while [ -z "$BLOCK_DEVICE" ]
+           - do
+           -    sleep 10
+           -    BLOCK_DEVICE=$(readlink /sys/class/block/sd* |grep $LAVA_STORAGE_INFO_0_SATA |awk '/[b-z]$/{print $1}' |awk '{n=split($0,a,"/"); print a[n]}')
+           - done
+           - lsblk
+           - fdisk -l
+           - cd /lava-lxc
+           - bmaptool --quiet copy --bmap /lava-lxc/*.wic.bmap /lava-lxc/*.wic.gz /dev/$BLOCK_DEVICE
+
+- boot:
+    namespace: recovery
+    timeout:
+      minutes: 5
+    method: recovery
+    commands: exit
+
+- boot:
+    namespace: target
+    method: minimal
+    failure_retry: 3
+    prompts:
+      - "{{ login_prompt }}"
+    timeout:
+      minutes: 6
+

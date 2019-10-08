@@ -1,0 +1,3 @@
+{% extends "shared/templates/recovery-deploy-boot.yaml" %}
+
+{% set bootbomb_filename = "pico-imx6ul_bootbomb_20160510.imx" %}

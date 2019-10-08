@@ -1,39 +1,31 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "BSP" %}
-{% set lxc_creation = false %}
+{% set job_name = "bsp" %}
+{% set lxc_creation = true %}
+{% set lxc_name = job_name+"-lxc" %}
 
 {% block testplan %}
 - test:
     timeout:
-      minutes: 20
-    namespace: target
+      minutes: 50
+    namespace: lxc
     definitions:
-    - path: automated/linux/optee/optee-xtest.yaml
-      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
-      history: false
-      name: optee-xtest
-      from: git
-      branch: linaro-mbl
 
-    - path: automated/linux/mbl/mbl_auto.yaml
-      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
-      history: false
-      name: mbl-auto
-      from: git
-      branch: linaro-mbl
+    {{ macros.avahi_discovery() | indent }}
 
-    - path: automated/linux/badblocks/badblocks.yaml
-      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
-      history: false
-      name: badblocks
-      from: git
-      branch: linaro-mbl
+    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
 
-    - path: automated/linux/memtester/memtester.yaml
-      repository: https://git.linaro.org/landing-teams/working/mbl/test-definitions
-      history: false
-      name: memtester
+    {{ macros.install_mbl_cli(venv_name) | indent }}
+
+    - path: ci/lava/tests/{{ job_name }}.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: {{ job_name }}
       from: git
-      branch: linaro-mbl
+      history: False
+      branch: "{{ mbl_branch }}"
+      {% if "mbl-core" in mbl_revisions %}
+      revision: {{ mbl_revisions["mbl-core"] }}
+      {% endif %}
+      parameters:
+          virtual_env: "{{ venv_name }}"
 {% endblock testplan %}
