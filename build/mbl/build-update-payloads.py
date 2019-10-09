@@ -43,6 +43,13 @@ def _parse_args():
         default="mbl-development",
         required=False,
     )
+    parser.add_argument(
+        "--image",
+        metavar="STRING",
+        help="Name of the image to build.",
+        default="mbl-image-development",
+        required=False,
+    )
 
     args, _ = parser.parse_known_args()
     file_util.ensure_is_directory(args.builddir)
@@ -64,7 +71,7 @@ def main():
     packages = "virtual/atf optee-os virtual/bootloader virtual/kernel"
     bitbake_build_commands = [
         "bitbake -c cleansstate {}".format(packages),
-        "bitbake {}".format(packages),
+        "bitbake {}".format(args.image),
     ]
     bitbake.run_commands(bitbake_build_commands)
 
