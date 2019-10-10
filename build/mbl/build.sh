@@ -19,9 +19,6 @@ set -o pipefail
 
 execdir="$(readlink -e "$(dirname "$0")")"
 
-# Load the config functions
-source "$execdir/config-funcs.sh"
-
 write_info()
 {
   printf "info:"
@@ -551,19 +548,9 @@ flag_binary_release=0
 flag_interactive_mode=0
 repo_hosts=""
 
-# Find the build directory option - where the config resides
-config_dir=$(config_locate_dir "$@")
-# Get the arguments saved in the config (if any)
-config_build=()
-config_read "$config_dir" "build.args" config_build
-
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
-if [ ${#config_build[@]} -gt 0 ]; then
-  command_line="$(printf '%q ' "$0" "${config_build[@]}" "$@")"
-else
-  command_line="$(printf '%q ' "$0" "$@")"
-fi
+command_line="$(printf '%q ' "$0" "$@")"
 
 args_list="accept-eula:,archive-source,artifactory-api-key:"
 args_list="${args_list},binary-release,branch:,builddir:,build-tag:"
@@ -582,19 +569,8 @@ args_list="${args_list},parent-command-line:"
 args_list="${args_list},repo-host:,root-passwd-file:"
 args_list="${args_list},ssh-auth-keys:"
 args_list="${args_list},url:"
-
-if [ ${#config_build[@]} -gt 0 ]; then
-  args=$(getopt -o+hj:o:x -l $args_list -n "$(basename "$0")" -- "${config_build[@]}" "$@")
-else
-  args=$(getopt -o+hj:o:x -l $args_list -n "$(basename "$0")" -- "$@")
-fi
+args=$(getopt -o+hj:o:x -l $args_list -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
-
-# Save the arguments for later in an array to write out as parsing will
-# remove the arguments
-args_saved=()
-config_save_args args_saved "$@"
-
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
     eval "$opt_prev=\$1"
@@ -850,9 +826,6 @@ if [ -n "${mcc_destdir:-}" ]; then
   fi
   mcc_final_destdir="layers/$mcc_destdir"
 fi
-
-# After all the validation, write out a config (if there isn't one)
-config_write "$config_dir" "build.args" "${args_saved[@]}"
 
 if empty_stages_p; then
   if [ -r "$builddir/,stage" ]; then

@@ -128,19 +128,25 @@ imagename="$default_imagename"
 project="$default_project"
 flag_tty="-t"
 
-# Find the build directory option - where the config resides
-config_dir=$(config_locate_dir "$@")
-# Get the arguments saved in the config (if any)
+# Configuration argument arrays
+# Will be populated by file if we are in config mode
 config_runme=()
-config_read "$config_dir" "run-me.args" config_runme
+config_build=()
+config_dir=""
+set +e # Return value is config mode value
+config_mode_check config_dir "$@"
+config_mode=$?
+set -e
+if [ $config_mode -eq 1 ]; then
+  config_read "$config_dir" "run-me.args" config_runme
+  config_read "$config_dir" "build.args" config_build
+fi
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
-if [ ${#config_runme[@]} -gt 0 ]; then
-  command_line="$(printf '%q ' "$0" "${config_runme[@]}" "$@")"
-else
-  command_line="$(printf '%q ' "$0" "$@")"
-fi
+set +u # Ignore empty array
+command_line="$(printf '%q ' "$0" "$@" "${config_runme[@]}" )"
+set -u
 
 args_list="boot-rot-key:,builddir:"
 args_list="${args_list},downloaddir:"
@@ -156,17 +162,16 @@ args_list="${args_list},root-passwd-file:"
 args_list="${args_list},ssh-auth-keys:"
 args_list="${args_list},tty"
 
-if [ ${#config_runme[@]} -gt 0 ]; then
-  args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "${config_runme[@]}" "$@")
-else
-  args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "$@")
-fi
+set +u # Ignore empty array
+args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "$@" "${config_runme[@]}")
+set -u
 eval set -- "$args"
 
 # Save the arguments for later in an array to write out as parsing will
 # remove the arguments
 args_saved=()
 config_save_args args_saved "$@"
+echo ${args_saved[@]}
 
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -360,8 +365,11 @@ if [ -z "${SSH_AUTH_SOCK+false}" ]; then
   exit 4
 fi
 
-# After all the validation, write out a config (if there isn't one)
-config_write "$config_dir" "run-me.args" "${args_saved[@]}"
+if [ $config_mode -eq 0 ]; then
+  # After all the validation, write out a config when not reading the config
+  config_write "$config_dir" "run-me.args" "${args_saved[@]}"
+  config_write "$config_dir" "build.args" "$@"
+fi
 
 # Build the docker build environment
 docker build -f "$execdir/$dockerfile" -t "$imagename" "$execdir"
@@ -376,6 +384,7 @@ fi
 # want that instance quoted because that would inject an empty
 # argument when download is not defined.
 # shellcheck disable=SC2086
+set +u
 docker run --rm -i $flag_tty \
        --name "$default_containername" \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
@@ -391,4 +400,5 @@ docker run --rm -i $flag_tty \
          ${outputdir:+--outputdir "$outputdir"} \
          --parent-command-line "$command_line" \
          ${mbl_tools_version:+--mbl-tools-version "$mbl_tools_version"} \
-         "$@"
+         "$@" "${config_build[@]}"
+set -u
