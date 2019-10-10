@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2018-2019, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -8,6 +8,10 @@ set -e
 set -u
 
 execdir="$(readlink -e "$(dirname "$0")")"
+srcdir="$execdir/common"
+
+# Load the config functions
+source "$srcdir/config-funcs.sh"
 
 default_imagename="mbl-manifest-env"
 default_containername="mbl-tools-container.$$"
@@ -124,12 +128,46 @@ imagename="$default_imagename"
 project="$default_project"
 flag_tty="-t"
 
+# Find the build directory option - where the config resides
+config_dir=$(config_locate_dir "$@")
+# Get the arguments saved in the config (if any)
+config_runme=()
+config_read "$config_dir" "run-me.args" config_runme
+
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
-command_line="$(printf '%q ' "$0" "$@")"
+if [ ${#config_runme[@]} -gt 0 ]; then
+  command_line="$(printf '%q ' "$0" "${config_runme[@]}" "$@")"
+else
+  command_line="$(printf '%q ' "$0" "$@")"
+fi
 
-args=$(getopt -o+ho:x -l boot-rot-key:,builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,kernel-rot-crt:,kernel-rot-key:,mcc-destdir:,mbl-tools-version:,outputdir:,root-passwd-file:,ssh-auth-keys:,tty,no-tty -n "$(basename "$0")" -- "$@")
+args_list="boot-rot-key:,builddir:"
+args_list="${args_list},downloaddir:"
+args_list="${args_list},external-manifest:"
+args_list="${args_list},help"
+args_list="${args_list},image-name:,inject-mcc:"
+args_list="${args_list},kernel-rot-crt:,kernel-rot-key:"
+args_list="${args_list},mcc-destdir:,mbl-tools-version:"
+args_list="${args_list},no-tty"
+args_list="${args_list},outputdir:"
+args_list="${args_list},project:"
+args_list="${args_list},root-passwd-file:"
+args_list="${args_list},ssh-auth-keys:"
+args_list="${args_list},tty"
+
+if [ ${#config_runme[@]} -gt 0 ]; then
+  args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "${config_runme[@]}" "$@")
+else
+  args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "$@")
+fi
 eval set -- "$args"
+
+# Save the arguments for later in an array to write out as parsing will
+# remove the arguments
+args_saved=()
+config_save_args args_saved "$@"
+
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
     eval "$opt_prev=\$1"
@@ -322,6 +360,10 @@ if [ -z "${SSH_AUTH_SOCK+false}" ]; then
   exit 4
 fi
 
+# After all the validation, write out a config (if there isn't one)
+config_write "$config_dir" "run-me.args" "${args_saved[@]}"
+
+# Build the docker build environment
 docker build -f "$execdir/$dockerfile" -t "$imagename" "$execdir"
 
 if [ -n "${external_manifest:-}" ]; then
