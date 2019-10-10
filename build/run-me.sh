@@ -80,6 +80,7 @@ OPTIONAL parameters:
                         this option is not used, either a new key will be
                         generated, or a key generated for a previous build in
                         the same work area will be used.
+  --clear-configs       Remove any saved run-me or build script config files.
   --downloaddir PATH    Use PATH to store Yocto downloaded sources.
   --external-manifest PATH
                         Specify an external manifest file.
@@ -132,24 +133,17 @@ flag_tty="-t"
 # Will be populated by file if we are in config mode
 config_runme=()
 config_build=()
-config_dir=""
-set +e # Return value is config mode value
-config_mode_check config_dir "$@"
-config_mode=$?
-set -e
-if [ $config_mode -eq 1 ]; then
-  config_read "$config_dir" "run-me.args" config_runme
-  config_read "$config_dir" "build.args" config_build
-fi
+config_dir=$(config_locate_dir "$@")
+config_read "$config_dir" "run-me.args" config_runme
+config_read "$config_dir" "build.args" config_build
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
-set +u # Ignore empty array
-command_line="$(printf '%q ' "$0" "$@" "${config_runme[@]}" )"
-set -u
+command_line="$(printf '%q ' "$0" "$@" "${config_runme[@]:-}" )"
 
 args_list="boot-rot-key:,builddir:"
 args_list="${args_list},downloaddir:"
+args_list="${args_list},clear-configs"
 args_list="${args_list},external-manifest:"
 args_list="${args_list},help"
 args_list="${args_list},image-name:,inject-mcc:"
@@ -162,9 +156,8 @@ args_list="${args_list},root-passwd-file:"
 args_list="${args_list},ssh-auth-keys:"
 args_list="${args_list},tty"
 
-set +u # Ignore empty array
-args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "$@" "${config_runme[@]}")
-set -u
+args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "$@" "${config_runme[@]:-}")
+echo "ARGS: $args"
 eval set -- "$args"
 
 # Save the arguments for later in an array to write out as parsing will
@@ -196,6 +189,16 @@ while [ $# -gt 0 ]; do
 
   --project)
     opt_prev=project
+    ;;
+
+  --clear-configs)
+    if [ "$config_dir" != "" ]; then
+      config_clear "$config_dir" "run-me.args" "build.args"
+      echo "Cleared configuration files"
+    else
+      echo "Cannot clear configuration files without a --builddir set"
+    fi
+    exit 0
     ;;
 
   --downloaddir)
@@ -365,11 +368,9 @@ if [ -z "${SSH_AUTH_SOCK+false}" ]; then
   exit 4
 fi
 
-if [ $config_mode -eq 0 ]; then
-  # After all the validation, write out a config when not reading the config
-  config_write "$config_dir" "run-me.args" "${args_saved[@]}"
-  config_write "$config_dir" "build.args" "$@"
-fi
+# After all the validation, write out a config when not reading the config
+config_write "$config_dir" "run-me.args" "${args_saved[@]}"
+config_write "$config_dir" "build.args" "$@"
 
 # Build the docker build environment
 docker build -f "$execdir/$dockerfile" -t "$imagename" "$execdir"
@@ -384,7 +385,6 @@ fi
 # want that instance quoted because that would inject an empty
 # argument when download is not defined.
 # shellcheck disable=SC2086
-set +u
 docker run --rm -i $flag_tty \
        --name "$default_containername" \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
@@ -400,5 +400,4 @@ docker run --rm -i $flag_tty \
          ${outputdir:+--outputdir "$outputdir"} \
          --parent-command-line "$command_line" \
          ${mbl_tools_version:+--mbl-tools-version "$mbl_tools_version"} \
-         "$@" "${config_build[@]}"
-set -u
+         "$@" "${config_build[@]:-}"

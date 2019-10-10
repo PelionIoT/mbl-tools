@@ -44,7 +44,9 @@ _config_write_args()
   local config="$1"
   shift
   if [ ! -e "$config" ] || [ -w "$config" ]; then
+    # Create empty file
     rm -f "$config"
+    touch "$config"
     local lastarg=""
     # Go through the other arguments (and values) saving them to a file
     # "--" is assumed to be the last arg in the list (which is not output)
@@ -78,29 +80,34 @@ _config_write_args()
   fi
 }
 
-# Called before parsing the arguments fully, check if the arguments
-# only contain builddir, if so we can read the configs, else we write them
-config_mode_check()
+# Called before parsing the arguments fully, skim the arguments for the
+# builddir so we can read the config file early - returns builddir
+config_locate_dir()
 {
-  local -n config_dir=$1
-  shift
   # We need to read the builddir to locate the config file
   local args=$(getopt -q -o+ -l "builddir:" -- "$@")
+  local config_dir=""
   if [[ $args =~ --builddir ]]; then
-    # Extract the last DIR from a possible list of "--builddir 'DIR'"
-    local val=${args##*builddir \'}
-    config_dir=${val%%\' --*}
-
-    # Check if there are any other arguments on the command line
-    # If not, then we can read the configs otherwise we should overwrite them
-    val=${args##* --}
-    if [ "$val" == "" ]; then
-      gbl_flag_config_save=0
-      return 1
-    fi
+     # Extract the last DIR from a possible list of "--builddir 'DIR' --"
+     config_dir=${args##*builddir \'}
+     config_dir=${config_dir%%\' --*}
   fi
-  gbl_flag_config_save=1
-  return 0
+  printf "$config_dir"
+}
+
+# Clear all the given configs from the config directory
+config_clear()
+{
+  local config_dir="$1"
+  shift
+  while [ $# -gt 0 ]; do
+    local config_file="$config_dir/$1"
+    if [ -f "$config_file" ]; then
+      rm $config_file
+      echo "Deleted configuration $config_file"
+    fi
+    shift
+  done
 }
 
 # Given config dir and filename, this will try and read args from that file
@@ -113,10 +120,12 @@ config_read()
   local config_file="$2"
   local -n config_args=$3
 
+  gbl_flag_config_save=${gbl_flag_config_save:-1}
   # Note: Pass given arg rather than our local ref to avoid circular ref
   _config_read_args "${config_dir}/${config_file}" $3
   if [ ${#config_args[@]} -gt 0 ]; then
     echo "Read configuration from ${config_dir}/${config_file}"
+    gbl_flag_config_save=0
   fi
 }
 
@@ -140,6 +149,7 @@ config_write()
   local config_dir="$1"
   local config_file="$2"
   shift 2
+  echo "$gbl_flag_config_save"
   if [ $gbl_flag_config_save -eq 1 ]; then
     if [ -d "$config_dir" ]; then
       echo "Saving configuration to $config_dir/$config_file"

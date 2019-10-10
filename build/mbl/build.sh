@@ -1204,9 +1204,11 @@ EOF
     ;;
 
   *)
-    printf "error: unrecognized stage: %s\n" "$stage" 2>&1
-    rm -f "$builddir/,stage"
-    exit 1
+    if [ "$stage" != "" ]; then
+      printf "error: unrecognized stage: %s\n" "$stage" 2>&1
+      rm -f "$builddir/,stage"
+      exit 1
+    fi
     ;;
   esac
 done
