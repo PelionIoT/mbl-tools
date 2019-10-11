@@ -129,18 +129,18 @@ imagename="$default_imagename"
 project="$default_project"
 flag_tty="-t"
 
-# Configuration argument arrays
-# Will be populated by file if we are in config mode
-config_runme=()
-config_build=()
-config_dir=$(config_locate_dir "$@")
-config_check_usage "$@"
-config_read "$config_dir" "run-me.args" config_runme
-config_read "$config_dir" "build.args" config_build
+echo "CL-pre:  $@"
+# Read or write configuration files and return combined args array
+config=()
+config_setup config "$@"
+# Set up args including values from config
+eval set -- "${config[@]}"
+echo "CL-post: $@"
+exit 0
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
-command_line="$(printf '%q ' "$0" "$@" "${config_runme[@]:-}" )"
+command_line="$(printf '%q ' "$0" "$@")"
 
 args_list="boot-rot-key:,builddir:"
 args_list="${args_list},downloaddir:"
@@ -158,15 +158,9 @@ args_list="${args_list},ssh-auth-keys:"
 args_list="${args_list},tty"
 args_list="${args_list},use-configs"
 
-args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "${config_runme[@]:-}" "$@")
+args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "$@")
 echo "ARGS: $args"
 eval set -- "$args"
-
-# Save the arguments for later in an array to write out as parsing will
-# remove the arguments
-args_saved=()
-config_save_args args_saved "$@"
-echo ${args_saved[@]}
 
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -370,10 +364,6 @@ if [ -z "${SSH_AUTH_SOCK+false}" ]; then
   exit 4
 fi
 
-# After all the validation, write out a config when not reading the config
-config_write "$config_dir" "run-me.args" "${args_saved[@]}"
-config_write "$config_dir" "build.args" "$@"
-
 # Build the docker build environment
 docker build -f "$execdir/$dockerfile" -t "$imagename" "$execdir"
 
@@ -382,6 +372,7 @@ if [ -n "${external_manifest:-}" ]; then
   cp "$external_manifest" "$builddir/$name"
   set -- "--external-manifest=$builddir/$name" "$@"
 fi
+
 
 # The ${:+} expansion of download upsets shellcheck, but we do not
 # want that instance quoted because that would inject an empty
@@ -402,4 +393,4 @@ docker run --rm -i $flag_tty \
          ${outputdir:+--outputdir "$outputdir"} \
          --parent-command-line "$command_line" \
          ${mbl_tools_version:+--mbl-tools-version "$mbl_tools_version"} \
-         "${config_build[@]:-}" "$@"
+         "$@"

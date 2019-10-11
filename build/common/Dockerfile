@@ -63,7 +63,7 @@ COPY common/git-setup.sh common/ssh-setup.sh \
      templates/README.binary_release_template \
      templates/Licensing_and_Acknowledgment.template_nxp \
      license-report ./
-COPY mbl/build.sh common/config-funcs.sh ./
+COPY mbl/build.sh ./
 
 # Scripts used to build poky-psa image
 COPY poky-test/build-poky.py \
