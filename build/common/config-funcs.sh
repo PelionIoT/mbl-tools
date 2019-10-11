@@ -5,7 +5,7 @@
 # BASH functions that can be "source"d into a script to provide simple
 # config functionality that supports command line options:
 #   --save-config FILE      - save all the arguments into FILE and exit
-#   --config FILE           - load arguments from FILE and combine them
+#   --load-config FILE      - load arguments from FILE and combine them
 #                             with the command line arguments
 #
 # Example usage to replace command line args ($@) with extra args from config:
@@ -16,6 +16,7 @@
 #
 # Notes:
 # * only supports options without values or options with a single value
+# * only supports options and values separated by spaces!
 # * supports "--" option that splits primary and secondary arguments
 
 
@@ -32,15 +33,21 @@ _config_read_args()
   local stage=1
   if [ -r "$config" ]; then
     while read -r line; do
-      if [[ "$line" =~ ^\ *--\ *$ ]]; then
-        # Switch stages on "--"
+      if [[ "$line" =~ ^--\ *$ ]]; then
+        # Switch to secondary stage on "--"
         stage=2
-        continue
+        continue  # Skip the "--"
       fi
-      # Need to split the arguments and values for the array
-      local val=${line#-* }
+      local val
+      if [[ "$line" =~ ^-[\-a-z\-]+= ]]; then
+        # Catch --option=value and don't split it
+        val="$line"
+      else
+        # Split the arguments and values for the array
+        val=${line#-* } # Remove the argument part
+      fi
       if [ "$val" == "$line" ]; then
-        # No value, only an option
+        # No value, only an option (or option=value)
         if [ $stage -eq 1 ]; then
           config_primary+=("$line")
         else
@@ -61,7 +68,7 @@ _config_read_args()
 # Write arguments and values to a config file
 # Outputs the arguments as argument and value on the same line
 # NOTE: "--END--" must be last entry in list to end processing/output of the list
-# NOTE: Strips out --config and --save-config options
+# NOTE: Strips out --load-config and --save-config options
 _config_write_args()
 {
   # Config filename and path
@@ -77,22 +84,32 @@ _config_write_args()
     #  this forces the loop to output the "lastarg" before exiting
     while [ $# -gt 0 ]; do
       local arg="$1"
+      echo "ARG:$arg"
       shift
       if [ -z "$arg" ]; then
         # Ignore empty arguments
         continue
       fi
-      if [[ $arg = -* ]]; then
+      local optcheck
+      if [[ "$arg" =~ ^- ]]; then
         # An argument, output any previous argument on its own
         if [ "$lastarg" != "" ]; then
-          echo "$lastarg" >> "$config"
+          # Catch when --load-config=file or --save-config=file and ignore them
+          set +e
+          optcheck=$(getopt -q -o+ -l "load-config:,save-config:" -- "$lastarg")
+          set -e
+          if [ "$optcheck" == " --" ] || [[ "$optcheck" =~ ^\ --\  ]]; then
+            echo "$lastarg" >> "$config"
+          fi
         fi
         lastarg=$arg
       else
         # A value - group arguments and values together
-
-        # Ignore the --config or --save-config as this specifies this config!
-        if [[ ! $lastarg =~ --config ]] && [[ ! $lastarg =~ --save-config ]]; then
+        # Ignore the --load-config or --save-config as this specifies this config!
+        set +e
+        optcheck=$(getopt -q -o+ -l "load-config:,save-config:" -- "$lastarg" "$arg")
+        set -e
+        if [[ "$optcheck" =~ ^\ --\  ]]; then
             echo "$lastarg $arg" >> "$config"
         fi
         lastarg=""
@@ -141,15 +158,19 @@ _config_write()
 
 # Called before parsing the arguments fully, skim the arguments for the
 # config options so we can read the config file early - returns option value
+
 _config_get_filename()
 {
   # We need to read the option to get the filename
   local optname=$1
   shift
+
+# TODO: Can't cope with other args with values before this!!
+
   local args=$(getopt -q -o+ -l "$optname:" -- "$@")
   local filename=""
-  if [[ $args =~ --$optname ]]; then
-    # Extract the last file from a possible list of "--config 'FILE' --"
+  if [[ "$args" =~ --$optname ]]; then
+    # Extract the last file from a possible list of "--option 'FILE' --"
     filename=${args##*$optname \'}
     filename=${filename%%\' --*}
   fi
@@ -158,7 +179,7 @@ _config_get_filename()
 
 # Combine the command line (cl) arguments with the config arguments, such that:
 # primary config & cl args (before --) -- secondary args & cl args (after --)
-# Strips out "--config" option and value as not needed anymore
+# Strips out "--load/save-config" options and value as not needed anymore
 _config_combine_args()
 {
   local -n ret_args=$1
@@ -177,16 +198,34 @@ _config_combine_args()
   # Next add all the command line arguments upto "--"
   while [ $# -gt 0 ]; do
     arg=$1
-    if [[ "$arg" =~ ^\ *--\ *$ ]]; then
-      shift
-      break
-    else
-      # Remove the -config argument and its value
-      if [[ ! "$arg" =~ --config ]] && [[ ! "$lastarg" =~ --config ]]; then
-        ret_args+=($arg)
+    shift
+    local optcheck
+    if [[ "$arg" =~ ^- ]]; then
+      # An argument, output any previous argument on its own
+      if [ "$lastarg" != "" ]; then
+        # Ignore the --load-config=file or --save-config=file
+        set +e
+        optcheck=$(getopt -q -o+ -l "load-config:,save-config:" -- "$lastarg")
+        set -e
+        if [ "$optcheck" == " --" ] || [[ "$optcheck" =~ ^\ --\  ]]; then
+          ret_args+=("$lastarg")
+        fi
       fi
       lastarg=$arg
-      shift
+    else
+      # A value - group arguments and values together
+      # Ignore the --load-config or --save-config as this specifies this config!
+      set +e
+      optcheck=$(getopt -q -o+ -l "load-config:,save-config:" -- "$lastarg" "$arg")
+      set -e
+      if [[ "$optcheck" =~ ^\ --\  ]]; then
+          ret_args+=("$lastarg" "$arg")
+      fi
+      lastarg=""
+    fi
+    if [[ "$arg" =~ ^--\ *$ ]]; then
+      # Found "--" exit the loop without recording it
+      break
     fi
   done
   # Add the delimiter between args (in case it wasn't in the command line)
@@ -213,7 +252,7 @@ config_setup()
 {
   local -n config_args=$1
   shift
-  local config_load=$(_config_get_filename "config" "$@")
+  local config_load=$(_config_get_filename "load-config" "$@")
   local config_save=$(_config_get_filename "save-config" "$@")
 
   # Avoid circular references by unique naming
