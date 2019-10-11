@@ -134,6 +134,7 @@ flag_tty="-t"
 config_runme=()
 config_build=()
 config_dir=$(config_locate_dir "$@")
+config_check_usage "$@"
 config_read "$config_dir" "run-me.args" config_runme
 config_read "$config_dir" "build.args" config_build
 
@@ -155,8 +156,9 @@ args_list="${args_list},project:"
 args_list="${args_list},root-passwd-file:"
 args_list="${args_list},ssh-auth-keys:"
 args_list="${args_list},tty"
+args_list="${args_list},use-configs"
 
-args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "$@" "${config_runme[@]:-}")
+args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "${config_runme[@]:-}" "$@")
 echo "ARGS: $args"
 eval set -- "$args"
 
@@ -400,4 +402,4 @@ docker run --rm -i $flag_tty \
          ${outputdir:+--outputdir "$outputdir"} \
          --parent-command-line "$command_line" \
          ${mbl_tools_version:+--mbl-tools-version "$mbl_tools_version"} \
-         "$@" "${config_build[@]:-}"
+         "${config_build[@]:-}" "$@"

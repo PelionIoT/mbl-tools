@@ -570,6 +570,7 @@ args_list="${args_list},repo-host:,root-passwd-file:"
 args_list="${args_list},ssh-auth-keys:"
 args_list="${args_list},url:"
 args=$(getopt -o+hj:o:x -l $args_list -n "$(basename "$0")" -- "$@")
+echo "ARGS: $args"
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -760,9 +761,13 @@ if [ -z "${manifest:-}" ]; then
   manifest="$default_manifest"
 fi
 
-if [ $# -gt 0 ]; then
-  stages=("$@")
-fi
+while [ $# -gt 0 ]; do
+  # Ignore empty stages
+  if [ -n "$1" ]; then
+    stages+=("$1")
+  fi
+  shift
+done
 
 if [ -n "${builddir:-}" ]; then
   builddir="$(readlink -f "$builddir")"
@@ -1204,11 +1209,9 @@ EOF
     ;;
 
   *)
-    if [ "$stage" != "" ]; then
-      printf "error: unrecognized stage: %s\n" "$stage" 2>&1
-      rm -f "$builddir/,stage"
-      exit 1
-    fi
+    printf "error: unrecognized stage: %s\n" "$stage" 2>&1
+    rm -f "$builddir/,stage"
+    exit 1
     ;;
   esac
 done

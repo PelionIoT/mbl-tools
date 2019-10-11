@@ -10,6 +10,9 @@
 # config. If we haven't read a file, we can create the initial one.
 gbl_flag_config_save=
 
+# Flag to indicate if we should be reading the config files, by default we
+# don't, otherwise multiple arguments can cause issues
+gbl_flag_config_load=0
 
 # Read arguments and values from a file
 # Use a bash array for the arguments and values to preserve spaces in values
@@ -88,11 +91,21 @@ config_locate_dir()
   local args=$(getopt -q -o+ -l "builddir:" -- "$@")
   local config_dir=""
   if [[ $args =~ --builddir ]]; then
-     # Extract the last DIR from a possible list of "--builddir 'DIR' --"
-     config_dir=${args##*builddir \'}
-     config_dir=${config_dir%%\' --*}
+    # Extract the last DIR from a possible list of "--builddir 'DIR' --"
+    config_dir=${args##*builddir \'}
+    config_dir=${config_dir%%\' --*}
   fi
   printf "$config_dir"
+}
+
+# Checks if we can try and read from the configs
+config_check_usage()
+{
+  # We need to read the use-configs option to check this
+  local args=$(getopt -q -o+ -l "use-configs:" -- "$@")
+  if [[ $args =~ --use-configs ]]; then
+    gbl_flag_config_load=1
+  fi
 }
 
 # Clear all the given configs from the config directory
@@ -120,12 +133,14 @@ config_read()
   local config_file="$2"
   local -n config_args=$3
 
-  gbl_flag_config_save=${gbl_flag_config_save:-1}
-  # Note: Pass given arg rather than our local ref to avoid circular ref
-  _config_read_args "${config_dir}/${config_file}" $3
-  if [ ${#config_args[@]} -gt 0 ]; then
-    echo "Read configuration from ${config_dir}/${config_file}"
-    gbl_flag_config_save=0
+  if [ $gbl_flag_config_load -eq 1 ]; then
+    gbl_flag_config_save=${gbl_flag_config_save:-1}
+    # Note: Pass given arg rather than our local ref to avoid circular ref
+    _config_read_args "${config_dir}/${config_file}" $3
+    if [ ${#config_args[@]} -gt 0 ]; then
+      echo "Read configuration from ${config_dir}/${config_file}"
+      gbl_flag_config_save=0
+    fi
   fi
 }
 
@@ -149,8 +164,7 @@ config_write()
   local config_dir="$1"
   local config_file="$2"
   shift 2
-  echo "$gbl_flag_config_save"
-  if [ $gbl_flag_config_save -eq 1 ]; then
+  if [ ${gbl_flag_config_save} -eq 1 ]; then
     if [ -d "$config_dir" ]; then
       echo "Saving configuration to $config_dir/$config_file"
       _config_write_args "$config_dir/$config_file" "$@" "--"
