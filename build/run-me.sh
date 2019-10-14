@@ -129,14 +129,11 @@ imagename="$default_imagename"
 project="$default_project"
 flag_tty="-t"
 
-echo "CL-pre:  $@"
 # Read or write configuration files and return combined args array
 config=()
 config_setup config "$@"
 # Set up args including values from config
 eval set -- "${config[@]}"
-echo "CL-post: $@"
-exit 0
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
