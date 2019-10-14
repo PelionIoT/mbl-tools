@@ -570,7 +570,6 @@ args_list="${args_list},repo-host:,root-passwd-file:"
 args_list="${args_list},ssh-auth-keys:"
 args_list="${args_list},url:"
 args=$(getopt -o+hj:o:x -l $args_list -n "$(basename "$0")" -- "$@")
-echo "ARGS: $args"
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -761,13 +760,9 @@ if [ -z "${manifest:-}" ]; then
   manifest="$default_manifest"
 fi
 
-while [ $# -gt 0 ]; do
-  # Ignore empty stages
-  if [ -n "$1" ]; then
-    stages+=("$1")
-  fi
-  shift
-done
+if [ $# -gt 0 ]; then
+  stages=("$@")
+fi
 
 if [ -n "${builddir:-}" ]; then
   builddir="$(readlink -f "$builddir")"
