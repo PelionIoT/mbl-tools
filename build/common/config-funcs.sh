@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright (c) 2019, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
@@ -17,6 +19,9 @@
 # Notes:
 # * only supports options without values or options with a single value
 # * supports "--" option that splits primary and secondary arguments
+# * SC1001: \- is on purpose
+# * SC2178: Arrays passed around by reference confuses shellcheck
+# * SC2034: Arrays passed around by reference confuses shellcheck
 
 
 # Read arguments and values from a file
@@ -39,7 +44,8 @@ _config_read_args()
         continue  # Skip the "--"
       fi
       local val
-      if [[ "$line" =~ ^-[\-a-z\-]+= ]]; then
+      # shellcheck disable=SC1001
+      if [[ "$line" =~ ^-[\-a-z]+= ]]; then
         # Catch --option=value and don't split it
         val="$line"
       else
@@ -117,11 +123,13 @@ _config_write_args()
 _config_read()
 {
   local config="$1"
+  # shellcheck disable=SC2178
   local -n config_primary=$2
+  # shellcheck disable=SC2178
   local -n config_secondary=$3
 
-  if [ -r ${config} ]; then
-    _config_read_args "${config}" ${!config_primary} ${!config_secondary}
+  if [ -r "${config}" ]; then
+    _config_read_args "${config}" "${!config_primary}" "${!config_secondary}"
     if [ ${#config_primary[@]} -gt 0 ] || [ ${#config_secondary[@]} -gt 0 ]; then
       echo "Read configuration from ${config}"
     fi
@@ -137,7 +145,7 @@ _config_write()
 {
   local config_file="$1"
   shift
-  if [ -d "$(dirname $config_file)" ]; then
+  if [ -d "$(dirname "$config_file")" ]; then
     echo "Saving configuration to $config_file"
     _config_write_args "$config_file" "$@" "--END--"
   else
@@ -225,8 +233,11 @@ _config_get_filename()
 # Params: ARRAY_REF ARRAY_REF ARRAY_REF ARGS_LIST...
 _config_combine_args()
 {
+  # shellcheck disable=SC2178
   local -n ret_args=$1
+  # shellcheck disable=SC2178
   local -n config_primary=$2
+  # shellcheck disable=SC2178
   local -n config_secondary=$3
   shift 3
   ret_args=()
@@ -277,7 +288,9 @@ config_setup()
 
   # Avoid circular references by unique naming of arrays
   local __args=()
+  # shellcheck disable=SC2034
   local __config_primary=()
+  # shellcheck disable=SC2034
   local __config_secondary=()
 
   local config_load=""
@@ -296,6 +309,6 @@ config_setup()
     _config_read "$config_load" __config_primary __config_secondary
   fi
   set +u  # __args could be empty, so allow unbound vars
-  _config_combine_args ${!config_args} __config_primary __config_secondary "${__args[@]}"
+  _config_combine_args "${!config_args}" __config_primary __config_secondary "${__args[@]}"
   set -u
 }

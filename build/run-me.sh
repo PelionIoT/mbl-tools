@@ -11,6 +11,7 @@ execdir="$(readlink -e "$(dirname "$0")")"
 srcdir="$execdir/common"
 
 # Load the config functions
+# shellcheck disable=SC1090
 source "$srcdir/config-funcs.sh"
 
 default_imagename="mbl-manifest-env"
@@ -80,7 +81,6 @@ OPTIONAL parameters:
                         this option is not used, either a new key will be
                         generated, or a key generated for a previous build in
                         the same work area will be used.
-  --clear-configs       Remove any saved run-me or build script config files.
   --downloaddir PATH    Use PATH to store Yocto downloaded sources.
   --external-manifest PATH
                         Specify an external manifest file.
@@ -99,6 +99,11 @@ OPTIONAL parameters:
                         this option is not used, either a new key will be
                         generated, or a key generated for a previous build in
                         the same work area will be used.
+  --load-config PATH    Path to the config file to read to add arguments to the
+                        command line arguments of run-me.sh and build.sh.
+                        Warning: lists of items (e.g. inject-mcc) will be
+                        prepended with any extra arguments you supply on the
+                        command line.
   --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
                         passed with --inject-mcc should be copied to.
   --mbl-tools-version STRING
@@ -112,6 +117,9 @@ OPTIONAL parameters:
                         interactive mode.
   --root-passwd-file PATH
                         The file containing the root user password in plain text.
+  --save-config PATH    Path to the file to record the currently specified command
+                        line arguments. Warning: will overwrite any existing file
+                        and it will not verify the arguments before saving.
   --ssh-auth-keys PATH
                         Path to the SSH Authorized Keys file to be installed
                         in the target rootfs at /home/user/.ssh/authorized_keys.
@@ -141,7 +149,6 @@ command_line="$(printf '%q ' "$0" "$@")"
 
 args_list="boot-rot-key:,builddir:"
 args_list="${args_list},downloaddir:"
-args_list="${args_list},clear-configs"
 args_list="${args_list},external-manifest:"
 args_list="${args_list},help"
 args_list="${args_list},image-name:,inject-mcc:"
@@ -153,7 +160,6 @@ args_list="${args_list},project:"
 args_list="${args_list},root-passwd-file:"
 args_list="${args_list},ssh-auth-keys:"
 args_list="${args_list},tty"
-args_list="${args_list},use-configs"
 
 args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "$@")
 echo "ARGS: $args"
@@ -182,16 +188,6 @@ while [ $# -gt 0 ]; do
 
   --project)
     opt_prev=project
-    ;;
-
-  --clear-configs)
-    if [ "$config_dir" != "" ]; then
-      config_clear "$config_dir" "run-me.args" "build.args"
-      echo "Cleared configuration files"
-    else
-      echo "Cannot clear configuration files without a --builddir set"
-    fi
-    exit 0
     ;;
 
   --downloaddir)
