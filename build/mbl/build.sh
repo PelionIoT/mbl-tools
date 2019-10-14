@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2018-2019, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -98,7 +98,7 @@ default_image="mbl-image-development"
 default_production_distro="mbl-production"
 default_production_image="mbl-image-production"
 default_accept_eula_machines=""
-default_lic_cmp_build_tag=""
+default_lic_cmp_artifact_path=""
 default_mcc_destdir="build-$default_distro"
 
 # Test if a machine name appears in the all_machines list.
@@ -337,7 +337,9 @@ create_license_report()
   set +u
   set +e
   local build_lic_paths=${1:?Missing license-paths parameter of ${FUNCNAME[0]}}
-  local prev_build_tag="$2"
+  # Assumption the path is of format: CONTEXT/mbed-linux/BUILD/BUILD-TAG
+  local prev_artifact_tag="${2##*/}"      # Extract BUILD-TAG
+  local prev_artifact_context="${2%%/*}"  # Extract CONTEXT
   local api_key="$3"
   local html_output_dir=${4:?Missing html_output_dir parameter of ${FUNCNAME[0]}}
   local machines=${5:?Missing machines parameter of ${FUNCNAME[0]}}
@@ -345,7 +347,8 @@ create_license_report()
 
   "./license_diff_report.py" "$build_tag" \
                              --lics-to-review "$build_lic_paths" \
-                             --lics-to-compare "$prev_build_tag" \
+                             --lics-to-compare "$prev_artifact_tag" \
+                             --build-context "$prev_artifact_context" \
                              --images "$image" \
                              --machines "$machines" \
                              --apikey "$api_key" \
@@ -491,6 +494,9 @@ OPTIONAL parameters:
   --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
                         passed with --inject-mcc should be copied to.
   --licenses            Collect extra build license info. Default disabled.
+  --licenses-artifact-path PATH
+                        Artifact path to compare the licenses against, e.g.
+                        isg-mbed-linux-release/mbed-linux/mbl-os-0.7.0/mbl-os-0.7.0_build5
   --local-conf-data STRING
                         Data to append to local.conf.
   --manifest MANIFEST   Name the manifest file. Default ${default_manifest}.
@@ -504,6 +510,8 @@ OPTIONAL parameters:
                         Specify the command line that was used to invoke the
                         script that invokes build.sh. This is written to
                         buildinfo.txt in the output directory.
+  --repo-host NAME      Add a trusted git repository host to the build
+                        environment. Can be specified multiple times.
   --root-passwd-file PATH
                         The file containing the root user password in plain text.
   --ssh-auth-keys PATH
@@ -538,12 +546,30 @@ local_conf_data=""
 flag_licenses=0
 flag_binary_release=0
 flag_interactive_mode=0
+repo_hosts=""
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,distro:,downloaddir:,external-manifest:,help,image:,inject-key:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,root-passwd-file:,ssh-auth-keys:,url: -n "$(basename "$0")" -- "$@")
+args_list="accept-eula:,archive-source,artifactory-api-key:"
+args_list="${args_list},binary-release,branch:,builddir:,build-tag:"
+args_list="${args_list},compress"
+args_list="${args_list},distro:,downloaddir:"
+args_list="${args_list},external-manifest:"
+args_list="${args_list},help"
+args_list="${args_list},image:,inject-key:,inject-mcc:"
+args_list="${args_list},jobs:"
+args_list="${args_list},licenses,licenses-artifact-path:,local-conf-data:"
+args_list="${args_list},machine:,manifest:,manifest-repo:,mbl-tools-version:"
+args_list="${args_list},mcc-destdir:"
+args_list="${args_list},no-compress"
+args_list="${args_list},outputdir:"
+args_list="${args_list},parent-command-line:"
+args_list="${args_list},repo-host:,root-passwd-file:"
+args_list="${args_list},ssh-auth-keys:"
+args_list="${args_list},url:"
+args=$(getopt -o+hj:o:x -l $args_list -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -643,8 +669,8 @@ while [ $# -gt 0 ]; do
     flag_licenses=1
     ;;
 
-  --licenses-buildtag)
-    opt_prev=lic_cmp_build_tag
+  --licenses-artifact-path)
+    opt_prev=lic_cmp_artifact_path
     ;;
 
   --local-conf-data)
@@ -664,6 +690,10 @@ while [ $# -gt 0 ]; do
     ;;
   -o | --outputdir)
     opt_prev=outputdir
+    ;;
+
+  --repo-host)
+    opt_append=repo_hosts
     ;;
 
   --root-passwd-file)
@@ -706,8 +736,8 @@ if [ "$flag_licenses" -eq 1 ]; then
   fi
 fi
 
-if [ -z "${lic_cmp_build_tag:-}" ]; then
-  lic_cmp_build_tag="$default_lic_cmp_build_tag"
+if [ -z "${lic_cmp_artifact_path:-}" ]; then
+  lic_cmp_artifact_path="$default_lic_cmp_artifact_path"
 fi
 
 if [ -z "${branch:-}" ]; then
@@ -808,7 +838,7 @@ if empty_stages_p; then
 fi
 
 "$execdir/git-setup.sh"
-"$execdir/ssh-setup.sh"
+"$execdir/ssh-setup.sh" $repo_hosts
 
 while true; do
   if empty_stages_p; then
@@ -1113,7 +1143,7 @@ while true; do
           done
 
             create_license_report "$build_lic_paths" \
-                                  "$lic_cmp_build_tag" \
+                                  "$lic_cmp_artifact_path" \
                                   "$artifactory_api_key" \
                                   "$outputdir" \
                                   "$machines" \
