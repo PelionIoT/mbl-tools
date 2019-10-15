@@ -41,8 +41,11 @@ build_script_for_project() {
         poky)
             printf "%s\n" "build-poky.py"
             ;;
+        pelion-edge)
+            printf "%s\n" "build.py"
+            ;;
         *)
-            printf "Unrecognized project \"%s\"" "$project" >&2
+            printf "Unrecognized project (build_script) \"%s\"" "$project" >&2
             exit 5
             ;;
     esac
@@ -60,8 +63,27 @@ dockerfile_for_project() {
         poky)
             printf "%s\n" "common/Dockerfile"
             ;;
+        pelion-edge)
+            printf "%s\n" "pelion-edge/Dockerfile"
+            ;;
         *)
-            printf "Unrecognized project \"%s\"" "$project" >&2
+            printf "Unrecognized project (dockerfile) \"%s\"" "$project" >&2
+            exit 5
+            ;;
+    esac
+}
+
+privileged_arg_for_project() {
+    project=${1:?}
+    case "$1" in
+        mbl)
+            printf "\n"
+            ;;
+        pelion-edge)
+            printf "%s\n" "--privileged=true"
+            ;;
+        *)
+            printf "Unrecognized project (priviledged arg) \"%s\"" "$project" >&2
             exit 5
             ;;
     esac
@@ -331,6 +353,7 @@ fi
 
 build_script=$(build_script_for_project "$project")
 dockerfile=$(dockerfile_for_project "$project")
+privileged_arg=$(privileged_arg_for_project "$project")
 if [ -n "${mcc_destdir:-}" ]; then
   build_args="${build_args:-} --mcc-destdir=$mcc_destdir"
 fi
@@ -379,6 +402,7 @@ docker run --rm -i $flag_tty \
        ${outputdir:+-v "$outputdir":"$outputdir"} \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
        -v "$builddir":"$builddir" \
+       ${privileged_arg} \
        "$imagename" \
        ./${build_script} --builddir "$builddir" \
          ${build_args:-} \
