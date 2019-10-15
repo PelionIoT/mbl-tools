@@ -184,7 +184,6 @@ args_list="${args_list},ssh-auth-keys:"
 args_list="${args_list},tty"
 
 args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "$@")
-echo "ARGS: $args"
 eval set -- "$args"
 
 while [ $# -gt 0 ]; do
@@ -388,7 +387,6 @@ if [ -n "${external_manifest:-}" ]; then
   cp "$external_manifest" "$builddir/$name"
   set -- "--external-manifest=$builddir/$name" "$@"
 fi
-
 
 # The ${:+} expansion of download upsets shellcheck, but we do not
 # want that instance quoted because that would inject an empty
