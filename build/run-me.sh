@@ -76,15 +76,12 @@ dockerfile_for_project() {
 privileged_arg_for_project() {
     project=${1:?}
     case "$1" in
-        mbl)
-            printf "\n"
-            ;;
         pelion-edge)
             printf "%s\n" "--privileged=true"
             ;;
         *)
-            printf "Unrecognized project (priviledged arg) \"%s\"" "$project" >&2
-            exit 5
+            # Assume all other projects don't need this
+            printf "\n"
             ;;
     esac
 }
