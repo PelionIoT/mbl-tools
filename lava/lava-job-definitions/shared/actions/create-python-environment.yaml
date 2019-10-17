@@ -1,6 +1,6 @@
-- path: ci/lava/tests/build-helloworld.yaml
+- path: ci/lava/dependencies/create-python-environment.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
-  name: build-helloworld
+  name: create-python-environment
   from: git
   history: False
   branch: "{{ mbl_branch }}"
@@ -8,4 +8,5 @@
   revision: {{ mbl_revisions["mbl-core"] }}
   {% endif %}
   parameters:
-     arm_arch: "{{ device_type }}"
+      virtual_env: "{{ venv_name }}"
+      host_download_dir: "{{ host_download_dir }}"

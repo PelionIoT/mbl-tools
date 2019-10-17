@@ -196,7 +196,7 @@ Now we need to do the tweaks to the following repos:
 * `mbl-manifest` - commit `default.xml` with changes done by manifest script
 * `mbl-tools` - edit/commit `maintenance/release.xml` to set the default revision to `mbl-os-x.y` (this is important for the release tagging later!)
 * `mbl-jenkins` - edit/commit `mbl-pipeline` to use `mbl-os-x.y` branches for everything (tools, manifest, lava etc)
-* `meta-mbl` - edit/commit `meta-mbl-distro/conf/distro/mbl.conf` to set `DISTRO_VERSION` to `mbl-os-x.y.z` (NOTE: `z` version!)
+* `meta-mbl` - edit/commit `meta-mbl-distro/conf/distro/include/mbl-distro.inc` to set `DISTRO_VERSION` to `mbl-os-x.y.z` (NOTE: `z` version!)
 
 Next you can push all the changes to github (this skips the PR flow for the changes done):
 
@@ -208,9 +208,18 @@ Now create the Jenkins job to test these new branches.
 
 ### Release tagging
 
-Assuming you have created a release branch using the flow above and have it testing on Jenkins.
+This assumes you have created a release branch using the flow above and have it testing on Jenkins.
 
-First change the mbl-tools to use the release version you have altered:
+If you DO NOT already have the environment set up from the release branches, then do the following:
+
+```
+mkdir RELWORKDIR ; cd RELWORKDIR
+git clone git@github.com:ARMmbed/mbl-tools
+export SCRIPTS=$(pwd)/mbl-tools/maintenance/scripts
+export RELVER=mbl-os-x.y
+```
+
+With the correct environment, now change the mbl-tools to use the release version you have altered:
 
 ```
 cd RELWORKDIR
@@ -231,7 +240,7 @@ cd $RELVER
 
 For release candidates, we just tag the `mbl-manifest` version containing a pinned manifest called `release.xml`.
 
-Get the `pinned-manifest.xml` from the Jenkins build, rename it to `release.xml` and commit/push it into `mbl-manifest` via the usual github PR process.
+Get the `pinned-manifest.xml` from the Jenkins build, rename it to `release.xml` and commit/push it into `mbl-manifest` via the usual github PR process (easiest to do this in a separate check out of mbl-manifest due to the fact that repo checks the commits out rather than branches).
 
 Now you can create a release candidate tag of the form `mbl-os-x.y.z-rcn` - for example `mbl-os-0.7.0-rc1`:
 

@@ -1,37 +1,29 @@
 {% extends "shared/templates/base.yaml" %}
 
 {% set job_name = "Core Components" %}
-{% set lxc_creation = false %}
+{% set lxc_creation = true %}
+{% set lxc_name = "core-components-lxc" %}
 
 {% block testplan %}
 - test:
     timeout:
-      minutes: 20
-    namespace: target
+      minutes: 110
+    namespace: lxc
+
     definitions:
-    {{ macros.install_test_dependencies() | indent }}
 
-    {# Use the correct ipk depending on architecture. #}
-    {% if device_type in  ["imx8mmevk-mbl"] %}
-        {# For the arm64 devices get the correct ipk. #}
-        {% set am_setup = "mv /scratch/app-lifecycle-manager-test-package_1.0_any.ipk.arm64 /scratch/app-lifecycle-manager-test-package_1.0_any.ipk" %}
-    {% else %}
-        {# For all else use the default. #}
-        {% set am_setup = "" %}
-    {% endif %}
-    {{ macros.core_component("application-framework", am_setup) | indent }}
+    {{ macros.avahi_discovery() | indent }}
 
-    {{ macros.core_component("cloud-services") | indent }}
+    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
 
-    {% set fm_setup = "python3 firmware-management/mbl-app-manager/tests/native/test_case_generator_mbl-app-manager.py -o /home/app -v" %}
-    {% set fm_teardown = "/bin/rm -rf /home/app/*" %}
-    {{ macros.core_component("firmware-management", fm_setup, fm_teardown) | indent }}
+    {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {{ macros.core_component("management-agents") | indent }}
+    {{ macros.create_python_environment_on_device(venv_name, host_download_dir, dut_download_dir) | indent }}
 
-    {{ macros.core_component("mbl-core") | indent }}
+    {{ macros.install_docker() | indent }}
 
-    {{ macros.core_component("platform-services") | indent }}
+    {{ macros.build_tutorial_images(venv_name, host_tutorials_dir, app_payload_version) | indent }}
 
-    {{ macros.core_component("secure-services") | indent }}
+    {{ macros.core_components(venv_name, dut_tutorials_dir, host_tutorials_dir) | indent }}
+
 {% endblock testplan %}

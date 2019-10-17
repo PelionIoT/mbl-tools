@@ -1,6 +1,6 @@
 - path: ci/lava/tests/core-component.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
-  name: "{{ component_name }}"
+  name: Core-Components
   from: git
   history: False
   branch: "{{ mbl_branch }}"
@@ -8,6 +8,8 @@
   revision: {{ mbl_revisions["mbl-core"] }}
   {% endif %}
   parameters:
-      COMPONENT: "{{ component_name }}"
-      SETUP: "{{ setup }}"
-      TEARDOWN: "{{ teardown }}"
+      virtual_env: "{{ venv_name }}"
+      dut_tutorials_dir: "{{ dut_tutorials_dir }}"
+      host_tutorials_dir: "{{ host_tutorials_dir }}"
+      {% set local_conf_url = pipeline_data["local_conf_url"] %}
+      local_conf_url: "{{ local_conf_url }}"

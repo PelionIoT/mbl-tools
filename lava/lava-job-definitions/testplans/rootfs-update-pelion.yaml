@@ -13,15 +13,17 @@
 
     {{ macros.avahi_discovery("pre") | indent }}
 
+    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
+
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
     {{ macros.enable_wifi(venv_name) | indent }}
 
     {{ macros.provision_mbl(venv_name) | indent }}
 
-    {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, "PELION", venv_name) | indent }}
+    {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, "PELION", venv_name, rootfs_payload_version) | indent }}
 
-    {{ macros.rootfs_update("POST_CHECK", "rootfs2", image_url, "PELION", venv_name) | indent }}
+    {{ macros.rootfs_update("POST_CHECK", "rootfs2", image_url, "PELION", venv_name, rootfs_payload_version) | indent }}
 
     {{ macros.avahi_discovery("post") | indent }}
 

@@ -7,11 +7,13 @@
 {% block testplan %}
 - test:
     timeout:
-      minutes: 50
+      minutes: 110
     namespace: lxc
     definitions:
 
     {{ macros.avahi_discovery() | indent }}
+
+    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
@@ -19,7 +21,7 @@
 
     {{ macros.install_docker() | indent }}
 
-    {{ macros.build_helloworld() | indent }}
+    {{ macros.build_tutorial_images(venv_name, host_tutorials_dir, app_payload_version) | indent }}
 
     {{ macros.provision_mbl(venv_name) | indent }}
 
@@ -34,6 +36,7 @@
       {% endif %}
       parameters:
           virtual_env: "{{ venv_name }}"
+          host_tutorials_dir: "{{ host_tutorials_dir }}"
 
     {{ macros.delete_certificate(venv_name) | indent }}
 {% endblock testplan %}

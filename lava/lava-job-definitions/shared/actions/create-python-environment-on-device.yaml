@@ -1,0 +1,13 @@
+- path: ci/lava/dependencies/create-python-environment-on-device.yaml
+  repository: https://github.com/ARMmbed/mbl-core.git
+  name: create-python-environment-on-device
+  from: git
+  history: False
+  branch: "{{ mbl_branch }}"
+  {% if "mbl-core" in mbl_revisions %}
+  revision: {{ mbl_revisions["mbl-core"] }}
+  {% endif %}
+  parameters:
+      virtual_env: "{{ venv_name }}"
+      host_download_dir: "{{ host_download_dir }}"
+      dut_download_dir: "{{ dut_download_dir }}"

@@ -13,3 +13,4 @@
       image_url: "{{ image_url }}"
       pelion_update: "{{ update_method }}"
       virtual_env: "{{ venv_name }}"
+      payload_version: "{{ rootfs_payload_version }}"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2018-2019, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -27,14 +27,20 @@ cleanup() {
 build_script_for_project() {
     project=${1:?}
     case "$1" in
+        build-update-payloads)
+            printf "%s\n" "build-update-payloads.py"
+            ;;
         mbl)
             printf "%s\n" "build.sh"
             ;;
         poky)
             printf "%s\n" "build-poky.py"
             ;;
+        pelion-edge)
+            printf "%s\n" "build.py"
+            ;;
         *)
-            printf "Unrecognized project \"%s\"" "$project" >&2
+            printf "Unrecognized project (build_script) \"%s\"" "$project" >&2
             exit 5
             ;;
     esac
@@ -43,15 +49,34 @@ build_script_for_project() {
 dockerfile_for_project() {
     project=${1:?}
     case "$1" in
+        build-update-payloads)
+            printf "%s\n" "common/Dockerfile"
+            ;;
         mbl)
             printf "%s\n" "common/Dockerfile"
             ;;
         poky)
             printf "%s\n" "common/Dockerfile"
             ;;
+        pelion-edge)
+            printf "%s\n" "pelion-edge/Dockerfile"
+            ;;
         *)
-            printf "Unrecognized project \"%s\"" "$project" >&2
+            printf "Unrecognized project (dockerfile) \"%s\"" "$project" >&2
             exit 5
+            ;;
+    esac
+}
+
+privileged_arg_for_project() {
+    project=${1:?}
+    case "$1" in
+        pelion-edge)
+            printf "%s\n" "--privileged=true"
+            ;;
+        *)
+            # Assume all other projects don't need this
+            printf "\n"
             ;;
     esac
 }
@@ -66,6 +91,10 @@ MANDATORY parameters:
   --builddir PATH       Specify the root of the build tree.
 
 OPTIONAL parameters:
+  --boot-rot-key PATH   Path to the secure world root of trust private key. If
+                        this option is not used, either a new key will be
+                        generated, or a key generated for a previous build in
+                        the same work area will be used.
   --downloaddir PATH    Use PATH to store Yocto downloaded sources.
   --external-manifest PATH
                         Specify an external manifest file.
@@ -75,6 +104,15 @@ OPTIONAL parameters:
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys.  Mandatory if passing
                         --mcc-destdir parameter.
+  --kernel-rot-crt PATH Path to the normal world root of trust public key
+                        certificate. If this option is not used, either a new
+                        certificate will be generated, or a certificate
+                        generated for a previous build in the same work area
+                        will be used.
+  --kernel-rot-key PATH Path to the normal world root of trust private key. If
+                        this option is not used, either a new key will be
+                        generated, or a key generated for a previous build in
+                        the same work area will be used.
   --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
                         passed with --inject-mcc should be copied to.
   --mbl-tools-version STRING
@@ -86,6 +124,12 @@ OPTIONAL parameters:
   -o, --outputdir PATH  Specify a directory to store non-interactively built
                         artifacts. Note: Will not be updated by builds in
                         interactive mode.
+  --root-passwd-file PATH
+                        The file containing the root user password in plain text.
+  --ssh-auth-keys PATH
+                        Path to the SSH Authorized Keys file to be installed
+                        in the target rootfs at /home/user/.ssh/authorized_keys.
+                        The filename must be prefixed with "user_".
   --tty                 Enable tty creation (default).
   --no-tty              Disable tty creation.
   -x                    Enable shell debugging in this script.
@@ -103,7 +147,7 @@ flag_tty="-t"
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+ho:x -l builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,mcc-destdir:,mbl-tools-version:,outputdir:,tty,no-tty -n "$(basename "$0")" -- "$@")
+args=$(getopt -o+ho:x -l boot-rot-key:,builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,kernel-rot-crt:,kernel-rot-key:,mcc-destdir:,mbl-tools-version:,outputdir:,root-passwd-file:,ssh-auth-keys:,tty,no-tty -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -118,6 +162,10 @@ while [ $# -gt 0 ]; do
     continue
   fi
   case $1 in
+  --boot-rot-key)
+    opt_prev=boot_rot_key
+    ;;
+
   --builddir)
     opt_prev=builddir
     ;;
@@ -147,6 +195,14 @@ while [ $# -gt 0 ]; do
     opt_append=inject_mcc_files
     ;;
 
+  --kernel-rot-crt)
+    opt_prev=kernel_rot_crt
+    ;;
+
+  --kernel-rot-key)
+    opt_prev=kernel_rot_key
+    ;;
+
   --mcc-destdir)
     opt_prev=mcc_destdir
     ;;
@@ -157,6 +213,14 @@ while [ $# -gt 0 ]; do
 
   -o | --outputdir)
     opt_prev=outputdir
+    ;;
+
+  --root-passwd-file)
+    opt_prev=root_passwd_file
+    ;;
+
+  --ssh-auth-keys)
+    opt_append=ssh_auth_keys
     ;;
 
   --tty)
@@ -215,8 +279,43 @@ if [ -n "${inject_mcc_files:-}" ]; then
   done
 fi
 
+if [ -n "${boot_rot_key:-}" ]; then
+  mkdir -p "$builddir/inject-keys"
+  cp "$boot_rot_key" "$builddir/inject-keys/rot_key.pem"
+  build_args="${build_args:-} --inject-key=$builddir/inject-keys/rot_key.pem"
+fi
+
+if [ -n "${kernel_rot_crt:-}" ]; then
+  mkdir -p "$builddir/inject-keys"
+  cp "$kernel_rot_crt" "$builddir/inject-keys/mbl-fit-rot-key.crt"
+  build_args="${build_args:-} --inject-key=$builddir/inject-keys/mbl-fit-rot-key.crt"
+fi
+
+if [ -n "${kernel_rot_key:-}" ]; then
+  mkdir -p "$builddir/inject-keys"
+  cp "$kernel_rot_key" "$builddir/inject-keys/mbl-fit-rot-key.key"
+  build_args="${build_args:-} --inject-key=$builddir/inject-keys/mbl-fit-rot-key.key"
+fi
+
+if [ -n "${root_passwd_file:-}" ]; then
+  base="$(basename "$root_passwd_file")"
+  cp "$root_passwd_file" "$builddir/$base"
+  build_args="${build_args:-} --root-passwd-file=$builddir/$base"
+fi
+
+if [ -n "${ssh_auth_keys:-}" ]; then
+  mkdir -p "$builddir/ssh-auth-keys"
+  for file in ${ssh_auth_keys:-}; do
+    base="$(basename "$file")"
+    user="$(sed 's/_.*//' <<<"$base")"
+    cp "$file" "$builddir/ssh-auth-keys/${user}_authorized_keys"
+    build_args="${build_args:-} --ssh-auth-keys=$builddir/ssh-auth-keys/${user}_authorized_keys"
+  done
+fi
+
 build_script=$(build_script_for_project "$project")
 dockerfile=$(dockerfile_for_project "$project")
+privileged_arg=$(privileged_arg_for_project "$project")
 if [ -n "${mcc_destdir:-}" ]; then
   build_args="${build_args:-} --mcc-destdir=$mcc_destdir"
 fi
@@ -263,6 +362,7 @@ docker run --rm -i $flag_tty \
        ${outputdir:+-v "$outputdir":"$outputdir"} \
        -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
        -v "$builddir":"$builddir" \
+       ${privileged_arg} \
        "$imagename" \
        ./${build_script} --builddir "$builddir" \
          ${build_args:-} \

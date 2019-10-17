@@ -28,7 +28,6 @@ RUN apt-get update && apt-get install -y \
     libsdl1.2-dev \
     python \
     python3 \
-    python3-pexpect \
     python3-pip \
     socat \
     texinfo \
@@ -36,10 +35,12 @@ RUN apt-get update && apt-get install -y \
     unzip \
     wget \
     xterm \
-    xz-utils
+    xz-utils \
+    parted
 
 RUN apt-get update && apt-get install gosu
-RUN pip3 install dohq-artifactory && pip3 install jinja2
+RUN pip3 install -U pip
+RUN pip3 install dohq-artifactory jinja2 pexpect
 COPY common/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
@@ -65,4 +66,10 @@ COPY common/git-setup.sh common/ssh-setup.sh \
 COPY mbl/build.sh ./
 
 # Scripts used to build poky-psa image
-COPY poky-test/build-poky.py common/file_util.py poky-test/poky-bitbake-wrapper.sh ./
+COPY poky-test/build-poky.py \
+     common/file_util.py \
+     poky-test/poky-bitbake-wrapper.sh ./
+
+# Scripts used to build BL2/BL3/fitImage components
+COPY common/bitbake_util.py \
+     mbl/build-update-payloads.py ./

@@ -51,6 +51,7 @@ def warning(message):
 
     """
     warnings.warn(message, stacklevel=2)
+    sys.stderr.flush()
 
 
 def _create_workarea(workdir, manifest_repo, branch, manifest):
@@ -224,24 +225,13 @@ def _set_up_download_dir(download_dir):
         warning("--downloaddir not specified. Not setting DL_DIR.")
 
 
-def _str_to_resolved_path(path_str):
-    """
-    Convert a string to a resolved Path object.
-
-    Args:
-    * path_str (str): string to convert to a Path object.
-
-    """
-    return pathlib.Path(path_str).resolve()
-
-
 def _parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--builddir",
         metavar="DIR",
-        type=_str_to_resolved_path,
+        type=file_util.str_to_resolved_path,
         help="directory in which to build",
         required=True,
     )
@@ -272,14 +262,14 @@ def _parse_args():
     parser.add_argument(
         "--downloaddir",
         metavar="PATH",
-        type=_str_to_resolved_path,
+        type=file_util.str_to_resolved_path,
         help="directory used for BitBake's download cache (currently ignored)",
         required=False,
     )
     parser.add_argument(
         "--outputdir",
         metavar="PATH",
-        type=_str_to_resolved_path,
+        type=file_util.str_to_resolved_path,
         help="directory in which to place build artifacts",
         required=False,
     )
@@ -345,7 +335,10 @@ def _parse_args():
         required=False,
     )
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
+
+    if len(unknown) > 0:
+        warning("unsupported arguments: {}".format(unknown))
 
     file_util.ensure_is_directory(args.builddir)
 

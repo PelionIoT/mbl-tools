@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2018-2019, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -93,11 +93,13 @@ all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl imx6u
 
 default_manifest="default.xml"
 default_manifest_repo="git@github.com:ARMmbed/mbl-manifest.git"
-default_distro="mbl"
-default_images="mbl-image-development"
+default_distro="mbl-development"
+default_image="mbl-image-development"
+default_production_distro="mbl-production"
+default_production_image="mbl-image-production"
 default_accept_eula_machines=""
-default_lic_cmp_build_tag=""
-default_mcc_destdir="build-mbl"
+default_lic_cmp_artifact_path=""
+default_mcc_destdir="build-$default_distro"
 
 # Test if a machine name appears in the all_machines list.
 #
@@ -146,7 +148,7 @@ bitbake_env_setup() {
   set +u
   set +e
   # shellcheck disable=SC1091
-  MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
+  MACHINE="$machine" DISTRO="$distro" . setup-environment "build-$distro"
   # shellcheck disable=SC2181
   if [ $? -ne 0 ]; then
       exit 1
@@ -229,7 +231,7 @@ setup_archiver()
 {
   local path="$1"
   local archiver="$2"
-  local name="build-mbl-archiver"
+  local name="build-$distro-archiver"
   local custom_data=""
 
   ## Setup the yocto source archiver
@@ -335,7 +337,9 @@ create_license_report()
   set +u
   set +e
   local build_lic_paths=${1:?Missing license-paths parameter of ${FUNCNAME[0]}}
-  local prev_build_tag="$2"
+  # Assumption the path is of format: CONTEXT/mbed-linux/BUILD/BUILD-TAG
+  local prev_artifact_tag="${2##*/}"      # Extract BUILD-TAG
+  local prev_artifact_context="${2%%/*}"  # Extract CONTEXT
   local api_key="$3"
   local html_output_dir=${4:?Missing html_output_dir parameter of ${FUNCNAME[0]}}
   local machines=${5:?Missing machines parameter of ${FUNCNAME[0]}}
@@ -343,7 +347,8 @@ create_license_report()
 
   "./license_diff_report.py" "$build_tag" \
                              --lics-to-review "$build_lic_paths" \
-                             --lics-to-compare "$prev_build_tag" \
+                             --lics-to-compare "$prev_artifact_tag" \
+                             --build-context "$prev_artifact_context" \
                              --images "$image" \
                              --machines "$machines" \
                              --apikey "$api_key" \
@@ -361,18 +366,15 @@ find_license_manifest_dir()
   local image=${1:?Missing image parameter of ${FUNCNAME[0]}}
   local machine=${2:?Missing machine parameter of ${FUNCNAME[0]}}
 
-  local licdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc/deploy/licenses"
+  local licdir="$builddir/machine-$machine/mbl-manifest/build-$distro/tmp/deploy/licenses"
   local license_manifest_dir_pattern="${image}-${machine}-*"
-
+  # find the last modified license manifest directory as we could possibly have
+  # multiple license directories after multiple build runs
   local license_manifest_dir
-  license_manifest_dir=$(find "$licdir" -maxdepth 1 -type d -name "$license_manifest_dir_pattern")
-  local count
-  count=$(printf "%s" "$license_manifest_dir" | wc -w)
-  if [ "$count" -ne 1 ]; then
-    printf "error: found unexpected number of files matching \"%s\" in %s (%d)" \
+  if ! license_manifest_dir=$(find "$licdir" -maxdepth 1 -type d -name "$license_manifest_dir_pattern" -print0 | xargs -r -0 ls -1 -t -d | head -1); then
+    printf "error: failed to find any directories matching \"%s\" in %s\n" \
       "$license_manifest_dir_pattern" \
       "$licdir" \
-      "$count" \
       1>&2
     return 1
   fi
@@ -475,12 +477,16 @@ OPTIONAL parameters:
   -j, --jobs NUMBER     Set the number of parallel processes. Default # CPU on the host.
   --[no-]compress       Enable image artifact compression, default enabled.
   --build-tag TAG       Specify a unique version tag to identify the build.
+  --distro DISTRO       Specify the DISTRO to be set. Default $default_distro.
   --downloaddir DIR     Use DIR to store downloaded packages.
   --external-manifest PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
-  --image IMAGE         Select an alternative image.  Default $default_images.
-                        This option can be repeated to add multiple images.
+  --inject-key PATH     Add a file to the list of keys/certificates to be
+                        injected into the build.
+  --image IMAGE         Select an alternative image.  Default $default_image when
+                        --distro $default_distro and default $default_production_image
+                        when --distro $default_production_distro.
   --inject-mcc PATH     Add a file to the list of mbed cloud client files
                         to be injected into a build.  This is a temporary
                         mechanism to inject development keys. Mandatory if passing
@@ -488,6 +494,9 @@ OPTIONAL parameters:
   --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
                         passed with --inject-mcc should be copied to.
   --licenses            Collect extra build license info. Default disabled.
+  --licenses-artifact-path PATH
+                        Artifact path to compare the licenses against, e.g.
+                        isg-mbed-linux-release/mbed-linux/mbl-os-0.7.0/mbl-os-0.7.0_build5
   --local-conf-data STRING
                         Data to append to local.conf.
   --manifest MANIFEST   Name the manifest file. Default ${default_manifest}.
@@ -501,6 +510,14 @@ OPTIONAL parameters:
                         Specify the command line that was used to invoke the
                         script that invokes build.sh. This is written to
                         buildinfo.txt in the output directory.
+  --repo-host NAME      Add a trusted git repository host to the build
+                        environment. Can be specified multiple times.
+  --root-passwd-file PATH
+                        The file containing the root user password in plain text.
+  --ssh-auth-keys PATH
+                        Path to the SSH Authorized Keys file to be installed
+                        in the target rootfs at /home/user/.ssh/authorized_keys.
+                        The filename must be prefixed with "user_".
   --manifest-repo URL   Name the manifest URL to clone. Default ${default_manifest_repo}.
   --url           URL   Name the manifest URL to clone. Default ${default_manifest_repo}.
                         Deprecated. Use --manifest-repo instead.
@@ -512,7 +529,8 @@ OPTIONAL parameters:
 Useful STAGE names:
   clean                 Blow away the working tree and start over.
   start                 Start at the beginning.
-  build                 Execute the bitbake build for all images and machines.
+  build                 Execute the bitbake build for the specified image on
+                        all machines.
   interactive           Launch interactive mode to run BitBake and associated
                         commands.
 
@@ -521,7 +539,6 @@ EOF
 
 manifest_repo=""
 url=""
-distro="$default_distro"
 mcc_final_destdir="$default_mcc_destdir"
 flag_compress=1
 flag_archiver=""
@@ -529,12 +546,30 @@ local_conf_data=""
 flag_licenses=0
 flag_binary_release=0
 flag_interactive_mode=0
+repo_hosts=""
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+hj:o:x -l accept-eula:,archive-source,artifactory-api-key:,binary-release,branch:,builddir:,build-tag:,compress,no-compress,downloaddir:,external-manifest:,help,image:,inject-mcc:,mcc-destdir:,jobs:,licenses,licenses-buildtag:,local-conf-data:,machine:,manifest:,manifest-repo:,mbl-tools-version:,outputdir:,parent-command-line:,url: -n "$(basename "$0")" -- "$@")
+args_list="accept-eula:,archive-source,artifactory-api-key:"
+args_list="${args_list},binary-release,branch:,builddir:,build-tag:"
+args_list="${args_list},compress"
+args_list="${args_list},distro:,downloaddir:"
+args_list="${args_list},external-manifest:"
+args_list="${args_list},help"
+args_list="${args_list},image:,inject-key:,inject-mcc:"
+args_list="${args_list},jobs:"
+args_list="${args_list},licenses,licenses-artifact-path:,local-conf-data:"
+args_list="${args_list},machine:,manifest:,manifest-repo:,mbl-tools-version:"
+args_list="${args_list},mcc-destdir:"
+args_list="${args_list},no-compress"
+args_list="${args_list},outputdir:"
+args_list="${args_list},parent-command-line:"
+args_list="${args_list},repo-host:,root-passwd-file:"
+args_list="${args_list},ssh-auth-keys:"
+args_list="${args_list},url:"
+args=$(getopt -o+hj:o:x -l $args_list -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
@@ -593,6 +628,10 @@ while [ $# -gt 0 ]; do
       opt_prev=parent_command_line
     ;;
 
+  --distro)
+    opt_prev=distro
+    ;;
+
   --downloaddir)
     opt_prev=downloaddir
     ;;
@@ -607,7 +646,11 @@ while [ $# -gt 0 ]; do
     ;;
 
   --image)
-    opt_append=images
+    opt_prev=image
+    ;;
+
+  --inject-key)
+    opt_append=inject_key_files
     ;;
 
   --inject-mcc)
@@ -626,8 +669,8 @@ while [ $# -gt 0 ]; do
     flag_licenses=1
     ;;
 
-  --licenses-buildtag)
-    opt_prev=lic_cmp_build_tag
+  --licenses-artifact-path)
+    opt_prev=lic_cmp_artifact_path
     ;;
 
   --local-conf-data)
@@ -647,6 +690,18 @@ while [ $# -gt 0 ]; do
     ;;
   -o | --outputdir)
     opt_prev=outputdir
+    ;;
+
+  --repo-host)
+    opt_append=repo_hosts
+    ;;
+
+  --root-passwd-file)
+    opt_prev=root_passwd_file
+    ;;
+
+  --ssh-auth-keys)
+    opt_append=ssh_auth_keys
     ;;
 
   --url)
@@ -681,8 +736,8 @@ if [ "$flag_licenses" -eq 1 ]; then
   fi
 fi
 
-if [ -z "${lic_cmp_build_tag:-}" ]; then
-  lic_cmp_build_tag="$default_lic_cmp_build_tag"
+if [ -z "${lic_cmp_artifact_path:-}" ]; then
+  lic_cmp_artifact_path="$default_lic_cmp_artifact_path"
 fi
 
 if [ -z "${branch:-}" ]; then
@@ -720,13 +775,19 @@ else
   exit 3
 fi
 
-if [ -z "${images:-}" ]; then
-  images="$default_images"
+if [ -z "${distro:-}" ]; then
+  distro="$default_distro"
 fi
 
-if [[ ${images} == *"mbl-image-production"* ]]; then
-    printf "error: mbl-image-production not supported in this release.\n" >&2
+if [ -z "${image:-}" ]; then
+  if [ "${distro:-}" ==  "$default_distro" ]; then
+      image="$default_image"
+  elif [ "${distro:-}" ==  "$default_production_distro" ]; then
+      image="$default_production_image"
+  else
+    printf "error: missing --image IMAGE parameter.\n" >&2
     exit 3
+  fi
 fi
 
 if [ -z "${machines:-}" ]; then
@@ -777,7 +838,7 @@ if empty_stages_p; then
 fi
 
 "$execdir/git-setup.sh"
-"$execdir/ssh-setup.sh"
+"$execdir/ssh-setup.sh" $repo_hosts
 
 while true; do
   if empty_stages_p; then
@@ -889,7 +950,7 @@ while true; do
        set +u
        set +e
        # shellcheck disable=SC1091
-       MACHINE="$machine" DISTRO="$distro" . setup-environment "build-mbl"
+       MACHINE="$machine" DISTRO="$distro" . setup-environment "build-$distro"
        # shellcheck disable=SC2181
        if [ $? -ne 0 ]; then
            exit 1
@@ -902,11 +963,35 @@ while true; do
     ;;
 
   inject)
+    if [ -n "${inject_key_files:-}" ]; then
+      for machine in $machines; do
+        for file in $inject_key_files; do
+          base="$(basename "$file")"
+          cp "$file" "$builddir/machine-$machine/mbl-manifest/build-$distro/$base"
+        done
+      done
+    fi
+
     if [ -n "${inject_mcc_files:-}" ]; then
       for machine in $machines; do
         for file in $inject_mcc_files; do
           base="$(basename "$file")"
           cp "$file" "$builddir/machine-$machine/mbl-manifest/$mcc_final_destdir/$base"
+        done
+      done
+    fi
+
+    if [ -n "${root_passwd_file:-}" ]; then
+      for machine in $machines; do
+          cp "$root_passwd_file" "$builddir/machine-$machine/mbl-manifest/build-$distro/mbl_root_passwd_file"
+      done
+    fi
+
+    if [ -n "${ssh_auth_keys:-}" ]; then
+      for machine in $machines; do
+        for file in $ssh_auth_keys; do
+          base="$(basename "$file")"
+          cp "$file" "$builddir/machine-$machine/mbl-manifest/build-$distro/$base"
         done
       done
     fi
@@ -918,7 +1003,7 @@ while true; do
        (
        bitbake_env_setup "$machine"
        if [ -n "${build_tag:-}" ]; then
-         define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/meta-mbl-distro/conf/distro/mbl.conf" \
+         define_conf "$builddir/machine-$machine/mbl-manifest/layers/meta-mbl/meta-mbl-distro/conf/distro/include/mbl-distro.inc" \
                      "DISTRO_VERSION" "$build_tag"
        fi
        if [ "${flag_binary_release}" -eq 1 ]; then
@@ -943,12 +1028,8 @@ while true; do
        # This is useful to have at the log level that we are building.
        cat_files "$builddir/mbl-manifest/.repo/manifest.xml" "$builddir/pinned-manifest.xml"
 
-       # images is a space separated list of options, it should not be
-       # quoted because it will form multiple options rather than one
-       # option. However ideally each option in the list should be
-       # quoted.
-       # shellcheck disable=SC2086
-       bitbake $images
+       printf "\nCalling: bitbake %s\n\n" "$image"
+       bitbake "$image"
       )
     done
     push_stages artifact
@@ -957,86 +1038,98 @@ while true; do
   artifact)
     if [ -n "${outputdir:-}" ]; then
       for machine in $machines; do
-        bbtmpdir="$builddir/machine-$machine/mbl-manifest/build-mbl/tmp-$distro-glibc"
+        bbbuilddir="$builddir/machine-$machine/mbl-manifest/build-$distro"
+        bbtmpdir="${bbbuilddir}/tmp"
         machinedir="$outputdir/machine/$machine"
-        for image in $images; do
-          imagedir="$machinedir/images/$image"
+        imagedir="$machinedir/images/$image"
 
-          # We are interested in the image...
-          mkdir -p "$imagedir/images"
+        # We are interested in the image...
+        mkdir -p "$imagedir/images"
 
-          # Relevant to all machines
-          suffixes="manifest tar.xz wic.gz wic.bmap"
+        # Relevant to all machines
+        suffixes="manifest tar.xz wic.gz wic.bmap"
 
-          case $machine in
-          raspberrypi3-mbl) ;& # fall-through
-          imx7s-warp-mbl)   ;& # fall-through
-          imx7d-pico-mbl)   ;& # fall-through
-          imx6ul-pico-mbl)  ;& # fall-through
-          imx6ul-des0258-mbl)
-            targetsys=arm-oe-linux-gnueabi
-            ;;
-          imx8mmevk-mbl)
-            targetsys=aarch64-oe-linux
+        case $machine in
+        raspberrypi3-mbl) ;& # fall-through
+        imx7s-warp-mbl)   ;& # fall-through
+        imx7d-pico-mbl)   ;& # fall-through
+        imx6ul-pico-mbl)  ;& # fall-through
+        imx6ul-des0258-mbl)
+          targetsys=arm-oe-linux-gnueabi
+          ;;
+        imx8mmevk-mbl)
+          targetsys=aarch64-oe-linux
+          ;;
+        esac
+
+        # Source tar balls
+        mkdir -p "$imagedir/source"
+
+        case $flag_archiver in
+        "")
+          ;;
+        original)
+          # If we are archiving 'original' source we need to tar up a
+          # directory containing source tarballs, patches, series
+          # files and other crud.
+          for path in "$bbtmpdir/deploy/sources/$targetsys/"*; do
+            dir=$(dirname "$path")
+            pvn=$(basename "$path")
+            write_info "save artifact %s\n" "$pvn"
+            tar c -J -C "$dir" -f "$imagedir/source/$pvn.tar.xz" "$pvn"
+          done
+          ;;
+        *)
+          printf "assert: bad archiver %s\n" "$flag_archiver" >&2
+          exit 9
+          ;;
+        esac
+
+        for suffix in $suffixes
+        do
+          write_info "save artifact %s\n" "$image-$machine.$suffix"
+          cp "$bbtmpdir/deploy/images/$machine/$image-$machine.$suffix" "$imagedir/images"
+          case $suffix in
+          rpi-sdimg)
+            maybe_compress "$imagedir/images/$image-$machine.$suffix"
             ;;
           esac
-
-          # Source tar balls
-          mkdir -p "$imagedir/source"
-
-          case $flag_archiver in
-          "")
-            ;;
-          original)
-            # If we are archiving 'original' source we need to tar up a
-            # directory containing source tarballs, patches, series
-            # files and other crud.
-            for path in "$bbtmpdir/deploy/sources/$targetsys/"*; do
-              dir=$(dirname "$path")
-              pvn=$(basename "$path")
-              write_info "save artifact %s\n" "$pvn"
-              tar c -J -C "$dir" -f "$imagedir/source/$pvn.tar.xz" "$pvn"
-            done
-            ;;
-          *)
-            printf "assert: bad archiver %s\n" "$flag_archiver" >&2
-            exit 9
-            ;;
-          esac
-
-          for suffix in $suffixes
-          do
-            write_info "save artifact %s\n" "$image-$machine.$suffix"
-            cp "$bbtmpdir/deploy/images/$machine/$image-$machine.$suffix" "$imagedir/images"
-            case $suffix in
-            rpi-sdimg)
-              maybe_compress "$imagedir/images/$image-$machine.$suffix"
-              ;;
-            esac
-          done
-
-          # Dot graphs
-          mkdir -p "$imagedir/dot/"
-          bh_path="$builddir/machine-$machine/mbl-manifest/build-mbl/buildhistory/images/${machine//-/_}/glibc/$image"
-          for path in "$bh_path/"*.dot; do
-            if [ -e "$path" ]; then
-              write_info "save artifact %s\n" "$(basename "$path")"
-              cp "$path" "$imagedir/dot/"
-            fi
-          done
-
-          # Build information
-          mkdir -p "$imagedir/info/"
-          for path in "$bh_path/"*.txt; do
-            if [ -e "$path" ]; then
-              write_info "save artifact %s\n" "$(basename "$path")"
-              cp "$path" "$imagedir/info/"
-            fi
-          done
-
-          # License manifests
-          artifact_image_manifests "$image" "$machine"
         done
+
+        # Dot graphs
+        mkdir -p "$imagedir/dot/"
+        bh_path="$builddir/machine-$machine/mbl-manifest/build-$distro/buildhistory/images/${machine//-/_}/glibc/$image"
+        for path in "$bh_path/"*.dot; do
+          if [ -e "$path" ]; then
+            write_info "save artifact %s\n" "$(basename "$path")"
+            cp "$path" "$imagedir/dot/"
+          fi
+        done
+
+        # Build information
+        mkdir -p "$imagedir/info/"
+        for path in "$bh_path/"*.txt; do
+          if [ -e "$path" ]; then
+            write_info "save artifact %s\n" "$(basename "$path")"
+            cp "$path" "$imagedir/info/"
+          fi
+        done
+
+        # Images Sign Keys
+        mkdir -p "$imagedir/keys/"
+        shopt -s nullglob
+        for file in "$bbtmpdir/deploy/images/$machine/"*.{pem,crt,key} ; do
+            write_info "save artifact %s\n" "$(basename "$file")"
+            cp "$file" "$imagedir/keys/"
+        done
+        shopt -u nullglob
+
+        # License manifests
+        artifact_image_manifests "$image" "$machine"
+
+        # local.conf
+        write_info "save artifact local.conf\n"
+        cp "${bbbuilddir}/conf/local.conf" "$machinedir"
 
         # ... the license information...
         write_info "save artifact licenses\n"
@@ -1044,20 +1137,17 @@ while true; do
 
         if [ "$flag_licenses" -eq 1 ]; then
           write_info "create license report\n"
-          for image in $images; do
-            for mach in $machines; do
-              # use the license manifests we just copied to the artifact dir
-              build_lic_paths+="${outputdir}/machine/${mach}/images/${image}"
-            done
-
-              create_license_report "$build_lic_paths" \
-                                    "$lic_cmp_build_tag" \
-                                    "$artifactory_api_key" \
-                                    "$outputdir" \
-                                    "$machines" \
-                                    "$image"
+          for mach in $machines; do
+            # use the license manifests we just copied to the artifact dir
+            build_lic_paths+="${outputdir}/machine/${mach}/images/${image}"
           done
 
+            create_license_report "$build_lic_paths" \
+                                  "$lic_cmp_artifact_path" \
+                                  "$artifactory_api_key" \
+                                  "$outputdir" \
+                                  "$machines" \
+                                  "$image"
         fi
 
         maybe_compress "$machinedir/licenses.tar"
@@ -1066,9 +1156,7 @@ while true; do
 
       if [ "$flag_binary_release" -eq 1 ]; then
         for machine in $machines; do
-          for image in $images; do
-            create_binary_release "$image" "$machine"
-          done
+          create_binary_release "$image" "$machine"
         done
       fi
 

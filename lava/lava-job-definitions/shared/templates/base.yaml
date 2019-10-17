@@ -15,19 +15,29 @@ tags:
 {% endif %}
 
 {% set venv_name = "/tmp/venv" %}
+{% set host_download_dir = "/tmp/pytest" %}
+{% set dut_download_dir = "/tmp/pytest" %}
+{% set host_tutorials_dir = "/tmp/tutorials" %}
+{% set dut_tutorials_dir = "/scratch" %}
+
+{% set app_payload_version = "1" %}
+{% set rootfs_payload_version = "1" %}
 
 metadata:
     build-url: "{{ build_url }}"
     build-tag: "{{ build_tag }}"
     testplan: "{{ job_name }}"
     mbl-branch: "{{ mbl_branch }}"
+{% if treasure_database %}
+    td-database: "{{ treasure_database }}"
+{% endif %}
 
 priority: medium
 visibility: public
 
 timeouts:
   job:
-    minutes: {{ job_timeout|default(50) }}
+    minutes: {{ job_timeout|default(120) }}
   action:
     minutes: 15
   connection:
@@ -48,6 +58,8 @@ protocols:
 {%    set login_prompt = login_prompt|default("mbed-linux-os-(.*) login:", true) %}
 
 {%    set prompts = prompts|default(["root@mbed-linux-os(.*):~#"], true) %}
+
+{%    set passwords = passwords|default([], true) %}
 
 
 # Deploy and boot the target
