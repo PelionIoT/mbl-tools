@@ -67,7 +67,7 @@ else
     ALL_COMMITS=$(git cherry -v --abbrev=7 "$MST" "$DEV" | awk '$0 ~ "^+" {count++} END {print count}')
     DIFF=$(git cherry -v --abbrev=7 "$MST" "$DEV" "$TAG_TO")
     TAG_COMMITS=$(printf "%s" "$DIFF" | awk '$0 ~ "^+" {count++} END {print count}')
-    if [ $ALL_COMMITS != $TAG_COMMITS ]; then
+    if [ "$ALL_COMMITS" != "$TAG_COMMITS" ]; then
         echo -e "${WARN_COL}!!!WARNING!!! Tag $TAG_TO maybe incorrect"
         echo -e "  Tag commits ($TAG_COMMITS) does not match all commits ($ALL_COMMITS)"
         echo -e "  Please review using --no-tag option${NO_COL}"
@@ -86,7 +86,7 @@ IFS=$'\n'
 SHAS=""
 for line in $DIFF; do
     if [ $COMMIT_DATE -eq 1 ]; then
-        CDATE=$(git log -1 --format="%ci" ${line:2:7})
+        CDATE=$(git log -1 --format="%ci" "${line:2:7}")
         CDATE="${DATE_COL}${CDATE%% *} "
     fi
     if [[ $line =~ ^\+ ]]; then
