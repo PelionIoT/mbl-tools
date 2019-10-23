@@ -19,8 +19,8 @@
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
     {% set payload_url = "/".join([payloads_url,
-                                   component_name + "_payload.tar",
-                                   component_name + "_payload.tar",]) %}
+                                   component_name + "_payload.swu",
+                                   component_name + "_payload.swu",]) %}
 
     {{ macros.boot_component_update(venv_name, component_name, payload_url, update_method) | indent }}
 
