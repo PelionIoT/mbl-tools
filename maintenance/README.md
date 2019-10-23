@@ -114,9 +114,10 @@ done
 
 To enable testing you will need to create and push 3 "TEST COMMITS" on:
 
-* `mbl-manifest` - change `default.xml` entries of mbl-config & meta-mbl to your maintenance branches
-* `meta-mbl` - change `mbl-linked-repositories.conf` to point your maintenance branch of mbl-core (rather than AUTO-REV)
-* `mbl-jenkins` - change `mbl-pipeline` to point to the maintenance branches for mblToolsBranch, paramsBranch, mblManifestBranch & lavaMblBranch (and any new ones!)
+* `mbl-manifest` - change `default.xml` entries of mbl-config & meta-mbl to your maintenance branches;
+* `meta-mbl` - change `mbl-linked-repositories.conf` setting of 
+SRC_URI_OPTIONS_MBL_CORE_REPO to point your maintenance branch of mbl-core rather than master;
+* `mbl-jenkins` - change `mbl-pipeline` to point to the maintenance branches for the mbl-jenkins-library revision, paramsBranch, mblManifestBranch, mblToolsBranch & lavaMblBranch (and any future ones!).
 
 Label the 3 PRs for these repositories as _DO NOT MERGE_, as you will need to back out the TEST COMMIT on each before merging to master.
 
