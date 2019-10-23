@@ -77,10 +77,10 @@ def main():
 
     # Create the payloads
     create_update_payload_commands = [
-        "create-update-payload -b1 -o {}/wks_bootloader1_payload.swu".format(
+        "create-update-payload -b1 -o {}/bootloader1_payload.swu".format(
             args.outputdir
         ),
-        "create-update-payload -b2 -o {}/wks_bootloader2_payload.swu".format(
+        "create-update-payload -b2 -o {}/bootloader2_payload.swu".format(
             args.outputdir
         ),
         "create-update-payload -k -o {}/kernel_payload.swu".format(
