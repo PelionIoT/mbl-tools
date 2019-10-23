@@ -77,14 +77,17 @@ def main():
 
     # Create the payloads
     create_update_payload_commands = [
-        "create-update-payload -b1 -o {}/wks_bootloader1_payload.tar".format(
+        "create-update-payload -b1 -o {}/wks_bootloader1_payload.swu".format(
             args.outputdir
         ),
-        "create-update-payload -b2 -o {}/wks_bootloader2_payload.tar".format(
+        "create-update-payload -b2 -o {}/wks_bootloader2_payload.swu".format(
             args.outputdir
         ),
-        "create-update-payload -k -o {}/kernel_payload.tar".format(
+        "create-update-payload -k -o {}/kernel_payload.swu".format(
             args.outputdir
+        ),
+        "create-update-payload -r {} -o {}/rootfs_payload.swu".format(
+            args.image, args.outputdir
         ),
     ]
     bitbake.run_commands(create_update_payload_commands)
