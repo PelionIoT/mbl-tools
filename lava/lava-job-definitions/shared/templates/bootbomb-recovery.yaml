@@ -77,4 +77,3 @@
       - "{{ login_prompt }}"
     timeout:
       minutes: 6
-

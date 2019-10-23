@@ -26,10 +26,8 @@ valid_device_types = (
     "bcm2837-rpi-3-b-plus-32",
     "imx7s-warp-mbl",
     "imx7d-pico-mbl",
-    "imx7d-pico-recovery-mbl",
     "imx8mmevk-mbl",
     "imx6ul-pico-mbl",
-    "imx6ul-pico-recovery-mbl",
 )
 
 
