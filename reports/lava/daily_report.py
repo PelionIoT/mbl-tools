@@ -274,7 +274,7 @@ def html_output(results, link, submitter):
 
 
 def main():
-    """Main function."""
+    """Create the daily report."""
     parser = argparse.ArgumentParser(
         description=HELP_TEXT, formatter_class=argparse.RawTextHelpFormatter
     )
