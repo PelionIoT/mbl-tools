@@ -1,0 +1,31 @@
+# Copyright (c) 2018, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+{% import "shared/macros.jinja2" as macros with context %}
+actions:
+
+{% if lxc_creation %}
+
+# Deploy and boot the LXC container
+- deploy:
+    namespace: lxc
+    timeout:
+      minutes: 10
+    to: lxc
+    os: ubuntu
+    packages:
+    - avahi-utils
+    - python3-venv
+    - libusb-1.0
+    - bmap-tools
+    - usbutils
+
+- boot:
+    namespace: lxc
+    method: lxc
+    timeout:
+      minutes: 5
+    prompts:
+      - "root@{{ lxc_name }}-(.*):/#"
+{% endif %}
+
