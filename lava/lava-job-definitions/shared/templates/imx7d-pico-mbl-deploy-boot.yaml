@@ -1,1 +1,3 @@
-{% extends "shared/templates/uboot-ums-deploy-boot.yaml" %}
+{% extends "shared/templates/bootbomb-recovery.yaml" %}
+
+{% set bootbomb_filename = "pico-imx7d_bootbomb_20170112.imx" %}

@@ -7,7 +7,9 @@ context:
   extra_nfsroot_args: ",vers=3"
   console_device: "ttyS0"
 
-actions:
+# Deploy and boot the lxc container
+{% include "shared/templates/lxc-deploy-boot.yaml" with context %}
+
 - deploy:
     namespace: target
     timeout:
