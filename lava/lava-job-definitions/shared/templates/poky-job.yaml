@@ -1,6 +1,16 @@
+# Copyright (c) 2019, Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: BSD-3-Clause
+#
+# Template for poky test plans
+# Requires: job_name
+#
+# Notes:
+# * Assumes mbl-core:/ci/lava/tests/job_name.yaml exists
+# * Assumes poky tests are on IMX8 only
+
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "PSA Crypto Poky"%}
 {% set lxc_creation = false %}
 {% set root_partition = 1 %}
 {% set login_prompt = "imx8mmevk login:" %}
@@ -12,9 +22,9 @@
       minutes: 10
     namespace: target
     definitions:
-    - path: ci/lava/tests/psa-arch-poky-tests.yaml
+    - path: ci/lava/tests/{{ job_name }}.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: psa-arch-poky-tests
+      name: {{ job_name }}
       from: git
       history: False
       branch: "{{ mbl_branch }}"
