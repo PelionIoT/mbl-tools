@@ -65,28 +65,6 @@ protocols:
 # Deploy and boot the target
 {% include "shared/templates/" + device_type + "-deploy-boot.yaml" with context %}
 
-{% if lxc_creation %}
-
-# Deploy and boot the LXC container
-- deploy:
-    namespace: lxc
-    timeout:
-      minutes: 10
-    to: lxc
-    os: ubuntu
-    packages:
-    - avahi-utils
-    - python3-venv
-
-- boot:
-    namespace: lxc
-    method: lxc
-    timeout:
-      minutes: 5
-    prompts:
-      - "root@{{ lxc_name }}-(.*):/#"
-{% endif %}
-
 # Run the testplan
 {% block testplan %}
 {# This block should contain LAVA test definitions. Those are defined in the
