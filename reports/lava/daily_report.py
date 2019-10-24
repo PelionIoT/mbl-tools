@@ -39,7 +39,7 @@ th { color:#fff; }
 .backred    { background-color:#ff1a1a; }
 .backgreen  { background-color:#00cc00; }
 .backgrey   { background-color:#808080; }
-.textbuild  { font-size: 3vw; }
+.textbuild  { font-size: 2vw; }
 .textred    { color: #ff1a1a; text-align: right; }
 .textamber  { color:#ff9900; text-align: right; }
 .textgreen  { color: #00cc00; text-align: right; }
