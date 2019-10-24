@@ -26,23 +26,23 @@ body { background-color: black; }
 table, th, td {
     border:1px solid #bbbbbb;
     border-collapse: collapse;
-    font-size: 2vw;
+    font-size: 1.5vw;
     font-family: Arial, Helvetica, sans-serif;
     padding:5px;
     text-shadow:1px 1px 1px #000066;
     border-bottom:3px solid #669999;
-    background-color:#666699
+    background-color:#737373
 }
 table { min-width: 100%; }
 th { color:#fff; }
-.backamber  { background-color:#ff9900; }
-.backred    { background-color:#ff1a1a; }
-.backgreen  { background-color:#00cc00; }
+.backamber  { background-color:#804d00; }
+.backred    { background-color:#8b0000; }
+.backgreen  { background-color:#006400; }
 .backgrey   { background-color:#808080; }
 .textbuild  { font-size: 2vw; }
-.textred    { color: #ff1a1a; text-align: right; }
-.textamber  { color:#ff9900; text-align: right; }
-.textgreen  { color: #00cc00; text-align: right; }
+.textred    { color: #8b0000; text-align: right; }
+.textamber  { color: #804d00; text-align: right; }
+.textgreen  { color: #006400; text-align: right; }
 .textblack  { color: #353531; text-align: right; }
 .textboard  { font-size: 1vw; }
 .row { display: flex; }
@@ -159,14 +159,15 @@ def html_output(results, link, submitter):
     """Print out all the summary results in HTML tables."""
     print(HTML_HEADER)
 
-    row = True
+    print('<div class="row">')
+    half = int((len(results) + 1) / 2)
+    count = 0
+    print('<div class="column">')
     for result in results:
-        if row:
-            print('<div class="row">')
-            row = False
-        else:
-            row = True
-        print('<div class="column">')
+        if count == half:
+            print("</div>")  # Finish the col
+            print('<div class="column">')
+        count += 1
         failed = (
             result["Totals"]["Jobs"]
             - result["Totals"]["Complete"]
@@ -267,11 +268,8 @@ def html_output(results, link, submitter):
                 )
             )
         print("</tr></table>")
-        print("</div>")  # Finish the col
-        if row:
-            print("</div>")  # Finish the row
-    if not row:
-        print("</div>")  # Finish the row
+    print("</div>")  # Finish the col
+    print("</div>")  # Finish the row
     print(HTML_FOOTER)
 
 
