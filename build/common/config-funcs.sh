@@ -80,7 +80,7 @@ _config_write_args()
   # Config filename and path
   local config="$1"
   shift
-  if [ ! -e "$config" ] || [ -w "$config" -a -f "$config" ]; then
+  if [ ! -e "$config" ] || [[ -w "$config" && -f "$config" ]]; then
     # Create empty file
     rm -f "$config"
     touch "$config"
@@ -146,7 +146,7 @@ _config_write()
   local config_file="$1"
   shift
   if [ -d "$(dirname "$config_file")" ]; then
-    if [ ! -e "$config_file" ] || [ -w "$config_file" -a -f "$config_file" ]; then
+    if [ ! -e "$config_file" ] || [[ -w "$config_file" && -f "$config_file" ]]; then
       echo "Saving configuration to $config_file"
       _config_write_args "$config_file" "$@" "--END--"
     else
