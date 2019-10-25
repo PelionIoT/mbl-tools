@@ -80,7 +80,7 @@ _config_write_args()
   # Config filename and path
   local config="$1"
   shift
-  if [ ! -e "$config" ] || [ -w "$config" ]; then
+  if [ ! -e "$config" ] || [ -w "$config" -a -f "$config" ]; then
     # Create empty file
     rm -f "$config"
     touch "$config"
@@ -146,8 +146,12 @@ _config_write()
   local config_file="$1"
   shift
   if [ -d "$(dirname "$config_file")" ]; then
-    echo "Saving configuration to $config_file"
-    _config_write_args "$config_file" "$@" "--END--"
+    if [ ! -e "$config_file" ] || [ -w "$config_file" -a -f "$config_file" ]; then
+      echo "Saving configuration to $config_file"
+      _config_write_args "$config_file" "$@" "--END--"
+    else
+      echo "ERROR: Cannot write $config_file as invalid file"
+    fi
   else
     echo "ERROR: Cannot write $config_file as directory is invalid"
     return 1
@@ -246,31 +250,31 @@ _config_combine_args()
   local arg
   set +u # Ignore if the config_primary array is empty
   for arg in "${config_primary[@]}"; do
-    ret_args+=($arg)
+    ret_args+=("$arg")
   done
   set -u
   # Next add all the command line arguments upto "--"
   while [ $# -gt 0 ]; do
-    arg=$1
+    arg="$1"
     shift
     if [[ "$arg" =~ ^--\ *$ ]]; then
       # Found "--" exit the loop without recording it as we may get arguments
       # that don't contain "--"
       break
     fi
-    ret_args+=($arg)
+    ret_args+=("$arg")
   done
   # Add the delimiter between args (in case it wasn't in the command line)
   ret_args+=("--")
   # Now add the secondary config args
   set +u # Ignore if the config_secondary array is empty
   for arg in "${config_secondary[@]}"; do
-    ret_args+=($arg)
+    ret_args+=("$arg")
   done
   set -u
   # Lastly add any remaining args
   while [ $# -gt 0 ]; do
-    ret_args+=($1)
+    ret_args+=("$1")
     shift
   done
 }
@@ -300,15 +304,24 @@ config_setup()
   _config_get_filename "save-config" config_save __args "${__args[@]}" "--END--"
   set -u
 
-  if [ -n "$config_save" ]; then
-    set +u  # __args could be empty, so allow unbound vars
-    _config_write "$config_save" "${__args[@]}"
-    set -u
-    exit 0
-  elif [ -n "$config_load" ]; then
+  if [ -n "$config_load" ] || [ -n "$config_save" ]; then
+    if [ "$config_save" == "$config_load" ]; then
+      echo "ERROR: Unsupported loading and saving to same config file - $config_save"
+      exit 2
+    fi
+  fi
+
+  # Support loading from one config and saving to another
+  if [ -n "$config_load" ]; then
     _config_read "$config_load" __config_primary __config_secondary
   fi
   set +u  # __args could be empty, so allow unbound vars
   _config_combine_args "${!config_args}" __config_primary __config_secondary "${__args[@]}"
   set -u
+  if [ -n "$config_save" ]; then
+    set +u  # __args could be empty, so allow unbound vars
+    _config_write "$config_save" "${config_args[@]}"
+    set -u
+    exit 0
+  fi
 }
