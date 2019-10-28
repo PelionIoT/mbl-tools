@@ -35,7 +35,7 @@ table, th, td {
     background-color:#bbbbbb;
 }
 table { min-width: 100%; }
-th { color:#fff; }
+th { color:#353531; text-shadow:1px 1px 1px #666666; }
 .backamber  { background-color:#804d00; }
 .backred    { background-color:#8b0000; }
 .backgreen  { background-color:#006400; }
