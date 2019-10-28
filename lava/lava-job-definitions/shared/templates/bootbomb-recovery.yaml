@@ -52,6 +52,7 @@
            - BUSNUM=$(cat $DEVICE_PATH/busnum)
            - DEVICENUM=$(cat $DEVICE_PATH/devnum)
            - imx_usb --bus=$BUSNUM --device=$DEVICENUM {{ bootbomb_filename }}
+           # Sleep to allow the bootbomb to start up.
            - sleep 30
            - ls -al $LAVA_STORAGE_INFO_0_BLOCK
            - bmaptool --quiet copy --bmap /lava-lxc/*.wic.bmap /lava-lxc/*.wic.gz $LAVA_STORAGE_INFO_0_BLOCK || lava-test-raise "recovery flash failed"
