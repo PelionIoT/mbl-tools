@@ -30,21 +30,20 @@ table, th, td {
     font-family: Arial, Helvetica, sans-serif;
     font-weight: bold;
     padding:5px;
-    text-shadow:1px 1px 1px #333333;
     border-bottom:3px solid #669999;
-    background-color:#bbbbbb;
+    background-color:#f2f2f2;
 }
 table { min-width: 100%; }
-th { color:#353531; text-shadow:1px 1px 1px #666666; }
-.backamber  { background-color:#804d00; }
+th { color:#353531; }
+.backamber  { background-color:#cc7a00; }
 .backred    { background-color:#8b0000; }
 .backgreen  { background-color:#006400; }
 .backgrey   { background-color:#808080; }
 .textbuild  { font-size: 2vw; }
-.textred    { color: #8b0000; text-align: right; text-shadow:1px 1px 1px #aa6666; }
-.textamber  { color: #804d00; text-align: right; text-shadow:1px 1px 1px #aa9966; }
-.textgreen  { color: #006400; text-align: right; text-shadow:1px 1px 1px #66aa66; }
-.textblack  { color: #353531; text-align: right; text-shadow:1px 1px 1px #666666; }
+.textred    { color: #e60000; text-align: right; }
+.textamber  { color: #804d00; text-align: right; }
+.textgreen  { color: #009900; text-align: right; }
+.textblack  { color: #353531; text-align: right; }
 .textboard  { font-size: 1vw; }
 .row { display: flex; }
 .column { flex: 50%; }
