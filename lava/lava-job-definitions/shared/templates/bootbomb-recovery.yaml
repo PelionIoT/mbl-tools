@@ -47,20 +47,15 @@
            - cd /lava-lxc
            - dpkg -i imx-usb-loader_0-git20181105.4aa98090-1_amd64.deb
            - lsusb
+             # The value 15a2 in the next line is the idVendor of the usb when the device is powered in recovery mode.
            - DEVICE_PATH=$(grep 15a2 /sys/bus/usb/devices/*/idVendor |grep "$LAVA_STORAGE_INFO_0_SATA" |awk '{split($0,a,"/idVendor"); print a[1]}')
            - BUSNUM=$(cat $DEVICE_PATH/busnum)
            - DEVICENUM=$(cat $DEVICE_PATH/devnum)
            - imx_usb --bus=$BUSNUM --device=$DEVICENUM {{ bootbomb_filename }}
-           - BLOCK_DEVICE=$(readlink /sys/class/block/sd* |grep $LAVA_STORAGE_INFO_0_SATA |awk '/[b-z]$/{print $1}' |awk '{n=split($0,a,"/"); print a[n]}')
-           - while [ -z "$BLOCK_DEVICE" ]
-           - do
-           -    sleep 10
-           -    BLOCK_DEVICE=$(readlink /sys/class/block/sd* |grep $LAVA_STORAGE_INFO_0_SATA |awk '/[b-z]$/{print $1}' |awk '{n=split($0,a,"/"); print a[n]}')
-           - done
-           - lsblk
-           - fdisk -l
-           - cd /lava-lxc
-           - bmaptool --quiet copy --bmap /lava-lxc/*.wic.bmap /lava-lxc/*.wic.gz /dev/$BLOCK_DEVICE
+             # Sleep to allow the bootbomb to start up.
+           - sleep 30
+           - ls -al $LAVA_STORAGE_INFO_0_BLOCK || lava-test-raise "block device not found"
+           - bmaptool --quiet copy --bmap /lava-lxc/*.wic.bmap /lava-lxc/*.wic.gz $LAVA_STORAGE_INFO_0_BLOCK || lava-test-raise "recovery flash operation failed"
 
 - boot:
     namespace: recovery
