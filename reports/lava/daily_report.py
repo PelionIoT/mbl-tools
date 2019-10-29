@@ -27,7 +27,7 @@ body { background-color: black; }
 table, th, td {
     border:1px solid #669999;
     border-collapse: collapse;
-    font-size: 1.5vw;
+    font-size: 1.4vw; /* Default size (jobs/tests) */
     font-family: Arial, Helvetica, sans-serif;
     font-weight: bold;
     padding:5px;
@@ -40,13 +40,13 @@ th { color:#353531; }
 .backred    { background-color:#8b0000; }
 .backgreen  { background-color:#006400; }
 .backgrey   { background-color:#808080; }
-.textbuild  { font-size: 2vw; }
+.textbuild  { font-size: 2vw; } /* Build job header size */
+.textboard  { font-size: 1vw; } /* Board results size */
 .texttime   { float: right; font-size: 0.8vw; color:#fff }
 .textred    { color: #e60000; text-align: right; }
-.textamber  { color: #804d00; text-align: right; }
+.textamber  { color: #e68a00; text-align: right; }
 .textgreen  { color: #009900; text-align: right; }
 .textblack  { color: #353531; text-align: right; }
-.textboard  { font-size: 1vw; }
 .row { display: flex; }
 .column { flex: 50%; }
 a:link { text-decoration: none; color:#fff; }
@@ -61,6 +61,8 @@ a:active { text-decoration: underline; }
 HTML_FOOTER = """
 </body>
 """
+
+MAX_RESULTS = 100
 
 
 def get_relative_time(timestamp):
@@ -87,7 +89,7 @@ def get_relative_time(timestamp):
     return relative
 
 
-def get_results_summary(server, submitter, build_name):
+def get_results_summary(server, submitter, build_name, build_num=-1):
     """Get a summary of the jobs/tests for a build.
 
     :return: Summary dictionary
@@ -95,36 +97,41 @@ def get_results_summary(server, submitter, build_name):
     """
     # Get test jobs for the given jenkins build_name
     query = lRE.get_custom_query(
-        server, submitter, "{}_build-1".format(build_name)
+        server, submitter, "{}_build{}".format(build_name, build_num)
     )
-    results = server.results.make_custom_query("testjob", query, 100)
-    build_num = query[query.rfind("build") :]
+    results = server.results.make_custom_query("testjob", query, MAX_RESULTS)
+    build_num = query[query.rfind("build") + 5 :]
+
+    if len(results) > 0:
+        time = get_relative_time(results[0]["submit_time"].value)
+    else:
+        time = "never"
 
     summary = {
         "Name": build_name,
         "Build": build_num,
         "Totals": {},
         "Boards": {},
-        "Time": get_relative_time(results[0]["submit_time"].value),
+        "Time": time,
     }
     summary["Totals"] = {
         "Jobs": len(results),
         "Complete": 0,
         "Pending": 0,
+        "Incomplete": 0,
         "Suites": 0,
         "Failed": 0,
         "Passed": 0,
     }
 
     for result in results:
-        # print( result['id'] )
-
         board = result["requested_device_type_id"]
         if board not in summary["Boards"]:
             summary["Boards"][board] = {
                 "Jobs": 0,
                 "Complete": 0,
                 "Pending": 0,
+                "Incomplete": 0,
                 "Suites": 0,
                 "Failed": 0,
                 "Passed": 0,
@@ -137,6 +144,9 @@ def get_results_summary(server, submitter, build_name):
         elif details["status"] != "Incomplete":
             summary["Boards"][board]["Pending"] += 1
             summary["Totals"]["Pending"] += 1
+        else:
+            summary["Boards"][board]["Incomplete"] += 1
+            summary["Totals"]["Incomplete"] += 1
 
         summary["Boards"][board]["Jobs"] += 1
 
@@ -170,6 +180,29 @@ def get_results_summary(server, submitter, build_name):
     return summary
 
 
+def compare_runs(runs, value, board=None):
+    """Compare a value between runs and return indication of better/worse.
+
+    :return: HTML symbol to indicate status.
+
+    """
+    if "Previous" in runs:
+        if board:
+            last = runs["Last"]["Boards"][board][value]
+            prev = runs["Previous"]["Boards"][board][value]
+        else:
+            last = runs["Last"]["Totals"][value]
+            prev = runs["Previous"]["Totals"][value]
+        if last > prev:
+            return "&uArr; "
+        elif last < prev:
+            return "&dArr; "
+        else:
+            return "&equals; "
+    else:
+        return ""
+
+
 def choose_class(result, zero_class, nonz_class):
     """Return one of the classes based on the result.
 
@@ -182,6 +215,29 @@ def choose_class(result, zero_class, nonz_class):
         return nonz_class
 
 
+def get_result_class_and_string(runs, value, board=None):
+    """Get a class based on value & the result with comparison indicator.
+
+    :return: Tuple of class - zero_class when zero result, else nonz_class,
+    and String with status indicator for HTML.
+
+    """
+    if board:
+        result = runs["Last"]["Boards"][board][value]
+    else:
+        result = runs["Last"]["Totals"][value]
+
+    if value in ["Complete", "Passed"]:
+        clss = choose_class(result, "textblack", "textgreen")
+    elif value in ["Incomplete", "Failed"]:
+        clss = choose_class(result, "textblack", "textred")
+    else:
+        clss = "textamber"
+
+    result = "{}{}".format(compare_runs(runs, value, board), result)
+    return (clss, result)
+
+
 def html_output(results, link, submitter):
     """Print out all the summary results in HTML tables."""
     print(HTML_HEADER)
@@ -190,22 +246,24 @@ def html_output(results, link, submitter):
     half = int((len(results) + 1) / 2)
     count = 0
     print('<div class="column">')
-    for result in results:
+    for runs in results:
+        result = runs["Last"]
+        # Put half the jobs in one column and the others in another
         if count == half:
             print("</div>")  # Finish the col
             print('<div class="column">')
         count += 1
-        failed = (
-            result["Totals"]["Jobs"]
-            - result["Totals"]["Complete"]
-            - result["Totals"]["Pending"]
-        )
+
+        # Work out the heading colour based on results
         if result["Totals"]["Jobs"] > 0:
-            if failed == 0 and result["Totals"]["Failed"] == 0:
+            if (
+                result["Totals"]["Incomplete"] == 0
+                and result["Totals"]["Failed"] == 0
+            ):
                 backclass = "backgreen"
             elif (
                 result["Totals"]["Complete"] == 0
-                and result["Totals"]["Failed"] == 0
+                and result["Totals"]["Passed"] == 0
             ):
                 backclass = "backred"
             else:
@@ -213,12 +271,14 @@ def html_output(results, link, submitter):
         else:
             backclass = "backgrey"
 
+        # Quick link to the detailed results
         anchor = "{}?image_version={}&image_number={}&submitter={}".format(
-            link, result["Name"], result["Build"][5:], submitter
+            link, result["Name"], result["Build"], submitter
         )
 
+        # Start the table with a main job name heading
         print("<table><tr>")
-        header = '<span class="textbuild"><a href="{}">{} {}</a></span>'.format(  # noqa: E501
+        header = '<span class="textbuild"><a href="{}">{} build{}</a></span>'.format(  # noqa: E501
             anchor, result["Name"], result["Build"]
         )
         header = '{}<span class="texttime">{}</span>'.format(
@@ -226,74 +286,73 @@ def html_output(results, link, submitter):
         )
         print('<th class="{}" colspan="5">{}</th>'.format(backclass, header))
         print("</tr><tr>")
+        # Indicate there are still jobs pending
         if result["Totals"]["Pending"] > 0:
             print("<th>Jobs (pending)</th>")
-            print(
-                '<td class="textamber">{}</td>'.format(
-                    result["Totals"]["Pending"]
-                )
-            )
             span = "1"
         else:
-            print("<th>Jobs</th>")
-            span = "2"
+            if (
+                "Previous" in runs
+                and runs["Previous"]["Totals"]["Pending"] > 0
+            ):
+                print("<th>Jobs (previous pends)</th>")
+                span = "1"
+            else:
+                print("<th>Jobs</th>")
+                span = "2"
+        if span == "1":
+            print(
+                '<td class="{}">{}</td>'.format(
+                    *get_result_class_and_string(runs, "Pending")
+                )
+            )
+
+        # Overall job stats
         print(
-            '<td class="{}" colspan="{}">{}</td>'.format(
-                choose_class(
-                    result["Totals"]["Complete"], "textblack", "textgreen"
-                ),
-                span,
-                result["Totals"]["Complete"],
+            '<td colspan="{}" class="{}">{}</td>'.format(
+                span, *get_result_class_and_string(runs, "Complete")
             )
         )
         print(
-            '<td class="{}" colspan="2">{}</td>'.format(
-                choose_class(failed, "textblack", "textred"), failed
+            '<td colspan="2" class="{}">{}</td>'.format(
+                *get_result_class_and_string(runs, "Incomplete")
             )
         )
         print("</tr><tr>")
+        # Overall test stats
         print("<th>Tests</th>")
         print(
-            '<td class="{}" colspan="2">{}</td>'.format(
-                choose_class(
-                    result["Totals"]["Passed"], "textblack", "textgreen"
-                ),
-                result["Totals"]["Passed"],
+            '<td colspan="2" class="{}">{}</td>'.format(
+                *get_result_class_and_string(runs, "Passed")
             )
         )
         print(
-            '<td class="{}" colspan="2">{}</td>'.format(
-                choose_class(
-                    result["Totals"]["Failed"], "textblack", "textred"
-                ),
-                result["Totals"]["Failed"],
+            '<td colspan="2" class="{}">{}</td>'.format(
+                *get_result_class_and_string(runs, "Failed")
             )
         )
+        # Per board stats
         for board, info in result["Boards"].items():
             print("</tr><tr>")
             print('<th class="textboard">{} (jobs/tests)</th>'.format(board))
             print(
                 '<td class="textboard {}">{}</td>'.format(
-                    choose_class(info["Complete"], "textblack", "textgreen"),
-                    info["Complete"],
-                )
-            )
-            failed = info["Jobs"] - info["Complete"] - info["Pending"]
-            print(
-                '<td class="textboard {}">{}</td>'.format(
-                    choose_class(failed, "textblack", "textred"), failed
+                    *get_result_class_and_string(runs, "Complete", board)
                 )
             )
             print(
                 '<td class="textboard {}">{}</td>'.format(
-                    choose_class(info["Passed"], "textblack", "textgreen"),
-                    info["Passed"],
+                    *get_result_class_and_string(runs, "Incomplete", board)
                 )
             )
             print(
                 '<td class="textboard {}">{}</td>'.format(
-                    choose_class(info["Failed"], "textblack", "textred"),
-                    info["Failed"],
+                    *get_result_class_and_string(runs, "Passed", board)
+                )
+            )
+            print(
+                '<td class="textboard {}">{}</td>'.format(
+                    *get_result_class_and_string(runs, "Failed", board)
                 )
             )
         print("</tr></table>")
@@ -330,7 +389,15 @@ def main():
 
     results = []
     for build in args.build_name:
-        results.append(get_results_summary(server, args.submitter, build))
+        runs = {}
+        runs["Last"] = get_results_summary(server, args.submitter, build)
+        if runs["Last"]["Build"]:
+            build_num = int(runs["Last"]["Build"]) - 1
+            if build_num > 0:
+                runs["Previous"] = get_results_summary(
+                    server, args.submitter, build, build_num
+                )
+        results.append(runs)
 
     html_output(results, link, args.submitter)
 
