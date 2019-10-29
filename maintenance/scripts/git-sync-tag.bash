@@ -34,23 +34,6 @@ TAG_INTO=${DEV}_into_${MST}
 
 set -xe
 
-# Sync master with remote
-git fetch "$REMOTE"
-git checkout "${MST}"
-git pull
-
-# Tagging the last synced commit from the target branch (master branch)
-# Delete on the remote the previous tag
-git push "$REMOTE" :"refs/tags/${TAG_INTO}"
-
-# Delete on the local the previous tag:
-git tag --delete "${TAG_INTO}"
-
-# Tag the <last_target_branch_synced_commit> - ASSUMPTION!
-echo "Tagging ${MST}: $(git log --format=oneline --abbrev-commit -1)"
-git tag "${TAG_INTO}"
-
-
 # Move to dev (but don't update - as assume this is at the right place!)
 git checkout "${DEV}"
 
@@ -64,6 +47,22 @@ git tag --delete "${TAG_TO}"
 # Tag the <last_source_branch_synced_commit> - ASSUMPTION!
 echo "Tagging ${DEV}: $(git log --format=oneline --abbrev-commit -1)"
 git tag "${TAG_TO}"
+
+
+# Sync master with remote
+git checkout "${MST}"
+git pull
+
+# Tagging the last synced commit from the target branch (master branch)
+# Delete on the remote the previous tag
+git push "$REMOTE" :"refs/tags/${TAG_INTO}"
+
+# Delete on the local the previous tag:
+git tag --delete "${TAG_INTO}"
+
+# Tag the <last_target_branch_synced_commit> - ASSUMPTION!
+echo "Tagging ${MST}: $(git log --format=oneline --abbrev-commit -1)"
+git tag "${TAG_INTO}"
 
 
 # Push the tags to the remote
