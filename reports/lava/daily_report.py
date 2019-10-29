@@ -24,25 +24,25 @@ HTML_HEADER = """
 <style>
 body { background-color: black; }
 table, th, td {
-    border:1px solid #bbbbbb;
+    border:1px solid #669999;
     border-collapse: collapse;
     font-size: 1.5vw;
     font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
     padding:5px;
-    text-shadow:1px 1px 1px #000066;
     border-bottom:3px solid #669999;
-    background-color:#737373
+    background-color:#f2f2f2;
 }
 table { min-width: 100%; }
-th { color:#fff; }
-.backamber  { background-color:#804d00; }
+th { color:#353531; }
+.backamber  { background-color:#cc7a00; }
 .backred    { background-color:#8b0000; }
 .backgreen  { background-color:#006400; }
 .backgrey   { background-color:#808080; }
 .textbuild  { font-size: 2vw; }
-.textred    { color: #8b0000; text-align: right; }
+.textred    { color: #e60000; text-align: right; }
 .textamber  { color: #804d00; text-align: right; }
-.textgreen  { color: #006400; text-align: right; }
+.textgreen  { color: #009900; text-align: right; }
 .textblack  { color: #353531; text-align: right; }
 .textboard  { font-size: 1vw; }
 .row { display: flex; }
