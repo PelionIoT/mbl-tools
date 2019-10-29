@@ -10,6 +10,7 @@ import lavaResultExtract as lRE
 import sys
 from os import environ
 import argparse
+from datetime import datetime
 
 HELP_TEXT = """Lava daily report generator.
 Requires the following environment variables to be set:
@@ -40,6 +41,7 @@ th { color:#353531; }
 .backgreen  { background-color:#006400; }
 .backgrey   { background-color:#808080; }
 .textbuild  { font-size: 2vw; }
+.texttime   { float: right; font-size: 0.8vw; color:#fff }
 .textred    { color: #e60000; text-align: right; }
 .textamber  { color: #804d00; text-align: right; }
 .textgreen  { color: #009900; text-align: right; }
@@ -61,6 +63,30 @@ HTML_FOOTER = """
 """
 
 
+def get_relative_time(timestamp):
+    """Given a timestamp string, get a relative time.
+
+    :return: Human readable relative time.
+
+    """
+    dt = datetime.strptime(timestamp, "%Y%m%dT%H:%M:%S")
+    delta = datetime.now() - dt
+    days = delta.days
+    relative = ""
+    if days != 0:
+        relative = "{} day{} ago".format(days, ("" if days == 1 else "s"))
+    else:
+        mins = int(delta.seconds / 60)
+        if mins < 100:
+            relative = "{} min{} ago".format(mins, ("" if mins == 1 else "s"))
+        else:
+            hours = int(delta.seconds / 3600)
+            relative = "{} hour{} ago".format(
+                hours, ("" if hours == 1 else "s")
+            )
+    return relative
+
+
 def get_results_summary(server, submitter, build_name):
     """Get a summary of the jobs/tests for a build.
 
@@ -79,6 +105,7 @@ def get_results_summary(server, submitter, build_name):
         "Build": build_num,
         "Totals": {},
         "Boards": {},
+        "Time": get_relative_time(results[0]["submit_time"].value),
     }
     summary["Totals"] = {
         "Jobs": len(results),
@@ -191,11 +218,13 @@ def html_output(results, link, submitter):
         )
 
         print("<table><tr>")
-        print(
-            '<th class="textbuild {}" colspan="5"><a href="{}">{} {}</a></th>'.format(  # noqa: E501
-                backclass, anchor, result["Name"], result["Build"]
-            )
+        header = '<span class="textbuild"><a href="{}">{} {}</a></span>'.format(  # noqa: E501
+            anchor, result["Name"], result["Build"]
         )
+        header = '{}<span class="texttime">{}</span>'.format(
+            header, result["Time"]
+        )
+        print('<th class="{}" colspan="5">{}</th>'.format(backclass, header))
         print("</tr><tr>")
         if result["Totals"]["Pending"] > 0:
             print("<th>Jobs (pending)</th>")
