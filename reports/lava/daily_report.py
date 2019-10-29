@@ -141,12 +141,12 @@ def get_results_summary(server, submitter, build_name, build_num=-1):
         if details["status"] == "Complete":
             summary["Boards"][board]["Complete"] += 1
             summary["Totals"]["Complete"] += 1
-        elif details["status"] != "Incomplete":
-            summary["Boards"][board]["Pending"] += 1
-            summary["Totals"]["Pending"] += 1
-        else:
+        elif details["status"] in ["Incomplete", "Canceled"]:
             summary["Boards"][board]["Incomplete"] += 1
             summary["Totals"]["Incomplete"] += 1
+        else:
+            summary["Boards"][board]["Pending"] += 1
+            summary["Totals"]["Pending"] += 1
 
         summary["Boards"][board]["Jobs"] += 1
 
