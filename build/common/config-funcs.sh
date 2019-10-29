@@ -19,9 +19,10 @@
 # Notes:
 # * only supports options without values or options with a single value
 # * supports "--" option that splits primary and secondary arguments
-# * SC1001: \- is on purpose
 # * SC2178: Arrays passed around by reference confuses shellcheck
+#           https://github.com/koalaman/shellcheck/issues/1225
 # * SC2034: Arrays passed around by reference confuses shellcheck
+#           https://github.com/koalaman/shellcheck/issues/1543
 
 
 # Read arguments and values from a file
@@ -44,8 +45,8 @@ _config_read_args()
         continue  # Skip the "--"
       fi
       local val
-      # shellcheck disable=SC1001
-      if [[ "$line" =~ ^-[\-a-z]+= ]]; then
+      pat="^-[-a-z]+="
+      if [[ "$line" =~ $pat ]]; then
         # Catch --option=value and don't split it
         val="$line"
       else
