@@ -27,7 +27,7 @@ body { background-color: black; }
 table, th, td {
     border:1px solid #669999;
     border-collapse: collapse;
-    font-size: 1.4vw; /* Default size (jobs/tests) */
+    font-size: 1.3vw; /* Default size (jobs/tests) */
     font-family: Arial, Helvetica, sans-serif;
     font-weight: bold;
     padding:5px;
@@ -36,13 +36,14 @@ table, th, td {
 }
 table { min-width: 100%; }
 th { color:#353531; }
-.backamber  { background-color:#cc7a00; }
-.backred    { background-color:#8b0000; }
-.backgreen  { background-color:#006400; }
-.backgrey   { background-color:#808080; }
+.backamber  { background-color:#cc7a00; color:#fff; }
+.backred    { background-color:#8b0000; color:#fff; }
+.backgreen  { background-color:#006400; color:#fff; }
+.backgrey   { background-color:#808080; color:#fff; }
 .textbuild  { font-size: 2vw; } /* Build job header size */
-.textboard  { font-size: 1vw; } /* Board results size */
+.textboard  { font-size: 0.9vw; } /* Board results size */
 .texttime   { float: right; font-size: 0.8vw; color:#fff }
+.textkey    { background-color:#000; color:#fff; font-size: 0.9vw; }
 .textred    { color: #e60000; text-align: right; }
 .textamber  { color: #e68a00; text-align: right; }
 .textgreen  { color: #009900; text-align: right; }
@@ -180,6 +181,52 @@ def get_results_summary(server, submitter, build_name, build_num=-1):
     return summary
 
 
+# List of indicators based for jobs, tests and overall
+# Format for each list entry is:
+# [{"Type": threshold ...}, [positive sym, negative sym, desc]]
+INDICATORS = [
+    [{"Jobs": 0, "Tests": 0, "All": 0}, ["equals", "equals", "Same"]],
+    [{"Jobs": 1, "Tests": 2, "All": 5}, ["#8673", "#8675", "Trivial"]],
+    [{"Jobs": 3, "Tests": 5, "All": 10}, ["uArr", "dArr", "Minor"]],
+    [{"Jobs": 7, "Tests": 10, "All": 20}, ["#10506", "#10507", "Major"]],
+    [{"Jobs": 0, "Tests": 0, "All": 0}, ["#10224", "#10225", "Serious"]],
+]
+
+
+def get_indicator(value, last, prev):
+    """Return an indicator of much different the last and prev results are.
+
+    :return: HTML symbol to indicate how much difference.
+
+    """
+    if value in ["Complete", "Incomplete"]:
+        ind_type = "Jobs"
+    elif value in ["Passed", "Failed"]:
+        ind_type = "Tests"
+    else:
+        ind_type = "All"
+
+    diff = abs(last - prev)
+    index = 0 if last > prev else 1
+    for group in INDICATORS:
+        threshold = group[0][ind_type]
+        indicator = group[1][index]
+        if threshold >= diff:
+            break
+    # Return the last one found
+    return "&{};".format(indicator)
+
+
+def indicator_key_table():
+    """Print out a simple key table of indicators."""
+    print("<table><tr>")
+    for group in INDICATORS:
+        print(
+            '<td class="textkey">&{}; {}</td>'.format(group[1][0], group[1][2])
+        )
+    print("</tr></table>")
+
+
 def compare_runs(runs, value, board=None):
     """Compare a value between runs and return indication of better/worse.
 
@@ -193,12 +240,7 @@ def compare_runs(runs, value, board=None):
         else:
             last = runs["Last"]["Totals"][value]
             prev = runs["Previous"]["Totals"][value]
-        if last > prev:
-            return "&uArr; "
-        elif last < prev:
-            return "&dArr; "
-        else:
-            return "&equals; "
+        return "{} ".format(get_indicator(value, last, prev))
     else:
         return ""
 
@@ -238,6 +280,55 @@ def get_result_class_and_string(runs, value, board=None):
     return (clss, result)
 
 
+# How much complete/incomplete jobs are worth compared to passed/failed tests
+JOBS_FACTOR = 5
+
+
+def calculate_overall(totals):
+    """Get an overall value from a dictionary of run totals.
+
+    :return: Overall value.
+
+    """
+    result = totals["Complete"] - totals["Incomplete"]
+    result *= JOBS_FACTOR
+    result += totals["Passed"] - totals["Failed"]
+    return result
+
+
+def get_result_overall_class_and_string(runs):
+    """Get a class based on value & the result with comparison indicator.
+
+    :return: Tuple of class and String with status indicator for HTML.
+
+    """
+    totals = runs["Last"]["Totals"]
+    if "Previous" in runs:
+        last = calculate_overall(totals)
+        prev = calculate_overall(runs["Previous"]["Totals"])
+        indicator = " {}".format(get_indicator("All", last, prev))
+    else:
+        last = 0
+        prev = 0
+        indicator = ""
+
+    if totals["Jobs"] > 0:
+        if totals["Incomplete"] == 0 and totals["Failed"] == 0:
+            # Complete success!
+            backclass = "backgreen"
+        elif last < prev:
+            # Things are getting worse!
+            backclass = "backred"
+        else:
+            # Still some problems, but probably getting better.
+            backclass = "backamber"
+    else:
+        # Nothing ran
+        backclass = "backgrey"
+
+    return (backclass, indicator)
+
+
 def html_output(results, link, submitter):
     """Print out all the summary results in HTML tables."""
     print(HTML_HEADER)
@@ -255,21 +346,7 @@ def html_output(results, link, submitter):
         count += 1
 
         # Work out the heading colour based on results
-        if result["Totals"]["Jobs"] > 0:
-            if (
-                result["Totals"]["Incomplete"] == 0
-                and result["Totals"]["Failed"] == 0
-            ):
-                backclass = "backgreen"
-            elif (
-                result["Totals"]["Complete"] == 0
-                and result["Totals"]["Passed"] == 0
-            ):
-                backclass = "backred"
-            else:
-                backclass = "backamber"
-        else:
-            backclass = "backgrey"
+        (backclass, indicator) = get_result_overall_class_and_string(runs)
 
         # Quick link to the detailed results
         anchor = "{}?image_version={}&image_number={}&submitter={}".format(
@@ -281,8 +358,8 @@ def html_output(results, link, submitter):
         header = '<span class="textbuild"><a href="{}">{} build{}</a></span>'.format(  # noqa: E501
             anchor, result["Name"], result["Build"]
         )
-        header = '{}<span class="texttime">{}</span>'.format(
-            header, result["Time"]
+        header = '{}{}<span class="texttime">{}</span>'.format(
+            header, indicator, result["Time"]
         )
         print('<th class="{}" colspan="5">{}</th>'.format(backclass, header))
         print("</tr><tr>")
@@ -356,6 +433,7 @@ def html_output(results, link, submitter):
                 )
             )
         print("</tr></table>")
+    indicator_key_table()
     print("</div>")  # Finish the col
     print("</div>")  # Finish the row
     print(HTML_FOOTER)
