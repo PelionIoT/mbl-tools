@@ -71,13 +71,16 @@ class Bitbake(object):
         self._validate_parameters()
         self._check_environment()
 
-    def _generate_setup_env_command(self):
+    def _generate_setup_env_command(self, verbose=False):
         """Generate a Bash command to set up the BitBake environment."""
-        return ". {} build-{}".format(
-            quote(self.init_env_file), quote(self.distro)
+        redirect_str = ""
+        if not verbose:
+            redirect_str = ">/dev/null"
+        return ". {} build-{} {}".format(
+            quote(self.init_env_file), quote(self.distro), redirect_str
         )
 
-    def run_command(self, command, **kwargs):
+    def run_command(self, command, verbose=False, **kwargs):
         """
         Run a command in the Bitbake environment.
 
@@ -97,6 +100,8 @@ class Bitbake(object):
         * command (str): the command to run in the environment
 
         Optional args:
+        * verbose (bool): Print setup-environment output, command, and the
+          subprocess return code to stdout.
         * kwargs for subprocess.run().
 
         Return:
@@ -113,10 +118,13 @@ class Bitbake(object):
             cd_command = "cd {} &&".format(quote(str(kwargs["cwd"])))
 
         full_command = "{} && {} {}".format(
-            self._generate_setup_env_command(), cd_command, command
+            self._generate_setup_env_command(verbose=verbose),
+            cd_command,
+            command,
         )
 
-        print('Running "{}"...'.format(full_command))
+        if verbose:
+            print('Running "{}"...'.format(full_command))
 
         # Flush stdout and stderr before calling the subprocess so that the
         # subprocess's output can't appear before prints we've already done.
@@ -138,7 +146,8 @@ class Bitbake(object):
         kwargs["env"]["MACHINE"] = self.machine
         kwargs["env"]["DISTRO"] = self.distro
         ret = subprocess.run(["bash", "-c", full_command], **kwargs)
-        print("Command finished with exit code {}".format(ret.returncode))
+        if verbose:
+            print("Command finished with exit code {}".format(ret.returncode))
         return ret
 
     def _check_environment(self):

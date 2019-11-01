@@ -29,6 +29,25 @@ cleanup() {
     fi
 }
 
+quiet_printf() {
+    if [ "$quiet" -ne 1 ]; then
+        # Shellcheck warns about printf's format string being variable, but
+        # quiet_printf is just forwarding args to printf, so it's
+        # quiet_printf's caller's responsibility to ensure that quiet_printf's
+        # format string isn't variable.
+        # shellcheck disable=SC2059
+        printf "$@"
+    fi
+}
+
+run_quietly() {
+    if [ "$quiet" -ne 1 ]; then
+        "$@"
+    else
+        "$@" > /dev/null
+    fi
+}
+
 build_script_for_project() {
     project=${1:?}
     case "$1" in
@@ -43,6 +62,9 @@ build_script_for_project() {
             ;;
         pelion-edge)
             printf "%s\n" "build.py"
+            ;;
+        run-command)
+            printf "%s\n" "run-command.py"
             ;;
         *)
             printf "Unrecognized project (build_script) \"%s\"" "$project" >&2
@@ -65,6 +87,9 @@ dockerfile_for_project() {
             ;;
         pelion-edge)
             printf "%s\n" "pelion-edge/Dockerfile"
+            ;;
+        run-command)
+            printf "%s\n" "common/Dockerfile"
             ;;
         *)
             printf "Unrecognized project (dockerfile) \"%s\"" "$project" >&2
@@ -134,6 +159,7 @@ OPTIONAL parameters:
   -o, --outputdir PATH  Specify a directory to store non-interactively built
                         artifacts. Note: Will not be updated by builds in
                         interactive mode.
+  --quiet               Reduce amount of output.
   --root-passwd-file PATH
                         The file containing the root user password in plain text.
   --save-config PATH    Path to the file to record the currently specified command
@@ -155,12 +181,19 @@ EOF
 imagename="$default_imagename"
 project="$default_project"
 flag_tty="-t"
+quiet=0
 
 # Read or write configuration files and return combined args array
 config=()
 config_setup config "$@"
+
 # Set up args including values from config
-eval set -- "${config[@]}"
+# Shell check wants us to quote the printf substitution to prevent word
+# splitting here, but we *want* word splitting of printf's output. The "%q" in
+# printf's format string means that the word splitting will happen in the right
+# places.
+# shellcheck disable=SC2046
+eval set -- $(printf '%q ' "${config[@]}")
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
@@ -176,6 +209,7 @@ args_list="${args_list},mcc-destdir:,mbl-tools-version:"
 args_list="${args_list},no-tty"
 args_list="${args_list},outputdir:"
 args_list="${args_list},project:"
+args_list="${args_list},quiet"
 args_list="${args_list},root-passwd-file:"
 args_list="${args_list},ssh-auth-keys:"
 args_list="${args_list},tty"
@@ -249,6 +283,10 @@ while [ $# -gt 0 ]; do
     opt_prev=outputdir
     ;;
 
+  --quiet)
+    quiet=1
+    ;;
+
   --root-passwd-file)
     opt_prev=root_passwd_file
     ;;
@@ -280,7 +318,7 @@ done
 if [ -n "${builddir:-}" ]; then
   builddir=$(readlink -f "$builddir")
   if [ ! -d "$builddir" ]; then
-    printf "missing builddir %s. Creating it.\n" "$builddir"
+    quiet_printf "missing builddir %s. Creating it.\n" "$builddir"
     mkdir -p "$builddir"
   fi
 else
@@ -291,7 +329,7 @@ fi
 if [ -n "${outputdir:-}" ]; then
   outputdir=$(readlink -f "$outputdir")
   if [ ! -d "$outputdir" ]; then
-    printf "missing outputdir %s. Creating it.\n" "$outputdir"
+    quiet_printf "missing outputdir %s. Creating it.\n" "$outputdir"
     mkdir -p "$outputdir"
   fi
 fi
@@ -299,7 +337,7 @@ fi
 if [ -n "${downloaddir:-}" ]; then
   downloaddir=$(readlink -f "$downloaddir")
   if [ ! -d "$downloaddir" ]; then
-    printf "missing downloaddir %s. Creating it.\n" "$downloaddir"
+    quiet_printf "missing downloaddir %s. Creating it.\n" "$downloaddir"
     mkdir -p "$downloaddir"
   fi
 fi
@@ -359,11 +397,11 @@ fi
 # environments so don't fail the build if it doesn't work.
 if [ -z "${mbl_tools_version:-}" ]; then
   if which git &> /dev/null; then
-    printf "Found git in path; attempting to determine mbl-tools version\n"
+    quiet_printf "Found git in path; attempting to determine mbl-tools version\n"
     if mbl_tools_version=$(git -C "$(dirname "$0")" rev-parse HEAD); then
-      printf "Determined mbl-tools version to be %s\n" "$mbl_tools_version";
+      quiet_printf "Determined mbl-tools version to be %s\n" "$mbl_tools_version";
     else
-      printf "Failed to determine mbl-tools version automatically; continuing anyway\n" >&2
+      quiet_printf "Failed to determine mbl-tools version automatically; continuing anyway\n" >&2
       mbl_tools_version=""
     fi
   fi
@@ -377,7 +415,7 @@ if [ -z "${SSH_AUTH_SOCK+false}" ]; then
 fi
 
 # Build the docker build environment
-docker build -f "$execdir/$dockerfile" -t "$imagename" "$execdir"
+run_quietly docker build -f "$execdir/$dockerfile" -t "$imagename" "$execdir"
 
 if [ -n "${external_manifest:-}" ]; then
   name="$(basename "$external_manifest")"
