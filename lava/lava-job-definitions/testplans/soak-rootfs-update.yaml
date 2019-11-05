@@ -15,9 +15,9 @@
 
     {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
 
-    {{ macros.install_mbl_cli(venv_name) | indent }}
+    {{ macros.avahi_discovery(venv_name, "pre") | indent }}
 
-    {{ macros.avahi_discovery("pre") | indent }}
+    {{ macros.install_mbl_cli(venv_name) | indent }}
 
     {% for iteration in range(iterations) %}
     {% if iteration is divisibleby 2 %}
@@ -54,7 +54,7 @@
     {% endif %}
     {{ macros.rootfs_update("POST_CHECK", rootfs, image_url, "MBL-CLI", venv_name, rootfs_payload_version, iteration) | indent }}
 
-    {{ macros.avahi_discovery("post", iteration) | indent }}
+    {{ macros.avahi_discovery(venv_name, "post", iteration) | indent }}
 
     # 42600 are 11 hours and 50 minutes.
     {{ macros.sleep(42600, iteration) | indent }}
