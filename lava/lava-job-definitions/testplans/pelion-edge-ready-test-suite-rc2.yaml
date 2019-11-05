@@ -1,0 +1,22 @@
+# {% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "Pelion Edge Ready" %}
+{% set lxc_creation = false %}
+{% set image_name = "console-image-raspberrypi3-mbl.wic.gz" %}
+{% set login_prompt = "raspberrypi3-mbl login:" %}
+{% set passwords = ['password_prompt: "Password:"', 'password: redmbed', '# For password change:', 'login_commands:', '- wigwagr0x', '- wigwagr0x'] %}
+{% set prompts = ['root@raspberrypi3(.*):', 'New password:', 'Re-enter new password:'] %}
+
+{% block testplan %}
+- test:                                                                         
+    timeout:                                                                    
+      minutes: 40                                                                
+    namespace: target                                                           
+    definitions:                                                                
+    - path: automated/test_suite.yaml
+      repository: https://github.com/armPelionEdge/pelion-edge-ready-test-suite.git
+      history: false
+      name: test_suite
+      from: git
+      branch: lava-testing     
+{% endblock testplan %}
