@@ -19,9 +19,9 @@
     namespace: lxc
     definitions:
 
-    {{ macros.avahi_discovery() | indent }}
-
     {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
+
+    {{ macros.avahi_discovery(venv_name) | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
