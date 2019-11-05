@@ -57,6 +57,10 @@ dockerfile_for_project() {
         build-update-payloads)
             printf "%s\n" "common/Dockerfile"
             ;;
+        cross-compile)
+            printf "Project \"%s\" doesn't have a Dockerfile. Please use --external-dockerfile.\n" "$project" >&2
+            exit 5
+            ;;
         mbl)
             printf "%s\n" "common/Dockerfile"
             ;;
@@ -101,6 +105,7 @@ OPTIONAL parameters:
                         generated, or a key generated for a previous build in
                         the same work area will be used.
   --downloaddir PATH    Use PATH to store Yocto downloaded sources.
+  --external-dockerfile Specify an external Dockerfile
   --external-manifest PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
@@ -169,6 +174,7 @@ command_line="$(printf '%q ' "$0" "$@")"
 args_list="boot-rot-key:,builddir:"
 args_list="${args_list},downloaddir:"
 args_list="${args_list},external-manifest:"
+args_list="${args_list},external-dockerfile:"
 args_list="${args_list},help"
 args_list="${args_list},image-name:,inject-mcc:"
 args_list="${args_list},kernel-rot-crt:,kernel-rot-key:"
@@ -210,6 +216,10 @@ while [ $# -gt 0 ]; do
 
   --downloaddir)
     opt_prev=downloaddir
+    ;;
+
+  --external-dockerfile)
+    opt_prev=external_dockerfile
     ;;
 
   --external-manifest)
@@ -347,11 +357,21 @@ if [ -n "${ssh_auth_keys:-}" ]; then
   done
 fi
 
-build_script=$(build_script_for_project "$project")
-dockerfile=$(dockerfile_for_project "$project")
+if [ "$project" == "cross-compile" ]; then
+  printf "\"%s\" project generates a build script that will be used for cross compilation\n" "$project";
+else
+  build_script=$(build_script_for_project "$project")
+fi
 privileged_arg=$(privileged_arg_for_project "$project")
 if [ -n "${mcc_destdir:-}" ]; then
   build_args="${build_args:-} --mcc-destdir=$mcc_destdir"
+fi
+
+if [ -n "${external_dockerfile:-}" ]; then
+  dockerfile_path=$(readlink -f "$external_dockerfile")
+else
+  dockerfile=$(dockerfile_for_project "$project")
+  dockerfile_path="$execdir/$dockerfile"
 fi
 
 # If we didn't get an mbl-tools version on the command line, try to determine
@@ -377,7 +397,7 @@ if [ -z "${SSH_AUTH_SOCK+false}" ]; then
 fi
 
 # Build the docker build environment
-docker build -f "$execdir/$dockerfile" -t "$imagename" "$execdir"
+docker build -f "$dockerfile_path" -t "$imagename" "$execdir"
 
 if [ -n "${external_manifest:-}" ]; then
   name="$(basename "$external_manifest")"
@@ -385,24 +405,33 @@ if [ -n "${external_manifest:-}" ]; then
   set -- "--external-manifest=$builddir/$name" "$@"
 fi
 
-# The ${:+} expansion of download upsets shellcheck, but we do not
-# want that instance quoted because that would inject an empty
-# argument when download is not defined.
-# shellcheck disable=SC2086
-docker run --rm -i $flag_tty \
-       --name "$default_containername" \
-       -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
-       -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
-       ${downloaddir:+-v "$downloaddir":"$downloaddir"} \
-       ${outputdir:+-v "$outputdir":"$outputdir"} \
-       -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
-       -v "$builddir":"$builddir" \
-       ${privileged_arg} \
-       "$imagename" \
-       ./${build_script} --builddir "$builddir" \
-         ${build_args:-} \
-         ${downloaddir:+--downloaddir "$downloaddir"} \
-         ${outputdir:+--outputdir "$outputdir"} \
-         --parent-command-line "$command_line" \
-         ${mbl_tools_version:+--mbl-tools-version "$mbl_tools_version"} \
-         "$@"
+
+if [ "$project" == "cross-compile" ]; then
+  cross_build_script="$imagename"
+  docker run --rm -i --name "$default_containername" \
+      "$imagename" > "$builddir/$cross_build_script"
+  chmod +x "$builddir/$cross_build_script"
+  (cd "$builddir" && ./"$cross_build_script" "$@")
+else
+  # The ${:+} expansion of download upsets shellcheck, but we do not
+  # want that instance quoted because that would inject an empty
+  # argument when download is not defined.
+  # shellcheck disable=SC2086
+  docker run --rm -i $flag_tty \
+         --name "$default_containername" \
+         -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
+         -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
+         ${downloaddir:+-v "$downloaddir":"$downloaddir"} \
+         ${outputdir:+-v "$outputdir":"$outputdir"} \
+         -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
+         -v "$builddir":"$builddir" \
+         ${privileged_arg} \
+         "$imagename" \
+         ./${build_script} --builddir "$builddir" \
+           ${build_args:-} \
+           ${downloaddir:+--downloaddir "$downloaddir"} \
+           ${outputdir:+--outputdir "$outputdir"} \
+           --parent-command-line "$command_line" \
+           ${mbl_tools_version:+--mbl-tools-version "$mbl_tools_version"} \
+           "$@"
+fi
