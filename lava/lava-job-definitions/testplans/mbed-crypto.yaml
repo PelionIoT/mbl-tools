@@ -1,3 +1,0 @@
-{% extends "shared/templates/pytest-job.yaml" %}
-
-{% set job_name = "mbed-crypto" %}
