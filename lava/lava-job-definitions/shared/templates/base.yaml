@@ -32,6 +32,9 @@ metadata:
     td-database: "{{ treasure_database }}"
 {% endif %}
 
+context:
+  kernel_start_message: ""
+
 priority: medium
 visibility: public
 
