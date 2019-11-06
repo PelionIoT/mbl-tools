@@ -236,7 +236,11 @@ def compare_runs(runs, value, board=None):
     if "Previous" in runs:
         if board:
             last = runs["Last"]["Boards"][board][value]
-            prev = runs["Previous"]["Boards"][board][value]
+            if board in runs["Previous"]["Boards"]:
+                prev = runs["Previous"]["Boards"][board][value]
+            else:
+                # Can't compare as board didn't get run last time
+                return ""
         else:
             last = runs["Last"]["Totals"][value]
             prev = runs["Previous"]["Totals"][value]
