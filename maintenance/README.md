@@ -307,11 +307,12 @@ $SCRIPTS/git-sync-manifest.bash armmbed/mbl-manifest/default.xml $DEVBR
 repo start $DEVBR --all
 cd armmbed
 ```
+
 Now we need to do the tweaks to the following repos:
 
 1. `mbl-manifest` - edit/commit `default.xml` with changes done by manifest script.
- 1.1 - Change the default revision ( \<default revision="master" sync-j="4"/> line) to `yocto-version-name`
- 1.2 - Some layers may not have the `yocto-version-name` branch and in this case for each project add a specific sha. And as soon as these projects create the `yocto-version-name` branch, remove the custom `revision=` setting from the `default.xml`
+    1. Change the default revision ( \<default revision="master" sync-j="4"/> line) to `yocto-version-name`
+    1. Some layers may not have the `yocto-version-name` branch and in this case for each project add a specific SHA. And as soon as these projects create the `yocto-version-name` branch, remove the custom `revision=` setting from the `default.xml`
 2. `mbl-tools` - edit/commit `maintenance/release.xml` to set the default revision to `yocto-version-name-dev`
 3. `mbl-jenkins` - edit/commit `mbl-*pipeline` to use `yocto-version-name-dev` branches for everything (tools, manifest, lava etc)
 
