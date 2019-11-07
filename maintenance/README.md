@@ -8,7 +8,7 @@ This directory contains the tools necessary to:
 
 It does this by containing two repo manifests of all the repositories to be maintained in MBL and using the repo tool to check them out and act on them:
 
-* `default.xml` - for the master maintenance (only on master)
+* `maintenance.xml` - for the master maintenance (only on master)
 * `release.xml` - for the development branch or release branches
 
 It also contains some helper scripts in `scripts`.
@@ -19,6 +19,7 @@ Note: Some of the repositories may not be public at this time, as this process i
 
 * [Maintenance Directions](#maintenance)
 * [Release Directions](#release)
+* [Development Branches Directions](#development)
 
 <a name="maintenance"/>
 
@@ -34,7 +35,7 @@ Can be done once as a place just to perform all maintenance jobs.
 mkdir MAINTENANCE
 cd MAINTENANCE
 # Get the tools on the dev branch - assumed to be the latest versions
-git clone git@github:ARMmbed/mbl-tools
+git clone git@github:ARMmbed/mbl-tools -b <dev-branch>
 export SCRIPTS=$(pwd)/mbl-tools/maintenance/scripts
 ```
 
@@ -167,13 +168,11 @@ repo forall -c $SCRIPTS/git-sync-tag.bash
 
 Follow these instructions to create a release branch from the current dev branch.
 
-NOTE: A similar flow can be used to create a new dev branch from master (with some tweaks!)
-
 Set up the tools:
 
 ```
 mkdir RELWORKDIR ; cd RELWORKDIR
-git clone git@github.com:ARMmbed/mbl-tools
+git clone git@github.com:ARMmbed/mbl-tools -b <dev-branch>
 export SCRIPTS=$(pwd)/mbl-tools/maintenance/scripts
 ```
 
@@ -185,7 +184,8 @@ $SCRIPTS/git-sync-start.bash --release ${RELVER}.setup
 cd ${RELVER}.setup
 ```
 
-Perform the correct alignment and set up of a pinned release manifest and create a release branch for all the repos:
+Perform the correct alignment and set up of a pinned release manifest, which can be copied from the last known good
+development branch build, and create a release branch for all the repos:
 
 ```
 $SCRIPTS/git-sync-manifest.bash pinned-manifest.xml $RELVER
@@ -196,7 +196,7 @@ Now we need to do the tweaks to the following repos:
 
 * `mbl-manifest` - commit `default.xml` with changes done by manifest script
 * `mbl-tools` - edit/commit `maintenance/release.xml` to set the default revision to `mbl-os-x.y` (this is important for the release tagging later!)
-* `mbl-jenkins` - edit/commit `mbl-pipeline` to use `mbl-os-x.y` branches for everything (tools, manifest, lava etc)
+* `mbl-jenkins` - edit/commit `mbl-*-pipeline` to use `mbl-os-x.y` branches for everything (tools, manifest, lava etc)
 * `meta-mbl` - edit/commit `meta-mbl-distro/conf/distro/include/mbl-distro.inc` to set `DISTRO_VERSION` to `mbl-os-x.y.z` (NOTE: `z` version!)
 
 Next you can push all the changes to github (this skips the PR flow for the changes done):
@@ -275,3 +275,50 @@ Next create the tags and push them:
 repo forall -c git tag $RELTAG
 repo forall -c git push origin $RELTAG
 ```
+
+<a name="development"/>
+
+## Development Branch directions
+
+### Development branches creation
+
+Follow these instructions to create a development branch from the master branch.
+
+Set up the tools:
+
+```
+mkdir DEVWORKDIR ; cd DEVWORKDIR
+git clone git@github.com:ARMmbed/mbl-tools -b master
+export SCRIPTS=$(pwd)/mbl-tools/maintenance/scripts
+```
+
+Create the checkout of all the repos, replacing `yocto-version-name-dev` with the version to be released (e.g. `warrior-dev`):
+
+```
+export DEVBR=yocto-version-name-dev
+$SCRIPTS/git-sync-start.bash --development ${DEVBR}.setup
+cd ${DEVBR}.setup
+```
+
+Perform the correct alignment and set up of the default.xml manifest and create the development branch for all the repos:
+
+```
+$SCRIPTS/git-sync-manifest.bash armmbed/mbl-manifest/default.xml $DEVBR
+repo start $DEVBR --all
+cd armmbed
+```
+Now we need to do the tweaks to the following repos:
+
+1. `mbl-manifest` - edit/commit `default.xml` with changes done by manifest script.
+ 1.1 - Change the default revision ( \<default revision="master" sync-j="4"/> line) to `yocto-version-name`
+ 1.2 - Some layers could not have the `yocto-version-name` branch and in this case for each project add the `revision="master"` or any specific sha. And as soon as these projetcs create the `yocto-version-name` branch, remove the custom `revision=` setting from the `default.xml`
+2. `mbl-tools` - edit/commit `maintenance/release.xml` to set the default revision to `yocto-version-name-dev`
+3. `mbl-jenkins` - edit/commit `mbl-*-pipeline` to use `yocto-version-name-dev` branches for everything (tools, manifest, lava etc)
+
+Next you can push all the changes to github (this skips the PR flow for the changes done):
+
+```
+repo forall -p -c git push --set-upstream origin $DEVBR
+```
+
+Now create the Jenkins job to test these new branches.

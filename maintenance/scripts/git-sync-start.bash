@@ -15,9 +15,15 @@ fi
 # Should be working off master
 MANIFEST=maintenance/maintenance.xml
 RELEASE=0
+DEVELOPMENT=0
 if [ "$1" == "--release" ]; then
     # Should be working off latest dev branch
     RELEASE=1
+    MANIFEST=maintenance/release.xml
+    shift
+elif [ "$1" == "--development" ]; then
+    # Should be working off master
+    DEVELOPMENT=1
     MANIFEST=maintenance/release.xml
     shift
 fi
@@ -80,6 +86,17 @@ if [ $RELEASE -eq 1 ]; then
     echo "$ ${MBL_TOOLS_SCRIPTS_DIR}/git-sync-rc-tag.bash mbl-os-x.y.z-rcn"
     echo "$ repo forall -c git tag new-release-tag"
     echo "$ repo forall -c git push $REMOTE new-release-tag"
+elif [ $DEVELOPMENT -eq 1 ]; then
+    echo "DEVELOPMENT BRANCH flow:"
+    echo "$ ${MBL_TOOLS_SCRIPTS_DIR}/git-sync-manifest.bash armmbed/mbl-manifest/default.xml yocto-version-name-dev"
+    echo "$ repo start yocto-version-name-dev --all"
+    echo "* edit/commit armmbed/mbl-manifest/default.xml with changes done by manifest script."
+    echo "  NOTE: Change the <default revision=\"master\" to yocto-version-name and some layers could not have the"
+    echo "  yocto-version-name branch and in this case for each project add the revision=\"master\" or any specific sha."
+    echo "* edit/commit armmbed/mbl-tools/maintenance/release.xml to default to yocto-version-name-dev"
+    echo "* edit/commit armmbed/mbl-jenkins/mbl-pipeline to use yocto-version-name-dev"
+    echo "Next you can push all the changes to github (this skips the PR flow for the changes done):"
+    echo "$ repo forall -c push --set-upstream $REMOTE yocto-version-name-dev"
 else
     echo "MAINTENANCE flow:"
     echo "$ repo start new-maintenance-branch --all"
