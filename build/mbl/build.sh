@@ -92,7 +92,7 @@ repo_init_atomic ()
 all_machines="imx7s-warp-mbl raspberrypi3-mbl imx7d-pico-mbl imx8mmevk-mbl imx6ul-pico-mbl imx6ul-des0258-mbl"
 
 default_manifest="default.xml"
-default_manifest_repo="git@github.com:ARMmbed/mbl-manifest.git"
+default_manifest_repo="https://github.com/ARMmbed/mbl-manifest.git"
 default_distro="mbl-development"
 default_image="mbl-image-development"
 default_production_distro="mbl-production"
