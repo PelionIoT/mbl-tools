@@ -93,7 +93,6 @@ elif [ $DEVELOPMENT -eq 1 ]; then
     echo "* edit/commit armmbed/mbl-manifest/default.xml with changes done by manifest script."
     echo "  NOTE: Change the <default revision=\"master\" to yocto-version-name and set a SHA"
     echo "   revision for the layers that don't yet support the yocto-version-name"
-    echo "  yocto-version-name branch and in this case for each project add the revision=\"master\" or any specific sha."
     echo "* edit/commit armmbed/mbl-tools/maintenance/release.xml to default to yocto-version-name-dev"
     echo "* edit/commit armmbed/mbl-jenkins/mbl-pipeline to use yocto-version-name-dev"
     echo "Next you can push all the changes to github (this skips the PR flow for the changes done):"
