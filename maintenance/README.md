@@ -313,7 +313,7 @@ Now we need to do the tweaks to the following repos:
  1.1 - Change the default revision ( \<default revision="master" sync-j="4"/> line) to `yocto-version-name`
  1.2 - Some layers could not have the `yocto-version-name` branch and in this case for each project add the `revision="master"` or any specific sha. And as soon as these projetcs create the `yocto-version-name` branch, remove the custom `revision=` setting from the `default.xml`
 2. `mbl-tools` - edit/commit `maintenance/release.xml` to set the default revision to `yocto-version-name-dev`
-3. `mbl-jenkins` - edit/commit `mbl-*-pipeline` to use `yocto-version-name-dev` branches for everything (tools, manifest, lava etc)
+3. `mbl-jenkins` - edit/commit `mbl-*pipeline` to use `yocto-version-name-dev` branches for everything (tools, manifest, lava etc)
 
 Next you can push all the changes to github (this skips the PR flow for the changes done):
 
