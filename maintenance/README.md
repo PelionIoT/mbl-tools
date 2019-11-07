@@ -196,7 +196,7 @@ Now we need to do the tweaks to the following repos:
 
 * `mbl-manifest` - commit `default.xml` with changes done by manifest script
 * `mbl-tools` - edit/commit `maintenance/release.xml` to set the default revision to `mbl-os-x.y` (this is important for the release tagging later!)
-* `mbl-jenkins` - edit/commit `mbl-*-pipeline` to use `mbl-os-x.y` branches for everything (tools, manifest, lava etc)
+* `mbl-jenkins` - edit/commit `mbl-*pipeline` to use `mbl-os-x.y` branches for everything (tools, manifest, lava etc)
 * `meta-mbl` - edit/commit `meta-mbl-distro/conf/distro/include/mbl-distro.inc` to set `DISTRO_VERSION` to `mbl-os-x.y.z` (NOTE: `z` version!)
 
 Next you can push all the changes to github (this skips the PR flow for the changes done):
