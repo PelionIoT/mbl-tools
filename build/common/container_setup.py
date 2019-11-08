@@ -9,6 +9,7 @@
 import argparse
 import pathlib
 import subprocess
+import sys
 
 SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent
 
