@@ -35,7 +35,7 @@ Can be done once as a place just to perform all maintenance jobs.
 mkdir MAINTENANCE
 cd MAINTENANCE
 # Get the tools on the dev branch - assumed to be the latest versions
-git clone git@github:ARMmbed/mbl-tools -b <dev-branch>
+git clone git@github.com:ARMmbed/mbl-tools -b <dev-branch>
 export SCRIPTS=$(pwd)/mbl-tools/maintenance/scripts
 ```
 
