@@ -546,7 +546,7 @@ local_conf_data=""
 flag_licenses=0
 flag_binary_release=0
 flag_interactive_mode=0
-repo_hosts=""
+repo_hosts=()
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
@@ -582,6 +582,11 @@ while [ $# -gt 0 ]; do
     opt_append=
     shift 1
     continue
+  elif [ -n "${opt_array_append:-}" ]; then
+      eval "$opt_array_append+=(\"\$1\")"
+      opt_array_append=
+      shift 1
+      continue
   fi
   case $1 in
   --accept-eula)
@@ -693,7 +698,7 @@ while [ $# -gt 0 ]; do
     ;;
 
   --repo-host)
-    opt_append=repo_hosts
+    opt_array_append=repo_hosts
     ;;
 
   --root-passwd-file)
@@ -836,6 +841,8 @@ if empty_stages_p; then
     stages=(start)
   fi
 fi
+
+"$execdir/container_setup.py" "${repo_hosts[@]/#/--repo-host=}"
 
 while true; do
   if empty_stages_p; then

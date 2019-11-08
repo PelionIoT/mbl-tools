@@ -24,6 +24,7 @@ import sys
 import warnings
 import tarfile
 
+from container_setup import set_up_container
 import file_util
 
 SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent
@@ -173,15 +174,6 @@ def _save_artifacts(workdir, outputdir, machine, image):
     else:
         warning("--outputdir not specified. Not saving artifacts.")
 
-
-def _set_up_git():
-    """Initialize a sane git setup."""
-    subprocess.run([str(SCRIPTS_DIR / "git-setup.sh")], check=True)
-
-
-def _set_up_container_ssh():
-    """Initialize a sane SSH setup."""
-    subprocess.run([str(SCRIPTS_DIR / "ssh-setup.sh")], check=True)
 
 
 def _set_up_bitbake_machine(workdir, machine):
@@ -359,8 +351,7 @@ def main():
         )
         sys.exit(1)
 
-    _set_up_container_ssh()
-    _set_up_git()
+    set_up_container()
     _set_up_download_dir(args.downloaddir)
 
     _create_workarea(
