@@ -842,7 +842,14 @@ if empty_stages_p; then
   fi
 fi
 
+# In the following we're going to do parameter expansion on an array that might
+# be empty. If "-u" is set then Bash <4.4 will complain about an unbound
+# variable when the array is actually empty, even though it has been declared.
+# The empty array case is valid for us though, so set "+u" to keep Bash quiet.
+set +u
+# The array expansion here prefixes every element with "--repo-host="
 "$execdir/container_setup.py" "${repo_hosts[@]/#/--repo-host=}"
+set -u
 
 while true; do
   if empty_stages_p; then
