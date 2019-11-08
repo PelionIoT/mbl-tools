@@ -194,16 +194,6 @@ def _inject_key(workdir, path, image):
         shutil.copy(path, workdir / "poky" / image)
 
 
-def _set_up_git():
-    """Initialize a sane git setup."""
-    subprocess.run([SCRIPTS_DIR / "git-setup.sh"], check=True)
-
-
-def _set_up_container_ssh():
-    """Initialize a sane SSH setup."""
-    subprocess.run([SCRIPTS_DIR / "ssh-setup.sh"], check=True)
-
-
 def _set_up_bitbake_ssh(workdir):
     """
     Configure BitBake to allow use of ssh-agent.
