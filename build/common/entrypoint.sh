@@ -56,4 +56,6 @@ fi
 
 export HOME=/home/"$username"
 
+gosu "$LOCAL_UID:$LOCAL_GID" "/git-setup.sh"
+gosu "$LOCAL_UID:$LOCAL_GID" "/ssh-setup.sh"
 exec gosu "$LOCAL_UID:$LOCAL_GID" "$@"

@@ -837,9 +837,6 @@ if empty_stages_p; then
   fi
 fi
 
-"$execdir/git-setup.sh"
-"$execdir/ssh-setup.sh" $repo_hosts
-
 while true; do
   if empty_stages_p; then
     push_stages stop
