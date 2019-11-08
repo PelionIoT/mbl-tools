@@ -175,7 +175,6 @@ def _save_artifacts(workdir, outputdir, machine, image):
         warning("--outputdir not specified. Not saving artifacts.")
 
 
-
 def _set_up_bitbake_machine(workdir, machine):
     """
     Configure BitBake to build the selected machine.
