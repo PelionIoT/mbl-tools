@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "Cellular" %}
+{% set job_name = "Cellular and WiFi" %}
 {% set lxc_creation = true %}
 {% set lxc_name = "cellular-lxc" %}
 
