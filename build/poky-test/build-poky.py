@@ -80,20 +80,27 @@ def _add_bitbake_layers(workdir):
     * workdir (Path): top level of work area.
 
     """
-    layers = ["meta-freescale", "meta-security", "meta-mbl/meta-psa/"]
+    command = [
+        str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"),
+        str(workdir),
+        "bitbake-layers",
+        "add-layer",
+    ]
 
+    layers = [
+        "meta-freescale",  # For IMX8
+        "meta-openembedded/meta-oe",  # For meta-security
+        "meta-openembedded/meta-perl",  # For meta-security
+        "meta-openembedded/meta-python",  # For meta-security
+        "meta-openembedded/meta-networking",  # For meta-security
+        "meta-security",  # For meta-psa
+        "meta-mbl/meta-psa",
+    ]
     for layer in layers:
-        print("Adding layer {} to bblayers".format(layer))
-        subprocess.run(
-            [
-                str(SCRIPTS_DIR / "poky-bitbake-wrapper.sh"),
-                str(workdir),
-                "bitbake-layers",
-                "add-layer",
-                str(workdir / "layers" / layer),
-            ],
-            check=True,
-        )
+        command.append(str(workdir / "layers" / layer))
+
+    print("Adding layers {} to bblayers".format(", ".join(layers)))
+    subprocess.run(command, check=True)
 
 
 def _build(workdir, image):
