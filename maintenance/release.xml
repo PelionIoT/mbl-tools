@@ -5,7 +5,7 @@
 
   <remote fetch="ssh://git@github.com" name="origin"/>
 
-  <default revision="master" sync-j="4"/>
+  <default revision="zeus-dev" sync-j="4"/>
 
   <project name="armmbed/mbl-manifest" remote="origin"/>
   <project name="armmbed/meta-mbl" remote="origin"/>
