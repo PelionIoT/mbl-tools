@@ -76,15 +76,23 @@ def main():
     bitbake.run_commands(bitbake_build_commands)
 
     # Create the payloads
+    bootloader1_base_path = args.outputdir / "bootloader1_payload"
+    bootloader2_base_path = args.outputdir / "bootloader2_payload"
+    kernel_base_path = args.outputdir / "kernel_payload"
+    rootfs_base_path = args.outputdir / "rootfs_payload"
+
     create_update_payload_commands = [
-        "create-update-payload -b1 -o {}/wks_bootloader1_payload.tar".format(
-            args.outputdir
+        "create-update-payload -b1 -o {0}.swu -t {0}.testinfo".format(
+            bootloader1_base_path
         ),
-        "create-update-payload -b2 -o {}/wks_bootloader2_payload.tar".format(
-            args.outputdir
+        "create-update-payload -b2 -o {0}.swu -t {0}.testinfo".format(
+            bootloader2_base_path
         ),
-        "create-update-payload -k -o {}/kernel_payload.tar".format(
-            args.outputdir
+        "create-update-payload -k -o {0}.swu -t {0}.testinfo".format(
+            kernel_base_path
+        ),
+        "create-update-payload -r {0} -o {1}.swu -t {1}.testinfo".format(
+            args.image, rootfs_base_path
         ),
     ]
     bitbake.run_commands(create_update_payload_commands)

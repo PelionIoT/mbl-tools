@@ -8,6 +8,11 @@ set -e
 set -u
 
 execdir="$(readlink -e "$(dirname "$0")")"
+srcdir="$execdir/common"
+
+# Load the config functions
+# shellcheck disable=SC1090
+source "$srcdir/config-funcs.sh"
 
 default_imagename="mbl-manifest-env"
 default_containername="mbl-tools-container.$$"
@@ -113,6 +118,11 @@ OPTIONAL parameters:
                         this option is not used, either a new key will be
                         generated, or a key generated for a previous build in
                         the same work area will be used.
+  --load-config PATH    Path to the config file to read to add arguments to the
+                        command line arguments of run-me.sh and build.sh.
+                        Warning: lists of items (e.g. inject-mcc) will be
+                        prepended with any extra arguments you supply on the
+                        command line.
   --mcc-destdir PATH    Relative directory from "layers" dir to where the file(s)
                         passed with --inject-mcc should be copied to.
   --mbl-tools-version STRING
@@ -126,6 +136,9 @@ OPTIONAL parameters:
                         interactive mode.
   --root-passwd-file PATH
                         The file containing the root user password in plain text.
+  --save-config PATH    Path to the file to record the currently specified command
+                        line arguments. Warning: will overwrite any existing file
+                        and it will not verify the arguments before saving.
   --ssh-auth-keys PATH
                         Path to the SSH Authorized Keys file to be installed
                         in the target rootfs at /home/user/.ssh/authorized_keys.
@@ -143,12 +156,33 @@ imagename="$default_imagename"
 project="$default_project"
 flag_tty="-t"
 
+# Read or write configuration files and return combined args array
+config=()
+config_setup config "$@"
+# Set up args including values from config
+eval set -- "${config[@]}"
+
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
 command_line="$(printf '%q ' "$0" "$@")"
 
-args=$(getopt -o+ho:x -l boot-rot-key:,builddir:,project:,downloaddir:,external-manifest:,help,image-name:,inject-mcc:,kernel-rot-crt:,kernel-rot-key:,mcc-destdir:,mbl-tools-version:,outputdir:,root-passwd-file:,ssh-auth-keys:,tty,no-tty -n "$(basename "$0")" -- "$@")
+args_list="boot-rot-key:,builddir:"
+args_list="${args_list},downloaddir:"
+args_list="${args_list},external-manifest:"
+args_list="${args_list},help"
+args_list="${args_list},image-name:,inject-mcc:"
+args_list="${args_list},kernel-rot-crt:,kernel-rot-key:"
+args_list="${args_list},mcc-destdir:,mbl-tools-version:"
+args_list="${args_list},no-tty"
+args_list="${args_list},outputdir:"
+args_list="${args_list},project:"
+args_list="${args_list},root-passwd-file:"
+args_list="${args_list},ssh-auth-keys:"
+args_list="${args_list},tty"
+
+args=$(getopt -o+ho:x -l $args_list -n "$(basename "$0")" -- "$@")
 eval set -- "$args"
+
 while [ $# -gt 0 ]; do
   if [ -n "${opt_prev:-}" ]; then
     eval "$opt_prev=\$1"
@@ -342,6 +376,7 @@ if [ -z "${SSH_AUTH_SOCK+false}" ]; then
   exit 4
 fi
 
+# Build the docker build environment
 docker build -f "$execdir/$dockerfile" -t "$imagename" "$execdir"
 
 if [ -n "${external_manifest:-}" ]; then

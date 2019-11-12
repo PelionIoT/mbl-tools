@@ -80,6 +80,6 @@ workdir=$(readlink -f "$workdir")
 FILES_TO_CHECK=$(find_files)
 
 printf "Run mbl-licensing-checker on files...\n"
-printf "%s" "$FILES_TO_CHECK" | xargs --no-run-if-empty mbl-licensing-checker || rc=1
+printf "%s" "$FILES_TO_CHECK" | xargs --no-run-if-empty mbl-licensing-checker -v || rc=1
 
 exit "$rc"

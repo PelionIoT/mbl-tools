@@ -1,4 +1,7 @@
-actions:
+# Deploy and boot the lxc container
+{% include "shared/templates/lxc-deploy-boot.yaml" with context %}
+
+
 - deploy:
     namespace: target
     to: u-boot-ums
