@@ -103,6 +103,62 @@ def _add_bitbake_layers(workdir):
     subprocess.run(command, check=True)
 
 
+KERNEL_BBAPPEND = """
+# Copyright (c) 2019 Arm Limited and Contributors. All rights reserved.
+#
+# SPDX-License-Identifier: MIT
+
+FILESEXTRAPATHS_prepend:="${THISDIR}/files:"
+SRC_URI_append = "file://ecryptfs.cfg "
+"""
+
+KERNEL_CONFIG = """
+CONFIG_EXPERIMENTAL=y
+CONFIG_KEYS=y
+CONFIG_CRYPTO=y
+CONFIG_CRYPTO_ALGAPI=y
+CONFIG_CRYPTO_BLKCIPHER=y
+CONFIG_CRYPTO_HASH=y
+CONFIG_CRYPTO_MANAGER=y
+CONFIG_CRYPTO_MD5=y
+CONFIG_CRYPTO_ECB=y
+CONFIG_CRYPTO_CBC=y
+CONFIG_CRYPTO_AES=y
+CONFIG_ECRYPT_FS=y
+CONFIG_ECRYPT_FS_MESSAGING=y
+"""
+
+
+def _add_kernel_config(workdir):
+    """
+    Add the necessary kernel config.
+
+    Args:
+    * workdir (Path): top level of work area.
+
+    """
+    kerneldir = (
+        workdir
+        / "layers"
+        / "poky"
+        / "meta-yocto-bsp"
+        / "recipes-kernel"
+        / "linux"
+    )
+    kernelfilesdir = kerneldir / "files"
+
+    kernelbbappend = kerneldir / "linux-imx_%.bbappend"
+    kernelconfig = kernelfilesdir / "ecryptfs.cfg"
+
+    print("Setting up kernel configuration")
+    with kernelbbappend.open("w") as bbappend:
+        bbappend.write(KERNEL_BBAPPEND)
+
+    kernelfilesdir.mkdir(exist_ok=True)
+    with kernelconfig.open("w") as config:
+        config.write(KERNEL_CONFIG)
+
+
 def _build(workdir, image):
     """
     Kick off a build of the workarea.
@@ -371,6 +427,8 @@ def main():
     _set_up_bitbake_machine(args.builddir, args.machine)
 
     _add_bitbake_layers(args.builddir)
+
+    _add_kernel_config(args.builddir)
 
     _build(args.builddir, args.image)
     _save_artifacts(args.builddir, args.outputdir, args.machine, args.image)
