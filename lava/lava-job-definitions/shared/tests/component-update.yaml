@@ -1,4 +1,4 @@
-- path: ci/lava/tests/boot-component-update.yaml
+- path: ci/lava/tests/component-update.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
   name: "{{ component_name }}-update-via-{{ update_method }}"
   from: git

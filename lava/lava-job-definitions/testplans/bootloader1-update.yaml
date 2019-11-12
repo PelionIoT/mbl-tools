@@ -1,4 +1,4 @@
 {% extends "shared/templates/component-update-job.yaml" %}
 
-{% set component_name = "rootfs" %}
+{% set component_name = "bootloader1" %}
 {% set update_method = "mbl-cli" %}
