@@ -51,6 +51,6 @@
     {% include "shared/tests/build-tutorial-images.yaml" %}
 {% endmacro %}
 
-{% macro boot_component_update(venv_name, component_name, payload_url, update_method) %}
-    {% include "shared/tests/boot-component-update.yaml" %}
+{% macro component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method) %}
+    {% include "shared/tests/component-update.yaml" %}
 {% endmacro %}

@@ -1,8 +1,8 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = component_name + " update via " + update_method %}
+{% set job_name = "OTA image updates via " + update_method %}
 {% set lxc_creation = true %}
-{% set lxc_name = component_name + "-update-" + update_method + "-lxc" %}
+{% set lxc_name = "image-update-" + update_method + "-lxc" %}
 {% set payloads_url = pipeline_data["payloads_url"] %}
 
 {% block testplan %}
@@ -18,10 +18,15 @@
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
+    {% for component_name in component_names %}
     {% set payload_url = "/".join([payloads_url,
                                    component_name + "_payload.swu",
                                    component_name + "_payload.swu",]) %}
 
-    {{ macros.boot_component_update(venv_name, component_name, payload_url, update_method) | indent }}
+    {% set payload_testinfo_url = "/".join([payloads_url,
+                                            component_name + "_payload.testinfo",
+                                            component_name + "_payload.testinfo",]) %}
 
+    {{ macros.component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method) | indent }}
+    {% endfor %}
 {% endblock testplan %}

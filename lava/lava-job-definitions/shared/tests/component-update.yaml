@@ -11,4 +11,5 @@
     virtual_env: "{{ venv_name }}"
     component_name: "{{ component_name }}"
     payload_url: "{{ payload_url }}"
+    payload_testinfo_url: "{{ payload_testinfo_url }}"
     update_method: "{{ update_method }}"

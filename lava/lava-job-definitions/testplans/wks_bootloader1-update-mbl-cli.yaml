@@ -1,4 +1,0 @@
-{% extends "shared/templates/boot-component-update-job.yaml" %}
-
-{% set component_name = "wks_bootloader1" %}
-{% set update_method = "mbl-cli" %}
