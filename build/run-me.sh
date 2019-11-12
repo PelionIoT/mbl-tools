@@ -57,8 +57,8 @@ dockerfile_for_project() {
         build-update-payloads)
             printf "%s\n" "common/Dockerfile"
             ;;
-        cross-compile)
-            printf "Project \"%s\" doesn't have a Dockerfile. Please use --external-dockerfile.\n" "$project" >&2
+        dockcross)
+            printf "Project \"%s\" requires an external Dockerfile. Please specify it with --external-dockerfile.\n" "$project" >&2
             exit 5
             ;;
         mbl)
@@ -357,7 +357,7 @@ if [ -n "${ssh_auth_keys:-}" ]; then
   done
 fi
 
-if [ "$project" == "cross-compile" ]; then
+if [ "$project" == "dockcross" ]; then
   printf "\"%s\" project generates a build script that will be used for cross compilation\n" "$project";
 else
   build_script=$(build_script_for_project "$project")
@@ -406,7 +406,7 @@ if [ -n "${external_manifest:-}" ]; then
 fi
 
 
-if [ "$project" == "cross-compile" ]; then
+if [ "$project" == "dockcross" ]; then
   cross_build_script="$imagename"
   docker run --rm -i --name "$default_containername" \
       "$imagename" > "$builddir/$cross_build_script"
