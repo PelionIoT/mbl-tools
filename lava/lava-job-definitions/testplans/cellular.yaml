@@ -1,0 +1,42 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "Cellular and WiFi" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "cellular-wifi-lxc" %}
+
+{% set _ = tags.update({"imx7d-pico-mbl": ["cellular_shield", "external_antenna"]}) %}
+{% set _ = tags.update({"bcm2837-rpi-3-b-plus-32": ["cellular_shield"]}) %}
+{% set _ = tags.update({"bcm2837-rpi-3-b-32": ["cellular_shield"]}) %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+
+    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
+
+    {{ macros.avahi_discovery(venv_name) | indent }}
+
+    {{ macros.install_mbl_cli(venv_name) | indent }}
+
+    {{ macros.create_python_environment_on_device(venv_name, host_download_dir, dut_download_dir) | indent }}
+
+    {{ macros.enable_wifi(venv_name) | indent }}
+
+    - path: ci/lava/tests/cellular-and-wifi.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: cellular_wifi_tests
+      from: git
+      history: False
+      branch: "{{ mbl_branch }}"
+      {% if "mbl-core" in mbl_revisions %}
+      revision: {{ mbl_revisions["mbl-core"] }}
+      {% endif %}
+      parameters:
+          virtual_env: "{{ venv_name }}"
+          device_type: "{{ device_type }}"
+          dut_tutorials_dir: "{{ dut_tutorials_dir }}"
+
+{% endblock testplan %}
