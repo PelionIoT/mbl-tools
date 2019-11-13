@@ -280,6 +280,27 @@ _config_combine_args()
   done
 }
 
+# Single quote all arguments
+# Needed for the eval operation (eval set -- "${config[@]}") that will be
+# perfomed on the config after we return
+# Params: ARRAY_REF ARGS_LIST...
+_config_add_quotes()
+{
+  # shellcheck disable=SC2178
+  local -n ret_args=$1
+  shift 1
+  ret_args=()
+
+  while [ $# -gt 0 ]; do
+    if [ "$1" != "--" ]; then
+      ret_args+=("'$1'")
+    else
+      ret_args+=("$1")
+    fi
+    shift
+  done
+}
+
 # Single config read/write function
 # First parameter is used on read and is an array populated with the combined
 # command line and config arguments
@@ -325,4 +346,5 @@ config_setup()
     set -u
     exit 0
   fi
+  _config_add_quotes "${!config_args}" "${config_args[@]}"
 }
