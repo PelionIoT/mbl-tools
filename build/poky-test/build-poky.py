@@ -253,7 +253,9 @@ def _set_up_bitbake_machine(workdir, machine):
         localconf.write('MACHINE ?= "{}"\n'.format(machine))
         localconf.write('ACCEPT_FSL_EULA = "1"\n')
         localconf.write('CORE_IMAGE_EXTRA_INSTALL += "mbed-crypto-test"\n')
-        localconf.write('CORE_IMAGE_EXTRA_INSTALL += "psa-trusted-storage-linux-test"\n')
+        localconf.write(
+            'CORE_IMAGE_EXTRA_INSTALL += "psa-trusted-storage-linux-test"\n'
+        )
         # Disable psa-arch-tests for now
         # localconf.write('CORE_IMAGE_EXTRA_INSTALL += "psa-arch-tests"\n')
 
