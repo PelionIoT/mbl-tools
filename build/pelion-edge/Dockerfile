@@ -154,7 +154,7 @@ RUN apt-get update && apt-get install -y gpg-agent
 ENV LANG en_US.UTF-8
 
 # Scripts used to build pelion-os-edge image
-COPY pelion-edge/build.py common/file_util.py pelion-edge/bitbake-wrapper.sh common/git-setup.sh common/ssh-setup.sh ./
+COPY pelion-edge/build.py common/file_util.py pelion-edge/bitbake-wrapper.sh common/container_setup.py common/git-setup.sh common/ssh-setup.sh ./
 COPY pelion-edge/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run

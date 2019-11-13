@@ -15,6 +15,7 @@ import argparse
 
 import file_util
 from bitbake_util import Bitbake
+from container_setup import set_up_container
 
 
 def _parse_args():
@@ -50,6 +51,17 @@ def _parse_args():
         default="mbl-image-development",
         required=False,
     )
+    parser.add_argument(
+        "--repo-host",
+        dest="extra_ssh_hosts",
+        metavar="HOST",
+        action="append",
+        help=(
+            "Add a trusted git repository host to the build environment."
+            " Can be specified multiple times."
+        ),
+        default=[],
+    )
 
     args, _ = parser.parse_known_args()
     file_util.ensure_is_directory(args.builddir)
@@ -61,11 +73,12 @@ def main():
     """Script entry point."""
     args = _parse_args()
 
-    # Set tup the Bitbake environemnt
+    set_up_container(extra_ssh_hosts=args.extra_ssh_hosts)
+
+    # Set up the Bitbake environemnt
     bitbake = Bitbake(
         builddir=args.builddir, machine=args.machine, distro=args.distro
     )
-    bitbake.setup_environment()
 
     # Build the packages
     packages = "virtual/atf optee-os virtual/bootloader virtual/kernel"
@@ -73,7 +86,8 @@ def main():
         "bitbake -c cleansstate {}".format(packages),
         "bitbake {}".format(args.image),
     ]
-    bitbake.run_commands(bitbake_build_commands)
+    for command in bitbake_build_commands:
+        bitbake.run_command(command, check=True)
 
     # Create the payloads
     bootloader1_base_path = args.outputdir / "bootloader1_payload"
@@ -95,7 +109,8 @@ def main():
             args.image, rootfs_base_path
         ),
     ]
-    bitbake.run_commands(create_update_payload_commands)
+    for command in create_update_payload_commands:
+        bitbake.run_command(command, check=True)
 
 
 if __name__ == "__main__":

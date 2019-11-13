@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN apt-get update && apt-get install gosu
 RUN pip3 install -U pip
-RUN pip3 install arpy dohq-artifactory jinja2 libconf pexpect
+RUN pip3 install arpy dohq-artifactory jinja2 libconf
 COPY common/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
@@ -58,18 +58,23 @@ RUN mkdir -p /dev/net \
     && mknod /dev/net/tun c 10 200 \
     && chmod 600 /dev/net/tun
 
+# Common build libs/scripts
+COPY common/bitbake_util.py \
+     common/file_util.py \
+     common/git-setup.sh \
+     common/ssh-setup.sh \
+     common/container_setup.py \
+     ./
+
 # Scripts used to build mbed-linux image
-COPY common/git-setup.sh common/ssh-setup.sh \
-     templates/README.binary_release_template \
+COPY templates/README.binary_release_template \
      templates/Licensing_and_Acknowledgment.template_nxp \
      license-report ./
 COPY mbl/build.sh ./
 
 # Scripts used to build poky-psa image
 COPY poky-test/build-poky.py \
-     common/file_util.py \
      poky-test/poky-bitbake-wrapper.sh ./
 
 # Scripts used to build BL2/BL3/fitImage components
-COPY common/bitbake_util.py \
-     mbl/build-update-payloads.py ./
+COPY mbl/build-update-payloads.py ./
