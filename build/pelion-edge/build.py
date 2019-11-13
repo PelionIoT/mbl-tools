@@ -29,6 +29,7 @@ import sys
 import warnings
 import tarfile
 
+from container_setup import set_up_container
 import file_util
 
 SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent
@@ -191,16 +192,6 @@ def _inject_key(workdir, path, image):
             parents=True, exist_ok=True
         )
         shutil.copy(path, workdir / "poky" / image)
-
-
-def _set_up_git():
-    """Initialize a sane git setup."""
-    subprocess.run([SCRIPTS_DIR / "git-setup.sh"], check=True)
-
-
-def _set_up_container_ssh():
-    """Initialize a sane SSH setup."""
-    subprocess.run([SCRIPTS_DIR / "ssh-setup.sh"], check=True)
 
 
 def _set_up_bitbake_ssh(workdir):
@@ -379,8 +370,7 @@ def main():
     warnings.formatwarning = warning_on_one_line
 
     args = _parse_args()
-    _set_up_container_ssh()
-    _set_up_git()
+    set_up_container()
     _set_up_download_dir(args.downloaddir)
 
     _create_workarea(

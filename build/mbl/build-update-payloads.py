@@ -15,6 +15,7 @@ import argparse
 
 import file_util
 from bitbake_util import Bitbake
+from container_setup import set_up_container
 
 
 def _parse_args():
@@ -50,6 +51,17 @@ def _parse_args():
         default="mbl-image-development",
         required=False,
     )
+    parser.add_argument(
+        "--repo-host",
+        dest="extra_ssh_hosts",
+        metavar="HOST",
+        action="append",
+        help=(
+            "Add a trusted git repository host to the build environment."
+            " Can be specified multiple times."
+        ),
+        default=[],
+    )
 
     args, _ = parser.parse_known_args()
     file_util.ensure_is_directory(args.builddir)
@@ -60,6 +72,8 @@ def _parse_args():
 def main():
     """Script entry point."""
     args = _parse_args()
+
+    set_up_container(extra_ssh_hosts=args.extra_ssh_hosts)
 
     # Set tup the Bitbake environemnt
     bitbake = Bitbake(
