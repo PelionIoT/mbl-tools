@@ -130,7 +130,7 @@ class Bitbake(object):
         kwargs = kwargs.copy()
 
         kwargs["shell"] = False
-        kwargs["cwd"] = str(self.builddir)
+        kwargs["cwd"] = str(self.top_dir)
         if "env" in kwargs:
             kwargs["env"] = kwargs["env"].copy()
         else:
@@ -142,10 +142,11 @@ class Bitbake(object):
         return ret
 
     def _check_environment(self):
-        repo_dir = self.builddir / ".repo"
+        self.top_dir = self.builddir / "machine-{}".format(self.machine) / "mbl-manifest"
+        repo_dir = self.top_dir / ".repo"
         if not repo_dir.exists() or not repo_dir.is_dir():
             raise BitbakeInvalidDirectoryError(repo_dir)
-        init_env_file_path = self.builddir / self.init_env_file
+        init_env_file_path = self.top_dir / self.init_env_file
         if not init_env_file_path.exists() or not init_env_file_path.is_file():
             raise BitbakeInvalidFileError(init_env_file_path)
 
