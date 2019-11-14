@@ -75,25 +75,26 @@ def main():
 
     set_up_container(extra_ssh_hosts=args.extra_ssh_hosts)
 
-    # Set tup the Bitbake environemnt
+    # Set up the Bitbake environemnt
     bitbake = Bitbake(
         builddir=args.builddir, machine=args.machine, distro=args.distro
     )
-    bitbake.setup_environment()
 
     # Build the packages
     packages = "virtual/atf optee-os virtual/bootloader virtual/kernel"
     bitbake_build_commands = [
-        "bitbake -c cleansstate {}".format(packages),
+        "bitbake -c cleansstate {} {}".format(packages, args.image),
         "bitbake {}".format(args.image),
     ]
-    bitbake.run_commands(bitbake_build_commands)
+    for command in bitbake_build_commands:
+        bitbake.run_command(command, check=True)
 
     # Create the payloads
     bootloader1_base_path = args.outputdir / "bootloader1_payload"
     bootloader2_base_path = args.outputdir / "bootloader2_payload"
     kernel_base_path = args.outputdir / "kernel_payload"
     rootfs_base_path = args.outputdir / "rootfs_payload"
+    multi_component_base_path = args.outputdir / "multi_component_payload"
 
     create_update_payload_commands = [
         "create-update-payload -b1 -o {0}.swu -t {0}.testinfo".format(
@@ -108,8 +109,13 @@ def main():
         "create-update-payload -r {0} -o {1}.swu -t {1}.testinfo".format(
             args.image, rootfs_base_path
         ),
+        (
+            "create-update-payload -b 1 2 -k -r {0} -o {1}.swu -t {1}"
+            ".testinfo".format(args.image, multi_component_base_path)
+        ),
     ]
-    bitbake.run_commands(create_update_payload_commands)
+    for command in create_update_payload_commands:
+        bitbake.run_command(command, check=True)
 
 
 if __name__ == "__main__":
