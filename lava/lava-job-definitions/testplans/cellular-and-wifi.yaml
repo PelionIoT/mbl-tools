@@ -7,6 +7,7 @@
 {% set _ = tags.update({"imx7d-pico-mbl": ["cellular_shield", "external_antenna"]}) %}
 {% set _ = tags.update({"bcm2837-rpi-3-b-plus-32": ["cellular_shield"]}) %}
 {% set _ = tags.update({"bcm2837-rpi-3-b-32": ["cellular_shield"]}) %}
+{% set _ = tags.update({"imx6ul-pico-mbl": ["cellular_shield"]}) %}
 
 {% block testplan %}
 - test:
