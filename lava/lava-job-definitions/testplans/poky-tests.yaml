@@ -1,3 +1,3 @@
 {% extends "shared/templates/poky-job.yaml" %}
 
-{% set job_name = "psa-arch-poky-tests" %}
+{% set job_name = "poky-tests" %}

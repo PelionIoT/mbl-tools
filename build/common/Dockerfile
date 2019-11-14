@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN apt-get update && apt-get install gosu
 RUN pip3 install -U pip
-RUN pip3 install arpy dohq-artifactory jinja2 libconf pexpect
+RUN pip3 install arpy dohq-artifactory jinja2 libconf
 COPY common/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
