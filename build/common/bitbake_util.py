@@ -142,7 +142,9 @@ class Bitbake(object):
         return ret
 
     def _check_environment(self):
-        self.top_dir = self.builddir / "machine-{}".format(self.machine) / "mbl-manifest"
+        self.top_dir = (
+            self.builddir / "machine-{}".format(self.machine) / "mbl-manifest"
+        )
         repo_dir = self.top_dir / ".repo"
         if not repo_dir.exists() or not repo_dir.is_dir():
             raise BitbakeInvalidDirectoryError(repo_dir)
