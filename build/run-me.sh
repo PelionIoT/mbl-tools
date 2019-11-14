@@ -370,10 +370,9 @@ if [ -z "${mbl_tools_version:-}" ]; then
 fi
 
 if [ -z "${SSH_AUTH_SOCK+false}" ]; then
-  printf "error: ssh-agent not found.\n" >&2
-  printf "To connect to Github please run an SSH agent and add your SSH key.\n" >&2
-  printf "More info: https://help.github.com/articles/connecting-to-github-with-ssh/\n" >&2
-  exit 4
+  printf "warning: ssh-agent not found.\n" >&2
+  printf "To connect to private repos please run an SSH agent and add your SSH key.\n" >&2
+  printf "Github info: https://help.github.com/articles/connecting-to-github-with-ssh/\n" >&2
 fi
 
 # Build the docker build environment
@@ -392,10 +391,10 @@ fi
 docker run --rm -i $flag_tty \
        --name "$default_containername" \
        -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
-       -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
+       ${SSH_AUTH_SOCK:+-e SSH_AUTH_SOCK="$SSH_AUTH_SOCK"} \
        ${downloaddir:+-v "$downloaddir":"$downloaddir"} \
        ${outputdir:+-v "$outputdir":"$outputdir"} \
-       -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
+       ${SSH_AUTH_SOCK:+-v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")"} \
        -v "$builddir":"$builddir" \
        ${privileged_arg} \
        "$imagename" \
