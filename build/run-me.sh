@@ -198,7 +198,7 @@ config_setup config "$@"
 # printf's format string means that the word splitting will happen in the right
 # places.
 # shellcheck disable=SC2046
-eval set -- $(printf '%q ' "${config[@]}")
+eval set -- "${config[@]}"
 
 # Save the full command line for later - when we do a binary release we want a
 # record of how this script was invoked
