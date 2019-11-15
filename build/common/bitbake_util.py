@@ -71,13 +71,10 @@ class Bitbake(object):
         self._validate_parameters()
         self._check_environment()
 
-    def _generate_setup_env_command(self, verbose=False):
+    def _generate_setup_env_command(self):
         """Generate a Bash command to set up the BitBake environment."""
-        redirect_str = ""
-        if not verbose:
-            redirect_str = ">/dev/null"
-        return ". {} build-{} {}".format(
-            quote(self.init_env_file), quote(self.distro), redirect_str
+        return ". {} build-{}".format(
+            quote(self.init_env_file), quote(self.distro)
         )
 
     def run_command(self, command, verbose=False, **kwargs):
@@ -118,7 +115,7 @@ class Bitbake(object):
             cd_command = "cd {} &&".format(quote(str(kwargs["cwd"])))
 
         full_command = "{} && {} {}".format(
-            self._generate_setup_env_command(verbose=verbose),
+            self._generate_setup_env_command(),
             cd_command,
             command,
         )
