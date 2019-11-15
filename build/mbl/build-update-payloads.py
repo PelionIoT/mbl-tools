@@ -83,7 +83,7 @@ def main():
     # Build the packages
     packages = "virtual/atf optee-os virtual/bootloader virtual/kernel"
     bitbake_build_commands = [
-        "bitbake -c cleansstate {}".format(packages),
+        "bitbake -c cleansstate {} {}".format(packages, args.image),
         "bitbake {}".format(args.image),
     ]
     for command in bitbake_build_commands:
@@ -94,6 +94,7 @@ def main():
     bootloader2_base_path = args.outputdir / "bootloader2_payload"
     kernel_base_path = args.outputdir / "kernel_payload"
     rootfs_base_path = args.outputdir / "rootfs_payload"
+    multi_component_base_path = args.outputdir / "multi_component_payload"
 
     create_update_payload_commands = [
         "create-update-payload -b1 -o {0}.swu -t {0}.testinfo".format(
@@ -107,6 +108,10 @@ def main():
         ),
         "create-update-payload -r {0} -o {1}.swu -t {1}.testinfo".format(
             args.image, rootfs_base_path
+        ),
+        (
+            "create-update-payload -b 1 2 -k -r {0} -o {1}.swu -t {1}"
+            ".testinfo".format(args.image, multi_component_base_path)
         ),
     ]
     for command in create_update_payload_commands:
