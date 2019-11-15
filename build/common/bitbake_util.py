@@ -115,9 +115,7 @@ class Bitbake(object):
             cd_command = "cd {} &&".format(quote(str(kwargs["cwd"])))
 
         full_command = "{} && {} {}".format(
-            self._generate_setup_env_command(),
-            cd_command,
-            command,
+            self._generate_setup_env_command(), cd_command, command
         )
 
         if verbose:
