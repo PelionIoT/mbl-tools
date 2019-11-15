@@ -87,7 +87,7 @@ def main():
         "bitbake {}".format(args.image),
     ]
     for command in bitbake_build_commands:
-        bitbake.run_command(command, check=True)
+        bitbake.run_command(command, check=True, verbose=True)
 
     # Create the payloads
     bootloader1_base_path = args.outputdir / "bootloader1_payload"
@@ -115,7 +115,7 @@ def main():
         ),
     ]
     for command in create_update_payload_commands:
-        bitbake.run_command(command, check=True)
+        bitbake.run_command(command, check=True, verbose=True)
 
 
 if __name__ == "__main__":
