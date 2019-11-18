@@ -89,14 +89,14 @@ def main():
     for command in bitbake_build_commands:
         bitbake.run_command(command, check=True)
 
-    # Create the payloads for bootloader components
+    # Create the payloads for bootloader components, kernel and rootfs
     bootloader1_base_path = args.outputdir / "bootloader1_payload"
     bootloader2_base_path = args.outputdir / "bootloader2_payload"
     kernel_base_path = args.outputdir / "kernel_payload"
     rootfs_base_path = args.outputdir / "rootfs_payload"
     multi_component_base_path = args.outputdir / "multi_component_payload"
 
-    create_update_bootloader_payloads_commands = [
+    create_update_payload_commands = [
         "create-update-payload -b1 -o {0}.swu -t {0}.testinfo".format(
             bootloader1_base_path
         ),
@@ -114,7 +114,7 @@ def main():
             ".testinfo".format(args.image, multi_component_base_path)
         ),
     ]
-    for command in create_update_bootloader_payloads_commands:
+    for command in create_update_payload_commands:
         bitbake.run_command(command, check=True)
 
     # Create the payloads for the apps testing
@@ -123,53 +123,59 @@ def main():
     )
 
     # Payload of a good single app
+    app_name = "user-sample-app-package_1.0_any"
     bitbake.run_command(
-        "create-update-payload -a {0}.ipk -o {1}.swu -t {1}.testinfo".format(
-            apps_base_path / "user-sample-app-package_1.0_any",
-            args.outputdir / "user-sample-app-package_1.0_any",
+        "create-update-payload -a {app}.ipk "
+        "-o {payload}.swu -t {payload}.testinfo".format(
+            app=apps_base_path / app_name, payload=args.outputdir / app_name
         ),
         check=True,
     )
 
     # Payload of good 5 apps
     good_five_apps_cmd = (
-        "create-update-payload -a {0}.ipk {1}.ipk {2}.ipk {3}.ipk {4}.ipk "
-        "-o {5}.swu -t {5}.testinfo".format(
-            apps_base_path / "sample-app-1-good_1.0_any",
-            apps_base_path / "sample-app-2-good_1.0_any",
-            apps_base_path / "sample-app-3-good_1.0_any",
-            apps_base_path / "sample-app-4-good_1.0_any",
-            apps_base_path / "sample-app-5-good_1.0_any",
-            args.outputdir / "mbl-multi-apps-update-package-all-good",
+        "create-update-payload "
+        "-a {app1}.ipk {app2}.ipk {app3}.ipk {app4}.ipk {app5}.ipk "
+        "-o {payload}.swu -t {payload}.testinfo".format(
+            app1=apps_base_path / "sample-app-1-good_1.0_any",
+            app2=apps_base_path / "sample-app-2-good_1.0_any",
+            app3=apps_base_path / "sample-app-3-good_1.0_any",
+            app4=apps_base_path / "sample-app-4-good_1.0_any",
+            app5=apps_base_path / "sample-app-5-good_1.0_any",
+            payload=args.outputdir / "mbl-multi-apps-update-package-all-good",
         )
     )
     bitbake.run_command(good_five_apps_cmd, check=True)
 
     # Payload of 4 good apps and 1 that cannot run
     four_good_one_cannot_run_apps_cmd = (
-        "create-update-payload -a {0}.ipk {1}.ipk {2}.ipk {3}.ipk {4}.ipk "
-        "-o {5}.swu -t {5}.testinfo".format(
-            apps_base_path / "sample-app-1-good_1.0_any",
-            apps_base_path / "sample-app-2-good_1.0_any",
-            apps_base_path / "sample-app-3-good_1.0_any",
-            apps_base_path / "sample-app-4-bad-oci-runtime_1.1_any",
-            apps_base_path / "sample-app-5-good_1.0_any",
-            args.outputdir / "mbl-multi-apps-update-package-one-fail-run",
+        "create-update-payload "
+        "-a {app1}.ipk {app2}.ipk {app3}.ipk {app4}.ipk {app5}.ipk "
+        "-o {payload}.swu -t {payload}.testinfo".format(
+            app1=apps_base_path / "sample-app-1-good_1.0_any",
+            app2=apps_base_path / "sample-app-2-good_1.0_any",
+            app3=apps_base_path / "sample-app-3-good_1.0_any",
+            app4=apps_base_path / "sample-app-4-bad-oci-runtime_1.1_any",
+            app5=apps_base_path / "sample-app-5-good_1.0_any",
+            payload=args.outputdir
+            / "mbl-multi-apps-update-package-one-fail-run",
         )
     )
     bitbake.run_command(four_good_one_cannot_run_apps_cmd, check=True)
 
     # Payload of 4 good apps and 1 that cannot be installed
     four_good_one_cannot_install_apps_cmd = (
-        "create-update-payload -a {0}.ipk {1}.ipk {2}.ipk {3}.ipk {4}.ipk "
-        "-o {5}.swu -t {5}.testinfo".format(
-            apps_base_path / "sample-app-1-good_1.0_any",
-            apps_base_path / "sample-app-2-good_1.0_any",
-            apps_base_path
+        "create-update-payload "
+        "-a {app1}.ipk {app2}.ipk {app3}.ipk {app4}.ipk {app5}.ipk "
+        "-o {payload}.swu -t {payload}.testinfo".format(
+            app1=apps_base_path / "sample-app-1-good_1.0_any",
+            app2=apps_base_path / "sample-app-2-good_1.0_any",
+            app3=apps_base_path
             / "sample-app-3-bad-architecture_1.1_invalid-architecture",
-            apps_base_path / "sample-app-4-good_1.0_any",
-            apps_base_path / "sample-app-5-good_1.0_any",
-            args.outputdir / "mbl-multi-apps-update-package-one-fail-install",
+            app4=apps_base_path / "sample-app-4-good_1.0_any",
+            app5=apps_base_path / "sample-app-5-good_1.0_any",
+            payload=args.outputdir
+            / "mbl-multi-apps-update-package-one-fail-install",
         )
     )
     bitbake.run_command(four_good_one_cannot_install_apps_cmd, check=True)
