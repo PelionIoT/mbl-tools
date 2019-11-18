@@ -130,6 +130,7 @@ def main():
             app=apps_base_path / app_name, payload=args.outputdir / app_name
         ),
         check=True,
+        verbose=True,
     )
 
     # Payload of good 5 apps
@@ -145,7 +146,7 @@ def main():
             payload=args.outputdir / "mbl-multi-apps-update-package-all-good",
         )
     )
-    bitbake.run_command(good_five_apps_cmd, check=True)
+    bitbake.run_command(good_five_apps_cmd, check=True, verbose=True)
 
     # Payload of 4 good apps and 1 that cannot run
     four_good_one_cannot_run_apps_cmd = (
@@ -161,7 +162,9 @@ def main():
             / "mbl-multi-apps-update-package-one-fail-run",
         )
     )
-    bitbake.run_command(four_good_one_cannot_run_apps_cmd, check=True)
+    bitbake.run_command(
+        four_good_one_cannot_run_apps_cmd, check=True, verbose=True
+    )
 
     # Payload of 4 good apps and 1 that cannot be installed
     four_good_one_cannot_install_apps_cmd = (
@@ -178,7 +181,9 @@ def main():
             / "mbl-multi-apps-update-package-one-fail-install",
         )
     )
-    bitbake.run_command(four_good_one_cannot_install_apps_cmd, check=True)
+    bitbake.run_command(
+        four_good_one_cannot_install_apps_cmd, check=True, verbose=True
+    )
 
 
 if __name__ == "__main__":
