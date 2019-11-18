@@ -1,3 +1,3 @@
 {% extends "shared/templates/bootbomb-recovery.yaml" %}
 
-{% set bootbomb_filename = "pico-imx7d_bootbomb_20170112.imx" %}
+{% set bootbomb_filename = "pico-imx7d_u-boot_20191114.imx" %}
