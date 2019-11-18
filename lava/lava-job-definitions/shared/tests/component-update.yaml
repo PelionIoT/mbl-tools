@@ -1,0 +1,15 @@
+- path: ci/lava/tests/component-update.yaml
+  repository: https://github.com/ARMmbed/mbl-core.git
+  name: "{{ component_name }}-update-via-{{ update_method }}"
+  from: git
+  history: False
+  branch: "{{ mbl_branch }}"
+  {% if "mbl-core" in mbl_revisions %}
+  revision: {{ mbl_revisions["mbl-core"] }}
+  {% endif %}
+  parameters:
+    virtual_env: "{{ venv_name }}"
+    component_name: "{{ component_name }}"
+    payload_url: "{{ payload_url }}"
+    payload_testinfo_url: "{{ payload_testinfo_url }}"
+    update_method: "{{ update_method }}"
