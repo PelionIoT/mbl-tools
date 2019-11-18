@@ -1,42 +1,4 @@
-{% extends "shared/templates/base.yaml" %}
+{% extends "shared/templates/component-update-job.yaml" %}
 
-{% set job_name = "RootFS update"%}
-{% set lxc_creation = true %}
-{% set lxc_name = "rootfs-update-lxc" %}
-
-{% block testplan %}
-- test:
-    timeout:
-      minutes: 30
-    namespace: lxc
-    definitions:
-
-    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
-
-    {{ macros.avahi_discovery(venv_name, "pre") | indent }}
-
-    {{ macros.install_mbl_cli(venv_name) | indent }}
-
-    {{ macros.rootfs_update("UPDATE", "rootfs1", image_url, "MBL-CLI", venv_name, rootfs_payload_version) | indent }}
-
-- boot:
-    namespace: target
-    method: minimal
-    # We don't power cycle because the rootfs update has rebooted the DUT
-    reset: false
-    prompts:
-      - "{{ login_prompt }}"
-    timeout:
-        minutes: 5
-    failure-retry: 3
-
-- test:
-   timeout:
-      minutes: 5
-   namespace: lxc
-   definitions:
-
-    {{ macros.rootfs_update("POST_CHECK", "rootfs2", image_url, "MBL-CLI", venv_name, rootfs_payload_version) | indent }}
-
-    {{ macros.avahi_discovery(venv_name, "post") | indent }}
-{% endblock testplan %}
+{% set component_name = "rootfs" %}
+{% set update_method = "mbl-cli" %}
