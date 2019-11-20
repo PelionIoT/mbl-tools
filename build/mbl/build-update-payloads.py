@@ -90,11 +90,11 @@ def main():
         bitbake.run_command(command, check=True, verbose=True)
 
     # Create the payloads for bootloader components, kernel and rootfs
-    bootloader1_base_path = args.outputdir / "bootloader1_payload"
-    bootloader2_base_path = args.outputdir / "bootloader2_payload"
-    kernel_base_path = args.outputdir / "kernel_payload"
-    rootfs_base_path = args.outputdir / "rootfs_payload"
-    multi_component_base_path = args.outputdir / "multi_component_payload"
+    bootloader1_base_path = args.outputdir / "bootloader1"
+    bootloader2_base_path = args.outputdir / "bootloader2"
+    kernel_base_path = args.outputdir / "kernel"
+    rootfs_base_path = args.outputdir / "rootfs"
+    multi_component_base_path = args.outputdir / "multi-component"
 
     create_update_payload_commands = [
         "create-update-payload -b1 -o {0}.swu -t {0}.testinfo".format(
@@ -123,11 +123,11 @@ def main():
     )
 
     # Payload of a good single app
-    app_name = "user-sample-app-package_1.0_any"
     bitbake.run_command(
         "create-update-payload -a {app}.ipk "
         "-o {payload}.swu -t {payload}.testinfo".format(
-            app=apps_base_path / app_name, payload=args.outputdir / app_name
+            app=apps_base_path / "sample-app_1.0_any",
+            payload=args.outputdir / "sample-app",
         ),
         check=True,
         verbose=True,
@@ -143,7 +143,7 @@ def main():
             app3=apps_base_path / "sample-app-3-good_1.0_any",
             app4=apps_base_path / "sample-app-4-good_1.0_any",
             app5=apps_base_path / "sample-app-5-good_1.0_any",
-            payload=args.outputdir / "mbl-multi-apps-update-package-all-good",
+            payload=args.outputdir / "multi-app-all-good",
         )
     )
     bitbake.run_command(good_five_apps_cmd, check=True, verbose=True)
@@ -158,8 +158,7 @@ def main():
             app3=apps_base_path / "sample-app-3-good_1.0_any",
             app4=apps_base_path / "sample-app-4-bad-oci-runtime_1.1_any",
             app5=apps_base_path / "sample-app-5-good_1.0_any",
-            payload=args.outputdir
-            / "mbl-multi-apps-update-package-one-fail-run",
+            payload=args.outputdir / "multi-app-one-fail-run",
         )
     )
     bitbake.run_command(
@@ -177,8 +176,7 @@ def main():
             / "sample-app-3-bad-architecture_1.1_invalid-architecture",
             app4=apps_base_path / "sample-app-4-good_1.0_any",
             app5=apps_base_path / "sample-app-5-good_1.0_any",
-            payload=args.outputdir
-            / "mbl-multi-apps-update-package-one-fail-install",
+            payload=args.outputdir / "multi-app-one-fail-install",
         )
     )
     bitbake.run_command(

@@ -37,6 +37,6 @@
       parameters:
           virtual_env: "{{ venv_name }}"
           device_type: "{{ device_type }}"
-          dut_tutorials_dir: "{{ dut_tutorials_dir }}"
+          dut_artifacts_dir: "{{ dut_artifacts_dir }}"
 
 {% endblock testplan %}

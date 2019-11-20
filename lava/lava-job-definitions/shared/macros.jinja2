@@ -2,10 +2,6 @@
    This file is imported in the base template, so every job has access to them #}
 
 {# Common actions #}
-{% macro install_docker() %}
-    {% include "shared/actions/install-docker.yaml" %}
-{% endmacro %}
-
 {% macro create_python_environment(venv_name, host_download_dir) %}
     {% include "shared/actions/create-python-environment.yaml" %}
 {% endmacro %}
@@ -39,16 +35,12 @@
     {% include "shared/tests/avahi-discovery.yaml" %}
 {% endmacro %}
 
-{% macro core_components(venv_name, dut_tutorials_dir, host_tutorials_dir) %}
+{% macro core_components(venv_name, local_conf_url, payloads_url, dut_artifacts_dir, host_artifacts_dir) %}
     {% include "shared/tests/core-component.yaml" %}
 {% endmacro %}
 
 {% macro rootfs_update(test_stage, rootfs, image_url, update_method, venv_name, rootfs_payload_version, iteration="") %}
     {% include "shared/tests/rootfs-update.yaml" %}
-{% endmacro %}
-
-{% macro build_tutorial_images(venv_name, host_tutorials_dir, app_payload_version) %}
-    {% include "shared/tests/build-tutorial-images.yaml" %}
 {% endmacro %}
 
 {% macro component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method) %}
