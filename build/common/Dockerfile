@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN apt-get update && apt-get install gosu
 RUN pip3 install -U pip
-RUN pip3 install arpy dohq-artifactory jinja2 libconf pexpect
+RUN pip3 install arpy dohq-artifactory jinja2 libconf
 COPY common/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
@@ -77,4 +77,8 @@ COPY poky-test/build-poky.py \
      poky-test/poky-bitbake-wrapper.sh ./
 
 # Scripts used to build BL2/BL3/fitImage components
-COPY mbl/build-update-payloads.py ./
+COPY common/bitbake_util.py \
+     mbl/build-update-payloads.py ./
+
+# Scripts used to run commands in build environment
+COPY mbl/run-command.py ./

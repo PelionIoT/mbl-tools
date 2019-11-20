@@ -19,25 +19,37 @@ source "$srcdir/config-funcs.sh"
 
 validate_args()
 {
-  local -n list1=$1
-  local -n list2=$2
+  local -n lout=$1
+  local -n lexp=$2
   local invalid=0
 
-  if [ ${#list1[@]} -ne ${#list2[@]} ]; then
+  if [ ${#lout[@]} -ne ${#lexp[@]} ]; then
     # Different lengths
     invalid=1
     echo "ERR: found different lengths of args"
   fi
-  for i in "${!list1[@]}"; do
-      if [ "${list1[$i]}" != "${list2[$i]}" ]; then
-        echo "ERR: non-matching arg [${list1[$i]}] != [${list2[$i]}]"
+  for i in "${!lout[@]}"; do
+    # Special case where -- is not quoted
+    if [ "${lexp[$i]}" == "--" ]; then
+      if [ "${lout[$i]}" == "--" ]; then
+        continue
+      else
+        echo "ERR: non-matching arg [${lout[$i]}] != [${lexp[$i]}]"
         invalid=1
         break
       fi
+    fi
+    # Otherwise the output will be wrapped in '' & the expected list won't be!
+    if [ "${lout[$i]}" != "'${lexp[$i]}'" ]; then
+      echo "ERR: non-matching arg [${lout[$i]}] != ['${lexp[$i]}']"
+      invalid=1
+      break
+    fi
   done
   set +e
   if [ $invalid -eq 1 ]; then
-    echo "FAIL: [${list1[*]}] != [${list2[*]}]"
+    echo "FAIL: [${lout[*]}] != [${lexp[*]}]"
+    echo " (note: expected args are NOT wrapped in single quotes)"
     return 1
   else
     echo "PASS"
@@ -72,6 +84,7 @@ validate_files()
     echo "FAIL: Differences found between $out and $exp"
     return 1
   fi
+  echo "PASS"
   return 0
 }
 

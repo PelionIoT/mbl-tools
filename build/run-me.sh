@@ -29,6 +29,25 @@ cleanup() {
     fi
 }
 
+quiet_printf() {
+    if [ "$quiet" -ne 1 ]; then
+        # Shellcheck warns about printf's format string being variable, but
+        # quiet_printf is just forwarding args to printf, so it's
+        # quiet_printf's caller's responsibility to ensure that quiet_printf's
+        # format string isn't variable.
+        # shellcheck disable=SC2059
+        printf "$@"
+    fi
+}
+
+run_quietly() {
+    if [ "$quiet" -ne 1 ]; then
+        "$@"
+    else
+        "$@" > /dev/null
+    fi
+}
+
 build_script_for_project() {
     project=${1:?}
     case "$1" in
@@ -44,6 +63,9 @@ build_script_for_project() {
         pelion-edge)
             printf "%s\n" "build.py"
             ;;
+        run-command)
+            printf "%s\n" "run-command.py"
+            ;;
         *)
             printf "Unrecognized project (build_script) \"%s\"" "$project" >&2
             exit 5
@@ -57,6 +79,10 @@ dockerfile_for_project() {
         build-update-payloads)
             printf "%s\n" "common/Dockerfile"
             ;;
+        dockcross)
+            printf "Project \"%s\" requires an external Dockerfile. Please specify it with --external-dockerfile.\n" "$project" >&2
+            exit 5
+            ;;
         mbl)
             printf "%s\n" "common/Dockerfile"
             ;;
@@ -65,6 +91,9 @@ dockerfile_for_project() {
             ;;
         pelion-edge)
             printf "%s\n" "pelion-edge/Dockerfile"
+            ;;
+        run-command)
+            printf "%s\n" "common/Dockerfile"
             ;;
         *)
             printf "Unrecognized project (dockerfile) \"%s\"" "$project" >&2
@@ -101,6 +130,7 @@ OPTIONAL parameters:
                         generated, or a key generated for a previous build in
                         the same work area will be used.
   --downloaddir PATH    Use PATH to store Yocto downloaded sources.
+  --external-dockerfile Specify an external Dockerfile
   --external-manifest PATH
                         Specify an external manifest file.
   -h, --help            Print brief usage information and exit.
@@ -134,6 +164,7 @@ OPTIONAL parameters:
   -o, --outputdir PATH  Specify a directory to store non-interactively built
                         artifacts. Note: Will not be updated by builds in
                         interactive mode.
+  --quiet               Reduce amount of output.
   --root-passwd-file PATH
                         The file containing the root user password in plain text.
   --save-config PATH    Path to the file to record the currently specified command
@@ -155,11 +186,18 @@ EOF
 imagename="$default_imagename"
 project="$default_project"
 flag_tty="-t"
+quiet=0
 
 # Read or write configuration files and return combined args array
 config=()
 config_setup config "$@"
+
 # Set up args including values from config
+# Shell check wants us to quote the printf substitution to prevent word
+# splitting here, but we *want* word splitting of printf's output. The "%q" in
+# printf's format string means that the word splitting will happen in the right
+# places.
+# shellcheck disable=SC2046
 eval set -- "${config[@]}"
 
 # Save the full command line for later - when we do a binary release we want a
@@ -169,6 +207,7 @@ command_line="$(printf '%q ' "$0" "$@")"
 args_list="boot-rot-key:,builddir:"
 args_list="${args_list},downloaddir:"
 args_list="${args_list},external-manifest:"
+args_list="${args_list},external-dockerfile:"
 args_list="${args_list},help"
 args_list="${args_list},image-name:,inject-mcc:"
 args_list="${args_list},kernel-rot-crt:,kernel-rot-key:"
@@ -176,6 +215,7 @@ args_list="${args_list},mcc-destdir:,mbl-tools-version:"
 args_list="${args_list},no-tty"
 args_list="${args_list},outputdir:"
 args_list="${args_list},project:"
+args_list="${args_list},quiet"
 args_list="${args_list},root-passwd-file:"
 args_list="${args_list},ssh-auth-keys:"
 args_list="${args_list},tty"
@@ -210,6 +250,10 @@ while [ $# -gt 0 ]; do
 
   --downloaddir)
     opt_prev=downloaddir
+    ;;
+
+  --external-dockerfile)
+    opt_prev=external_dockerfile
     ;;
 
   --external-manifest)
@@ -249,6 +293,10 @@ while [ $# -gt 0 ]; do
     opt_prev=outputdir
     ;;
 
+  --quiet)
+    quiet=1
+    ;;
+
   --root-passwd-file)
     opt_prev=root_passwd_file
     ;;
@@ -280,7 +328,7 @@ done
 if [ -n "${builddir:-}" ]; then
   builddir=$(readlink -f "$builddir")
   if [ ! -d "$builddir" ]; then
-    printf "missing builddir %s. Creating it.\n" "$builddir"
+    quiet_printf "missing builddir %s. Creating it.\n" "$builddir"
     mkdir -p "$builddir"
   fi
 else
@@ -291,7 +339,7 @@ fi
 if [ -n "${outputdir:-}" ]; then
   outputdir=$(readlink -f "$outputdir")
   if [ ! -d "$outputdir" ]; then
-    printf "missing outputdir %s. Creating it.\n" "$outputdir"
+    quiet_printf "missing outputdir %s. Creating it.\n" "$outputdir"
     mkdir -p "$outputdir"
   fi
 fi
@@ -299,7 +347,7 @@ fi
 if [ -n "${downloaddir:-}" ]; then
   downloaddir=$(readlink -f "$downloaddir")
   if [ ! -d "$downloaddir" ]; then
-    printf "missing downloaddir %s. Creating it.\n" "$downloaddir"
+    quiet_printf "missing downloaddir %s. Creating it.\n" "$downloaddir"
     mkdir -p "$downloaddir"
   fi
 fi
@@ -347,11 +395,21 @@ if [ -n "${ssh_auth_keys:-}" ]; then
   done
 fi
 
-build_script=$(build_script_for_project "$project")
-dockerfile=$(dockerfile_for_project "$project")
+if [ "$project" == "dockcross" ]; then
+  printf "\"%s\" project generates a build script that will be used for cross compilation\n" "$project";
+else
+  build_script=$(build_script_for_project "$project")
+fi
 privileged_arg=$(privileged_arg_for_project "$project")
 if [ -n "${mcc_destdir:-}" ]; then
   build_args="${build_args:-} --mcc-destdir=$mcc_destdir"
+fi
+
+if [ -n "${external_dockerfile:-}" ]; then
+  dockerfile_path=$(readlink -f "$external_dockerfile")
+else
+  dockerfile=$(dockerfile_for_project "$project")
+  dockerfile_path="$execdir/$dockerfile"
 fi
 
 # If we didn't get an mbl-tools version on the command line, try to determine
@@ -359,25 +417,24 @@ fi
 # environments so don't fail the build if it doesn't work.
 if [ -z "${mbl_tools_version:-}" ]; then
   if which git &> /dev/null; then
-    printf "Found git in path; attempting to determine mbl-tools version\n"
+    quiet_printf "Found git in path; attempting to determine mbl-tools version\n"
     if mbl_tools_version=$(git -C "$(dirname "$0")" rev-parse HEAD); then
-      printf "Determined mbl-tools version to be %s\n" "$mbl_tools_version";
+      quiet_printf "Determined mbl-tools version to be %s\n" "$mbl_tools_version";
     else
-      printf "Failed to determine mbl-tools version automatically; continuing anyway\n" >&2
+      quiet_printf "Failed to determine mbl-tools version automatically; continuing anyway\n" >&2
       mbl_tools_version=""
     fi
   fi
 fi
 
 if [ -z "${SSH_AUTH_SOCK+false}" ]; then
-  printf "error: ssh-agent not found.\n" >&2
-  printf "To connect to Github please run an SSH agent and add your SSH key.\n" >&2
-  printf "More info: https://help.github.com/articles/connecting-to-github-with-ssh/\n" >&2
-  exit 4
+  printf "warning: ssh-agent not found.\n" >&2
+  printf "To connect to private repos please run an SSH agent and add your SSH key.\n" >&2
+  printf "Github info: https://help.github.com/articles/connecting-to-github-with-ssh/\n" >&2
 fi
 
 # Build the docker build environment
-docker build -f "$execdir/$dockerfile" -t "$imagename" "$execdir"
+run_quietly docker build -f "$dockerfile_path" -t "$imagename" "$execdir"
 
 if [ -n "${external_manifest:-}" ]; then
   name="$(basename "$external_manifest")"
@@ -385,24 +442,33 @@ if [ -n "${external_manifest:-}" ]; then
   set -- "--external-manifest=$builddir/$name" "$@"
 fi
 
-# The ${:+} expansion of download upsets shellcheck, but we do not
-# want that instance quoted because that would inject an empty
-# argument when download is not defined.
-# shellcheck disable=SC2086
-docker run --rm -i $flag_tty \
-       --name "$default_containername" \
-       -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
-       -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
-       ${downloaddir:+-v "$downloaddir":"$downloaddir"} \
-       ${outputdir:+-v "$outputdir":"$outputdir"} \
-       -v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")" \
-       -v "$builddir":"$builddir" \
-       ${privileged_arg} \
-       "$imagename" \
-       ./${build_script} --builddir "$builddir" \
-         ${build_args:-} \
-         ${downloaddir:+--downloaddir "$downloaddir"} \
-         ${outputdir:+--outputdir "$outputdir"} \
-         --parent-command-line "$command_line" \
-         ${mbl_tools_version:+--mbl-tools-version "$mbl_tools_version"} \
-         "$@"
+
+if [ "$project" == "dockcross" ]; then
+  cross_build_script="$imagename"
+  docker run --rm -i --name "$default_containername" \
+      "$imagename" > "$builddir/$cross_build_script"
+  chmod +x "$builddir/$cross_build_script"
+  (cd "$builddir" && ./"$cross_build_script" "$@")
+else
+  # The ${:+} expansion of download upsets shellcheck, but we do not
+  # want that instance quoted because that would inject an empty
+  # argument when download is not defined.
+  # shellcheck disable=SC2086
+  docker run --rm -i $flag_tty \
+         --name "$default_containername" \
+         -e LOCAL_UID="$(id -u)" -e LOCAL_GID="$(id -g)" \
+         ${SSH_AUTH_SOCK:+-e SSH_AUTH_SOCK="$SSH_AUTH_SOCK"} \
+         ${downloaddir:+-v "$downloaddir":"$downloaddir"} \
+         ${outputdir:+-v "$outputdir":"$outputdir"} \
+         ${SSH_AUTH_SOCK:+-v "$(dirname "$SSH_AUTH_SOCK"):$(dirname "$SSH_AUTH_SOCK")"} \
+         -v "$builddir":"$builddir" \
+         ${privileged_arg} \
+         "$imagename" \
+         ./${build_script} --builddir "$builddir" \
+           ${build_args:-} \
+           ${downloaddir:+--downloaddir "$downloaddir"} \
+           ${outputdir:+--outputdir "$outputdir"} \
+           --parent-command-line "$command_line" \
+           ${mbl_tools_version:+--mbl-tools-version "$mbl_tools_version"} \
+           "$@"
+fi
