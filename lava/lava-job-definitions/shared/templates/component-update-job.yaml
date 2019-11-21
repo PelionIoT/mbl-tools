@@ -1,0 +1,39 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = component_name + " image update via " + update_method %}
+{% set lxc_creation = true %}
+{% set lxc_name = component_name + "-image-update-" + update_method + "-lxc" %}
+{% set payloads_url = pipeline_data["payloads_url"] %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 30
+    namespace: lxc
+    definitions:
+
+    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
+
+    {{ macros.avahi_discovery(venv_name) | indent }}
+
+    {{ macros.install_mbl_cli(venv_name) | indent }}
+
+    {% if update_method == "pelion" %}
+    {{ macros.provision_mbl(venv_name) | indent }}
+    {% endif %}
+
+    {% set payload_url = "/".join([payloads_url,
+                                   component_name + "_payload.swu",
+                                   component_name + "_payload.swu",]) %}
+
+    {% set payload_testinfo_url = "/".join([payloads_url,
+                                            component_name + "_payload.testinfo",
+                                            component_name + "_payload.testinfo",]) %}
+
+    {{ macros.component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method) | indent }}
+
+    {% if update_method == "pelion" %}
+    {{ macros.delete_certificate(venv_name) | indent }} 
+    {% endif %}
+
+{% endblock testplan %}
