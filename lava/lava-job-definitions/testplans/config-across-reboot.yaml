@@ -1,0 +1,34 @@
+{% extends "shared/templates/base.yaml" %}
+
+{% set job_name = "Config persists across reboot" %}
+{% set lxc_creation = true %}
+{% set lxc_name = "config-across-reboot" %}
+
+{% block testplan %}
+- test:
+    timeout:
+      minutes: 50
+    namespace: lxc
+    definitions:
+
+    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
+
+    {{ macros.avahi_discovery(venv_name) | indent }}
+
+    {{ macros.install_mbl_cli(venv_name) | indent }}
+
+    {{ macros.enable_wifi(venv_name) | indent }}
+
+    - path: ci/lava/tests/config-across-reboot.yaml
+      repository: https://github.com/ARMmbed/mbl-core.git
+      name: Config_across_reboot
+      from: git
+      history: False
+      branch: "{{ mbl_branch }}"
+      {% if "mbl-core" in mbl_revisions %}
+      revision: {{ mbl_revisions["mbl-core"] }}
+      {% endif %}
+      parameters:
+          virtual_env: "{{ venv_name }}"
+
+{% endblock testplan %}
