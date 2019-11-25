@@ -1,4 +1,4 @@
 {% extends "shared/templates/component-update-job.yaml" %}
 
-{% set component_name = "multi-component" %}
+{% set component_name = "sample-app" %}
 {% set update_method = "pelion" %}
