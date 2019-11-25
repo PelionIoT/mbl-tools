@@ -17,8 +17,8 @@ tags:
 {% set venv_name = "/tmp/venv" %}
 {% set host_download_dir = "/tmp/pytest" %}
 {% set dut_download_dir = "/tmp/pytest" %}
-{% set host_tutorials_dir = "/tmp/tutorials" %}
-{% set dut_tutorials_dir = "/scratch" %}
+{% set host_artifacts_dir = "/tmp/artifacts" %}
+{% set dut_artifacts_dir = "/scratch" %}
 
 {% set app_payload_version = "1" %}
 {% set rootfs_payload_version = "1" %}

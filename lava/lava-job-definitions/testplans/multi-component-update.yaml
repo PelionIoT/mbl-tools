@@ -1,4 +1,4 @@
 {% extends "shared/templates/component-update-job.yaml" %}
 
-{% set component_name = "multi_component" %}
+{% set component_name = "multi-component" %}
 {% set update_method = "mbl-cli" %}
