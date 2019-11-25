@@ -23,12 +23,12 @@
     {% endif %}
 
     {% set payload_url = "/".join([payloads_url,
-                                   component_name + "_payload.swu",
-                                   component_name + "_payload.swu",]) %}
+                                   component_name + ".swu",
+                                   component_name + ".swu",]) %}
 
     {% set payload_testinfo_url = "/".join([payloads_url,
-                                            component_name + "_payload.testinfo",
-                                            component_name + "_payload.testinfo",]) %}
+                                            component_name + ".testinfo",
+                                            component_name + ".testinfo",]) %}
 
     {{ macros.component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method) | indent }}
 

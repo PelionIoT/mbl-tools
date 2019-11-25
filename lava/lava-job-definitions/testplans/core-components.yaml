@@ -3,6 +3,8 @@
 {% set job_name = "Core Components" %}
 {% set lxc_creation = true %}
 {% set lxc_name = "core-components-lxc" %}
+{% set payloads_url = pipeline_data["payloads_url"] %}
+{% set local_conf_url = pipeline_data["local_conf_url"] %}
 
 {% block testplan %}
 - test:
@@ -20,10 +22,6 @@
 
     {{ macros.create_python_environment_on_device(venv_name, host_download_dir, dut_download_dir) | indent }}
 
-    {{ macros.install_docker() | indent }}
-
-    {{ macros.build_tutorial_images(venv_name, host_tutorials_dir, app_payload_version) | indent }}
-
-    {{ macros.core_components(venv_name, dut_tutorials_dir, host_tutorials_dir) | indent }}
+    {{ macros.core_components(venv_name, local_conf_url, payloads_url, dut_artifacts_dir, host_artifacts_dir) | indent }}
 
 {% endblock testplan %}
