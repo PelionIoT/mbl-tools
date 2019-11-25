@@ -14,7 +14,7 @@
 
     {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
 
-    {{ macros.avahi_discovery() | indent }}
+    {{ macros.avahi_discovery(venv_name) | indent }}
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
@@ -31,4 +31,9 @@
                                             component_name + "_payload.testinfo",]) %}
 
     {{ macros.component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method) | indent }}
+
+    {% if update_method == "pelion" %}
+    {{ macros.delete_certificate(venv_name) | indent }} 
+    {% endif %}
+
 {% endblock testplan %}

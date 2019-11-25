@@ -1,13 +1,8 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = "Cellular and WiFi" %}
+{% set job_name = "Config persists across reboot" %}
 {% set lxc_creation = true %}
-{% set lxc_name = "cellular-wifi-lxc" %}
-
-{% set _ = tags.update({"imx7d-pico-mbl": ["cellular_shield", "external_antenna"]}) %}
-{% set _ = tags.update({"imx6ul-pico-mbl": ["cellular_shield"]}) %}
-{% set _ = tags.update({"bcm2837-rpi-3-b-plus-32": ["cellular_shield"]}) %}
-{% set _ = tags.update({"bcm2837-rpi-3-b-32": ["cellular_shield"]}) %}
+{% set lxc_name = "config-across-reboot" %}
 
 {% block testplan %}
 - test:
@@ -22,13 +17,11 @@
 
     {{ macros.install_mbl_cli(venv_name) | indent }}
 
-    {{ macros.create_python_environment_on_device(venv_name, host_download_dir, dut_download_dir) | indent }}
-
     {{ macros.enable_wifi(venv_name) | indent }}
 
-    - path: ci/lava/tests/cellular-and-wifi.yaml
+    - path: ci/lava/tests/config-across-reboot.yaml
       repository: https://github.com/ARMmbed/mbl-core.git
-      name: cellular_wifi_tests
+      name: Config_across_reboot
       from: git
       history: False
       branch: "{{ mbl_branch }}"
@@ -37,7 +30,5 @@
       {% endif %}
       parameters:
           virtual_env: "{{ venv_name }}"
-          device_type: "{{ device_type }}"
-          dut_tutorials_dir: "{{ dut_tutorials_dir }}"
 
 {% endblock testplan %}
