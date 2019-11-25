@@ -6,6 +6,13 @@
 {% set lxc_name = "rootfs-soak-update-lxc" %}
 {% set iterations = 14 %}
 
+# Set tags so these jobs run of reserved boards
+{% set _ = tags.update({"imx7d-pico-mbl": ["soak_test"]}) %}                                                                                                                                                        
+{% set _ = tags.update({"imx6ul-pico-mbl": ["soak_test"]}) %}                   
+{% set _ = tags.update({"imx8mmevk-mbl": ["soak_test"]}) %}                     
+{% set _ = tags.update({"bcm2837-rpi-3-b-plus-32": ["soak_test"]}) %}           
+{% set _ = tags.update({"bcm2837-rpi-3-b-32": ["soak_test"]}) %} 
+
 {% block testplan %}
 - test:
     timeout:
