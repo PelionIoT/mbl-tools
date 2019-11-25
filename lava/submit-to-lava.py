@@ -13,10 +13,12 @@ import argparse
 import logging
 import sys
 import os
+import time
 import xmlrpc.client
 import urllib
 
 import jinja2
+import yaml
 
 
 default_template_base_path = "lava-job-definitions"
@@ -37,6 +39,14 @@ class ExitCode(enum.Enum):
     SUCCESS = 0
     CTRLC = 1
     ERROR = 2
+
+
+class JobStatusCode(enum.Enum):
+    """Job status codes."""
+
+    SUCCESS = 0
+    NOT_FINISHED = 1
+    FAILURE = 2
 
 
 class LAVATemplates(object):
@@ -159,6 +169,20 @@ class LAVAServer(object):
         for job_id in job_ids:
             lava_job_urls.append(self.job_info_url.format(job_id))
         return lava_job_urls
+
+    def check_job_status(self, job_id):
+        """Given a job ID, return its status (waiting, passed, failed)."""
+        return_value = JobStatusCode.SUCCESS.value
+        results = yaml.safe_load(
+            self.connection.results.get_testjob_results_yaml(job_id)
+        )
+        if len(results) == 0:
+            return JobStatusCode.NOT_FINISHED.value
+        for result in results:
+            if result["result"] != "pass":
+                logging.error("Test case %s failed", result["id"])
+                return_value = JobStatusCode.FAILURE.value
+        return return_value
 
     def _connect(self):
         """Create a xmlrpc client using LAVA url API."""
@@ -351,6 +375,27 @@ def _parse_arguments(cli_args):
         action="store_true",
         dest="dry_run",
     )
+    parser.add_argument(
+        "--poll-result",
+        help="Poll for the lava result",
+        action="store_true",
+        dest="poll_result",
+        default=False,
+    )
+    parser.add_argument(
+        "--poll-interval",
+        help="Poll interval for the lava queries",
+        type=int,
+        dest="poll_interval",
+        default=600,
+    )
+    parser.add_argument(
+        "--poll-retries",
+        help="Maximum amount of times the result is polled",
+        type=int,
+        dest="poll_retries",
+        default=5,
+    )
 
     return parser.parse_args(cli_args)
 
@@ -382,6 +427,33 @@ def _enable_debug_logging(debug=False):
     else:
         logging_level = logging.INFO
     logger.setLevel(logging_level)
+
+
+def poll_result(poll_retries, poll_interval, job_ids, lava_server):
+    """Poll result of the given job ids."""
+    i = 0
+    error_occurred = False
+    while i < poll_retries:
+        time.sleep(poll_interval)
+        logging.debug("Polling for test results")
+        for job_id in job_ids:
+            status = lava_server.check_job_status(job_id)
+            if status != JobStatusCode.NOT_FINISHED.value:
+                job_ids.remove(job_id)
+                if status != JobStatusCode.SUCCESS.value:
+                    logging.error("Job %s failed", job_id)
+                    error_occurred = True
+                else:
+                    logging.info("Job %s succeeded", job_id)
+        if len(job_ids) == 0 and error_occurred is False:
+            logging.debug("Finished polling jobs, all succeeded")
+            return ExitCode.SUCCESS.value
+        elif len(job_ids) == 0 and error_occurred is True:
+            logging.debug("Finished polling jobs, failures detected")
+            return ExitCode.SUCCESS.value
+        i += 1
+    logging.debug("Finished polling jobs, max retries reached")
+    return ExitCode.ERROR.value
 
 
 def _main(args):
@@ -422,13 +494,20 @@ def _main(args):
             args.lava_server, args.lava_username, args.lava_token, args.dry_run
         )
 
+        job_ids = []
         for lava_job in lava_jobs:
             # Submit the job to LAVA
-            job_ids = lava_server.submit_job(lava_job)
+            submitted_job_ids = lava_server.submit_job(lava_job)
             # Get the IDs and print the job info urls
-            job_id_urls = lava_server.get_job_urls(job_ids)
+            job_id_urls = lava_server.get_job_urls(submitted_job_ids)
             for job_id_url in job_id_urls:
                 logging.info("Job submitted: {}".format(job_id_url))
+            job_ids.extend(submitted_job_ids)
+
+        if args.poll_result:
+            return poll_result(
+                args.poll_retries, args.poll_interval, job_ids, lava_server
+            )
 
     except KeyboardInterrupt:
         logging.error("Ctrl-C detected. Stopping.")
