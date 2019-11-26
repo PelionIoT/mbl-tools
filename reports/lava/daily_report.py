@@ -63,7 +63,7 @@ HTML_FOOTER = """
 </body>
 """
 
-MAX_RESULTS = 100
+MAX_RESULTS = 1000
 
 
 def get_relative_time(timestamp):
