@@ -57,7 +57,7 @@ def setup_parser():
     parser.add_argument(
         "--numResults",
         type=int,
-        default="100",
+        default="1000",
         nargs="?",
         help="Number of Results",
     )
