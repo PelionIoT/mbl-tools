@@ -32,6 +32,14 @@ valid_device_types = (
     "imx6ul-pico-mbl",
 )
 
+black_list_images = {
+    "mbl-image-production": [
+        "bcm2837-rpi-3-b-32",
+        "bcm2837-rpi-3-b-plus-32",
+        "imx8mmevk-mbl",
+    ]
+}
+
 
 class ExitCode(enum.Enum):
     """Application return codes."""
@@ -467,6 +475,17 @@ def _main(args):
 
         # Set default args
         args = _set_default_args(args)
+
+        # Check for black listing
+        for image, devices in black_list_images.items():
+            if args.image_url.find(image) > 0:
+                if args.device_type in devices:
+                    logging.error(
+                        "Job black listed ({} not supported on {})".format(
+                            image, args.device_type
+                        )
+                    )
+                    return ExitCode.ERROR.value
 
         # Load LAVA templates
         lava_template = LAVATemplates(
