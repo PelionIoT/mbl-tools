@@ -202,7 +202,7 @@ If we are releasing from `zeus-dev`, run the follow:
 repo forall armmbed/mbl-tools armmbed/mbl-jenkins armmbed/mbl-jenkins-libraries -p -c find ./ -type f -exec sed -i -e "s/$DEVBRANCH/$RELVER/g" {} \;
 ```
 
-Once we have done all the changes we need to commit them (this time we include also mbl-manifest!):
+Once we have done all the changes we need to commit them, and we include the changes done by the `git-sync-manifest` script by including mbl-manifest:
 ```
 repo forall armmbed/mbl-manifest armmbed/mbl-tools armmbed/mbl-jenkins armmbed/mbl-jenkins-libraries -p -c git commit -a -m "Change branch from $DEVBRANCH to $RELVER"
 ```
