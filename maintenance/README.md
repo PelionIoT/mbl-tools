@@ -196,7 +196,7 @@ cd armmbed
 
 Now we need to do the tweak in the `meta-mbl` repo: edit `meta-mbl-distro/conf/distro/include/mbl-distro.inc` to set `DISTRO_VERSION` to `mbl-os-x.y.z` (NOTE: `z` version!)
 
-We need to change all the occurences of the current dev branch to the release branch on different repositories.
+We need to replace all the occurrences of the current dev branch with the release branch on mbl-tools, mbl-jenkins and mbl-jenkins-libraries.
 If we are releasing from `zeus-dev`, run the follow:
 ```
 repo forall armmbed/mbl-tools armmbed/mbl-jenkins armmbed/mbl-jenkins-libraries -p -c find ./ -type f -exec sed -i -e "s/$DEVBRANCH/$RELVER/g" {} \;
