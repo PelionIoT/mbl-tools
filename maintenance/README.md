@@ -166,13 +166,14 @@ repo forall -c $SCRIPTS/git-sync-tag.bash
 
 ### Release branches
 
-Follow these instructions to create a release branch from the current dev branch.
+Follow these instructions to create a release branch from the current dev branch (zeus-dev in this case).
 
 Set up the tools:
 
 ```
 mkdir RELWORKDIR ; cd RELWORKDIR
-git clone git@github.com:ARMmbed/mbl-tools -b <dev-branch>
+export DEVBRANCH=zeus-dev
+git clone git@github.com:ARMmbed/mbl-tools -b $DEVBRANCH
 export SCRIPTS=$(pwd)/mbl-tools/maintenance/scripts
 ```
 
@@ -192,15 +193,21 @@ $SCRIPTS/git-sync-manifest.bash pinned-manifest.xml $RELVER
 repo start $RELVER --all
 cd armmbed
 ```
-Now we need to do the tweaks to the following repos:
 
-* `mbl-manifest` - commit `default.xml` with changes done by manifest script
-* `mbl-tools` - edit/commit `maintenance/release.xml` to set the default revision to `mbl-os-x.y` (this is important for the release tagging later!)
-* `mbl-jenkins` - edit/commit `mbl-*pipeline` to use `mbl-os-x.y` branches for everything (tools, manifest, lava etc)
-* `meta-mbl` - edit/commit `meta-mbl-distro/conf/distro/include/mbl-distro.inc` to set `DISTRO_VERSION` to `mbl-os-x.y.z` (NOTE: `z` version!)
+Now we need to do the tweak in the `meta-mbl` repo: edit `meta-mbl-distro/conf/distro/include/mbl-distro.inc` to set `DISTRO_VERSION` to `mbl-os-x.y.z` (NOTE: `z` version!)
+
+We need to change all the occurences of the current dev branch to the release branch on different repositories.
+If we are releasing from `zeus-dev`, run the follow:
+```
+repo forall armmbed/mbl-tools armmbed/mbl-jenkins armmbed/mbl-jenkins-libraries -p -c find ./ -type f -exec sed -i -e "s/$DEVBRANCH/$RELVER/g" {} \;
+```
+
+Once we have done all the changes we need to commit them (this time we include also mbl-manifest!):
+```
+repo forall armmbed/mbl-manifest armmbed/mbl-tools armmbed/mbl-jenkins armmbed/mbl-jenkins-libraries -p -c git commit -a -m "Change branch from $DEVBRANCH to $RELVER"
+```
 
 Next you can push all the changes to github (this skips the PR flow for the changes done):
-
 ```
 repo forall -p -c git push --set-upstream origin $RELVER
 ```
