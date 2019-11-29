@@ -338,8 +338,9 @@ create_license_report()
   set +e
   local build_lic_paths=${1:?Missing license-paths parameter of ${FUNCNAME[0]}}
   # Assumption the path is of format: CONTEXT/mbed-linux/BUILD/BUILD-TAG
-  local prev_artifact_tag="${2##*/}"      # Extract BUILD-TAG
-  local prev_artifact_context="${2%%/*}"  # Extract CONTEXT
+  local artifact_path="${2%/}"            # Strip off trailing slash
+  local prev_artifact_tag="${artifact_path##*/}"      # Extract BUILD-TAG
+  local prev_artifact_context="${artifact_path%%/*}"  # Extract CONTEXT
   local api_key="$3"
   local html_output_dir=${4:?Missing html_output_dir parameter of ${FUNCNAME[0]}}
   local machines=${5:?Missing machines parameter of ${FUNCNAME[0]}}
