@@ -1,67 +1,19 @@
-{% extends "shared/templates/base.yaml" %}
+{% extends "shared/templates/component-update-job.yaml" %}
 
-{% set job_name = "Weekly soak test - RootFS update" %}
-{% set job_timeout = 10080 %}
-{% set lxc_creation = true %}
-{% set lxc_name = "rootfs-soak-update-lxc" %}
+{% set component_name = "rootfs" %}
+{% set update_method = "mbl-cli" %}
+{% set extra_info = " - weekly soak tests" %}
 {% set iterations = 14 %}
+# 10080 minutes are exactly 7 days
+{% set job_timeout = 10080 %}
+# 720 minutes is half day, we give some slack to it
+{% set action_timeout = 750 %}
+# 42600 are 11 hours and 50 minutes.
+{% set job_sleep = 42600 %}
 
 # Set tags so these jobs run of reserved boards
-{% set _ = tags.update({"imx7d-pico-mbl": ["soak_test"]}) %}                                                                                                                                                        
-{% set _ = tags.update({"imx6ul-pico-mbl": ["soak_test"]}) %}                   
-{% set _ = tags.update({"imx8mmevk-mbl": ["soak_test"]}) %}                     
-{% set _ = tags.update({"bcm2837-rpi-3-b-plus-32": ["soak_test"]}) %}           
-{% set _ = tags.update({"bcm2837-rpi-3-b-32": ["soak_test"]}) %} 
-
-{% block testplan %}
-- test:
-    timeout:
-      minutes: 30
-    namespace: lxc
-    definitions:
-
-    {{ macros.create_python_environment(venv_name, host_download_dir) | indent }}
-
-    {{ macros.avahi_discovery(venv_name, "pre") | indent }}
-
-    {{ macros.install_mbl_cli(venv_name) | indent }}
-
-    {% for iteration in range(iterations) %}
-    {% if iteration is divisibleby 2 %}
-        {% set rootfs = "rootfs1" %}
-    {% else %}
-        {% set rootfs = "rootfs2" %}
-    {% endif %}
-    {{ macros.rootfs_update("UPDATE", rootfs, image_url, "MBL-CLI", venv_name, rootfs_payload_version, iteration) | indent }}
-
-- boot:
-    namespace: target
-    method: minimal
-    # We don't power cycle because the rootfs update has rebooted the DUT
-    reset: false
-    prompts:
-      - "{{ login_prompt }}"
-    timeout:
-        minutes: 5
-    failure-retry: 3
-
-- test:
-   timeout:
-      minutes: 750 # 720 minutes is half day, we give some slack to it
-   namespace: lxc
-   definitions:
-
-    {% if iteration is divisibleby 2 %}
-        {% set rootfs = "rootfs2" %}
-    {% else %}
-        {% set rootfs = "rootfs1" %}
-    {% endif %}
-    {{ macros.rootfs_update("POST_CHECK", rootfs, image_url, "MBL-CLI", venv_name, rootfs_payload_version, iteration) | indent }}
-
-    {{ macros.avahi_discovery(venv_name, "post", iteration) | indent }}
-
-    # 42600 are 11 hours and 50 minutes.
-    {{ macros.sleep(42600, iteration) | indent }}
-
-    {% endfor %}
-{% endblock testplan %}
+{% set _ = tags.update({"imx7d-pico-mbl": ["soak_test"]}) %}
+{% set _ = tags.update({"imx6ul-pico-mbl": ["soak_test"]}) %}
+{% set _ = tags.update({"imx8mmevk-mbl": ["soak_test"]}) %}
+{% set _ = tags.update({"bcm2837-rpi-3-b-plus-32": ["soak_test"]}) %}
+{% set _ = tags.update({"bcm2837-rpi-3-b-32": ["soak_test"]}) %}
