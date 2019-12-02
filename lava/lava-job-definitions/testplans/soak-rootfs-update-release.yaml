@@ -1,15 +1,15 @@
 {% extends "shared/templates/component-update-job.yaml" %}
 
 {% set component_name = "rootfs" %}
-{% set update_method = "pelion" %}
-{% set extra_info = " - weekly soak tests" %}
-{% set iterations = 14 %}
-# 10080 minutes are exactly 7 days
-{% set job_timeout = 10080 %}
-# 720 minutes is half day, we give some slack to it
-{% set action_timeout = 750 %}
-# 42600 are 11 hours and 50 minutes.
-{% set job_sleep = 42600 %}
+{% set update_method = "mbl-cli" %}
+{% set extra_info = " - release soak tests" %}
+{% set iterations = 10 %}
+# 43200 minutes are 30 days
+{% set job_timeout = 43200 %}
+# 4320 minutes are three days, we give some slack to it
+{% set action_timeout = 4350 %}
+# 258600 seconds are 2 days, 23 hours and 50 minutes.
+{% set job_sleep = 258600 %}
 
 # Set tags so these jobs run of reserved boards
 {% set _ = tags.update({"imx7d-pico-mbl": ["soak_test"]}) %}
