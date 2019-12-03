@@ -1,6 +1,6 @@
 {% extends "shared/templates/base.yaml" %}
 
-{% set job_name = component_name + " image update via " + update_method %}
+{% set job_name = component_name + " image update via " + update_method + extra_info|default("") %}
 {% set lxc_creation = true %}
 {% set lxc_name = component_name + "-image-update-" + update_method + "-lxc" %}
 {% set payloads_url = pipeline_data["payloads_url"] %}
@@ -8,7 +8,7 @@
 {% block testplan %}
 - test:
     timeout:
-      minutes: 30
+      minutes: {{ action_timeout|default(30) }}
     namespace: lxc
     definitions:
 
@@ -30,10 +30,22 @@
                                             component_name + ".testinfo",
                                             component_name + ".testinfo",]) %}
 
+    {% if iterations %}
+    {% for iteration in range(iterations) %}
+
+    {{ macros.component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method, iteration) | indent }}
+
+    {{ macros.sleep(job_sleep, iteration) | indent }}
+
+    {% endfor %}
+    {% else %}
+
     {{ macros.component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method) | indent }}
 
+    {% endif %}
+
     {% if update_method == "pelion" %}
-    {{ macros.delete_certificate(venv_name) | indent }} 
+    {{ macros.delete_certificate(venv_name) | indent }}
     {% endif %}
 
 {% endblock testplan %}

@@ -20,9 +20,6 @@ tags:
 {% set host_artifacts_dir = "/tmp/artifacts" %}
 {% set dut_artifacts_dir = "/scratch" %}
 
-{% set app_payload_version = "1" %}
-{% set rootfs_payload_version = "1" %}
-
 metadata:
     build-url: "{{ build_url }}"
     build-tag: "{{ build_tag }}"
