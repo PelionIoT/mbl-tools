@@ -1,0 +1,19 @@
+{% extends "shared/templates/component-update-job.yaml" %}
+
+{% set component_name = "sample-app" %}
+{% set update_method = "mbl-cli" %}
+{% set extra_info = " - weekly soak tests" %}
+{% set iterations = 14 %}
+# 10080 minutes are exactly 7 days
+{% set job_timeout = 10080 %}
+# 720 minutes is half day, we give some slack to it
+{% set action_timeout = 750 %}
+# 42600 are 11 hours and 50 minutes.
+{% set job_sleep = 42600 %}
+
+# Set tags so these jobs run of reserved boards
+{% set _ = tags.update({"imx7d-pico-mbl": ["soak_test"]}) %}
+{% set _ = tags.update({"imx6ul-pico-mbl": ["soak_test"]}) %}
+{% set _ = tags.update({"imx8mmevk-mbl": ["soak_test"]}) %}
+{% set _ = tags.update({"bcm2837-rpi-3-b-plus-32": ["soak_test"]}) %}
+{% set _ = tags.update({"bcm2837-rpi-3-b-32": ["soak_test"]}) %}
