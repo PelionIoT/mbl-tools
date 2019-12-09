@@ -8,7 +8,7 @@
 {% block testplan %}
 - test:
     timeout:
-      minutes: {{ action_timeout|default(30) }}
+      minutes: 30
     namespace: lxc
     definitions:
 
@@ -32,6 +32,13 @@
 
     {% if iterations %}
     {% for iteration in range(iterations) %}
+
+- test:
+    timeout:
+      minutes: {{ action_timeout|default(30) }}
+    namespace: lxc
+    definitions:
+
 
     {{ macros.component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method, iteration) | indent }}
 
