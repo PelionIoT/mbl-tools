@@ -62,16 +62,26 @@ context:
           - functional
         run:
           steps:
-          - part=/dev/mmcblk0
+          - set +e
+          - sdcard=/dev/mmcblk0
           - ip=$(cat /proc/cmdline | awk -F"lava_ip=" '{print $2}' |awk -F" lava_dir=" '{ print $1 }')
-          - ifconfig
-          - ifconfig eth0 up
-          - dir=$(cat /proc/cmdline | awk -F"lava_dir=" '{ print $2 }' | cut -d"/" -f1,2)
-          - image_name=$(cat /proc/cmdline | awk -F"lava_dir=" '{ print $2 }' | cut -d"/" -f4 |awk -F"ip=" '{print $1 }')
-          - addr=http://${ip}/tftp/${dir}/preseed/${image_name}
-          - wget -nv -O /tmp/${image_name} ${addr}
+          - ifconfig && ifconfig eth0 up
+          - tftp_remote_dir=$(cat /proc/cmdline | awk -F"lava_dir=" '{ print $2 }' | cut -d"/" -f1,2)
+          # Work out the image and bmap file names
+          - image_name=$(cat /proc/cmdline | awk -F"lava_dir=" '{ print $2 }' | cut -d"/" -f4 | awk -F"ip=" '{ print $1 }' | xargs)
+          - bmap_name="${image_name%.gz}.bmap"
+          # Download the image and the bmap file
+          - image_addr=http://${ip}/tftp/${tftp_remote_dir}/preseed/${image_name}
+          - bmap_addr={{ image_url.replace(".gz", ".bmap") }}
+          - wget -nv -O /tmp/${image_name} ${image_addr}
+          - wget -nv -O /tmp/${bmap_name} ${bmap_addr} # This might fail because the proxy is unknown
+          - if [ $? -ne 0 ]; then
+          -   echo "192.168.130.43    artifactory-proxy.mbed-linux.arm.com" | tee /etc/hosts # Set the proxy IP address
+          -   wget -nv -O /tmp/${bmap_name} ${bmap_addr} # Try to download it again
+          - fi
           # Flash the SD card
-          - bmaptool -q copy --nobmap /tmp/${image_name} ${part}
+          - bmaptool --quiet copy --bmap /tmp/${bmap_name} /tmp/${image_name} ${sdcard} || lava-test-raise "recovery flash operation failed"
+          - set -e
 
 
 # Reboot on (just flashed) SDCARD, nothing to do (minimal method)
