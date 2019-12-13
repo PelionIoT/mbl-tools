@@ -13,3 +13,4 @@
     payload_url: "{{ payload_url }}"
     payload_testinfo_url: "{{ payload_testinfo_url }}"
     update_method: "{{ update_method }}"
+    soak_test: "{{ soak_test }}"
