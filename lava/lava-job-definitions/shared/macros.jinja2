@@ -39,6 +39,6 @@
     {% include "shared/tests/core-component.yaml" %}
 {% endmacro %}
 
-{% macro component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method, iteration="") %}
+{% macro component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method, soak_test="", iteration="") %}
     {% include "shared/tests/component-update.yaml" %}
 {% endmacro %}

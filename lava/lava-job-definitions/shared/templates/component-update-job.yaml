@@ -40,7 +40,7 @@
     definitions:
 
 
-    {{ macros.component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method, iteration) | indent }}
+    {{ macros.component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method, "--soak-test", iteration) | indent }}
 
     {{ macros.sleep(job_sleep, iteration) | indent }}
 
