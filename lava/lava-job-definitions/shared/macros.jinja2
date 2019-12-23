@@ -39,10 +39,6 @@
     {% include "shared/tests/core-component.yaml" %}
 {% endmacro %}
 
-{% macro rootfs_update(test_stage, rootfs, image_url, update_method, venv_name, rootfs_payload_version, iteration="") %}
-    {% include "shared/tests/rootfs-update.yaml" %}
-{% endmacro %}
-
-{% macro component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method) %}
+{% macro component_update(venv_name, component_name, payload_url, payload_testinfo_url, update_method, soak_test="", iteration="") %}
     {% include "shared/tests/component-update.yaml" %}
 {% endmacro %}

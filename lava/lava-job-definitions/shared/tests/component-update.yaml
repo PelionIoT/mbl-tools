@@ -1,6 +1,6 @@
 - path: ci/lava/tests/component-update.yaml
   repository: https://github.com/ARMmbed/mbl-core.git
-  name: "{{ component_name }}-update-via-{{ update_method }}"
+  name: "{{ component_name }}-update-via-{{ update_method }}{{ iteration }}"
   from: git
   history: False
   branch: "{{ mbl_branch }}"
@@ -13,3 +13,4 @@
     payload_url: "{{ payload_url }}"
     payload_testinfo_url: "{{ payload_testinfo_url }}"
     update_method: "{{ update_method }}"
+    soak_test: "{{ soak_test }}"

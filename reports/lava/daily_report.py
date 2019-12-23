@@ -63,7 +63,7 @@ HTML_FOOTER = """
 </body>
 """
 
-MAX_RESULTS = 100
+MAX_RESULTS = 1000
 
 
 def get_relative_time(timestamp):
@@ -365,21 +365,21 @@ def html_output(results, link, submitter):
         header = '{}{}<span class="texttime">{}</span>'.format(
             header, indicator, result["Time"]
         )
-        print('<th class="{}" colspan="5">{}</th>'.format(backclass, header))
+        print('<th class="{}" colspan="6">{}</th>'.format(backclass, header))
         print("</tr><tr>")
         # Indicate there are still jobs pending
         if result["Totals"]["Pending"] > 0:
-            print("<th>Jobs (pending)</th>")
+            print("<th>Jobs+pending/Tests</th>")
             span = "1"
         else:
             if (
                 "Previous" in runs
                 and runs["Previous"]["Totals"]["Pending"] > 0
             ):
-                print("<th>Jobs (previous pends)</th>")
+                print("<th>Jobs+prev pends/Tests</th>")
                 span = "1"
             else:
-                print("<th>Jobs</th>")
+                print("<th>Jobs/Tests</th>")
                 span = "2"
         if span == "1":
             print(
@@ -395,27 +395,29 @@ def html_output(results, link, submitter):
             )
         )
         print(
-            '<td colspan="2" class="{}">{}</td>'.format(
+            '<td class="{}">{}</td>'.format(
                 *get_result_class_and_string(runs, "Incomplete")
             )
         )
-        print("</tr><tr>")
         # Overall test stats
-        print("<th>Tests</th>")
         print(
-            '<td colspan="2" class="{}">{}</td>'.format(
+            '<td class="{}">{}</td>'.format(
                 *get_result_class_and_string(runs, "Passed")
             )
         )
         print(
-            '<td colspan="2" class="{}">{}</td>'.format(
+            '<td class="{}">{}</td>'.format(
                 *get_result_class_and_string(runs, "Failed")
             )
         )
         # Per board stats
         for board, info in result["Boards"].items():
             print("</tr><tr>")
-            print('<th class="textboard">{} (jobs/tests)</th>'.format(board))
+            print(
+                '<th {} class="textboard">{} (jobs/tests)</th>'.format(
+                    'colspan="2"', board
+                )
+            )
             print(
                 '<td class="textboard {}">{}</td>'.format(
                     *get_result_class_and_string(runs, "Complete", board)
