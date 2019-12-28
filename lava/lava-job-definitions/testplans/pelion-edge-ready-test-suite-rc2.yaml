@@ -18,5 +18,5 @@
       history: false
       name: test_suite
       from: git
-      branch: lava-testing     
+      branch: phase2   
 {% endblock testplan %}
