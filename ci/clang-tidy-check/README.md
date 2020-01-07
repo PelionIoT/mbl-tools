@@ -21,9 +21,9 @@ The script checks for the presence of the above code and attempts to build the p
 You must add any external dependencies for your project in the `Dockerfile`.
 Currently the `Dockerfile` only installs the dependencies for the UpdateD project in our `mbl-core` repository.
 
-If you choose to run outside of docker, then you need to install `cmake`, `clang`, `clang-tidy` and any external dependencies.
+If you choose to run outside of Docker, then you need to install `cmake`, `clang`, `clang-tidy` and any external dependencies.
 
-You must also provide a .clang-tidy file in the root of your project or repository, which specifies the `WarningsAsErrors`
+You must also provide a `.clang-tidy` file in the root of your project or repository, which specifies the `WarningsAsErrors`
 option for all enabled checks. See [our example in mbl-core](https://github.com/ARMmbed/mbl-core)
 
 Note: Our projects require CMake 3.5 or later and a version of `clang` that supports c++17.
@@ -50,5 +50,5 @@ Invoke the `clang-tidy-checks.sh` script directly to run outside of a docker con
 $ ./clang-tidy-check.sh --workdir /path/to/your/project
 ```
 
-Output will be printed on screen with the results.`
+Output will be printed on screen with the results.
 
