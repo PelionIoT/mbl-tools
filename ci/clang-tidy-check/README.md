@@ -16,7 +16,7 @@ if(RUN_CODE_CHECKS)
 endif(RUN_CODE_CHECKS)
 ```
 
-The script checks for the presence of the above code and attempts to build the project if true.
+The `clang-tidy-check.sh` script checks for the presence of the above code and attempts to build the project if true.
 
 You must add any external dependencies for your project in the `Dockerfile`.
 Currently the `Dockerfile` only installs the dependencies for the UpdateD project in our `mbl-core` repository.
@@ -51,4 +51,3 @@ $ ./clang-tidy-check.sh --workdir /path/to/your/project
 ```
 
 Output will be printed on screen with the results.
-
