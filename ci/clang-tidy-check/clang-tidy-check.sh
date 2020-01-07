@@ -11,7 +11,7 @@ set -o pipefail
 rc=0
 
 find_cmake_projects() {
-    find $workdir -name CMakeLists.txt -print0 | xargs -0 --no-run-if-empty grep -l 'option(RUN_CODE_CHECKS OFF)' | xargs dirname
+    find "$workdir" -name CMakeLists.txt -print0 | xargs -0 --no-run-if-empty grep -l 'option(RUN_CODE_CHECKS OFF)' | xargs dirname
 }
 
 usage()
@@ -69,7 +69,7 @@ fi
 
 workdir=$(readlink -f "$workdir")
 
-CMAKE_PROJECTS=$(printf $(find_cmake_projects))
+CMAKE_PROJECTS=$(printf "%s" "$(find_cmake_projects)")
 
 for project in $CMAKE_PROJECTS; do
     printf "Building \"%s\" with clang-tidy checks enabled.\n" "$project"
