@@ -2,7 +2,7 @@
 
 The `clang-tidy-check` builds a CMake project which has been configured to use `clang-tidy`.
 
-If any of the `clang-tidy` checks fail, the script will return a non-zero exit code.
+If any of the `clang-tidy` checks fail, the `clang-tidy-check.sh` script will return a non-zero exit code.
 
 
 # Requirements
