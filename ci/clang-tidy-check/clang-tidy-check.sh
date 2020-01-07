@@ -10,6 +10,10 @@ set -o pipefail
 
 rc=0
 
+find_cmake_projects() {
+    find $workdir -name CMakeLists.txt -print0 | xargs -0 --no-run-if-empty grep -l 'option(RUN_CODE_CHECKS OFF)' | xargs dirname
+}
+
 usage()
 {
   cat <<EOF
@@ -65,13 +69,21 @@ fi
 
 workdir=$(readlink -f "$workdir")
 
-echo "Building project with clang-tidy checks enabled.\n"
-cmake "$workdir" "-DCMAKE_CXX_CLANG_TIDY=clang-tidy;-checks=*,-clang-analyzer-cplusplus*,clang-analyzer-*" \
-    -DCMAKE_CXX_COMPILER=clang \
-    -DCMAKE_INSTALL_LIBDIR=/usr/lib \
-    -DCMAKE_INSTALL_BINDIR=/usr/bin \
-    -B/tmp/ || rc=1
+CMAKE_PROJECTS=$(printf $(find_cmake_projects))
 
-make -C /tmp || rc=1
+for project in $CMAKE_PROJECTS; do
+    printf "Building \"%s\" with clang-tidy checks enabled.\n" "$project"
+    PROJECT_TMPDIR=/tmp/$(basename "$project")
+    mkdir -p "$PROJECT_TMPDIR"
+    cmake "$project" \
+        --no-warn-unused-cli \
+        -B"$PROJECT_TMPDIR" \
+        -DRUN_CODE_CHECKS=ON \
+        -DCMAKE_CXX_COMPILER=clang \
+        -DCMAKE_INSTALL_LIBDIR=/usr/lib \
+        -DCMAKE_INSTALL_BINDIR=/usr/bin \
+        -S"$project" || rc=1
+    make -C "$PROJECT_TMPDIR" || rc=1
+done
 
 exit $rc

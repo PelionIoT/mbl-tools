@@ -22,8 +22,9 @@ RUN apt-get install -y libsystemd-dev
 
 RUN rm -rf /var/lib/apt/lists/*
 
-# The build process needs working space to perform the build and
-# delivery the build products.
+# Create a work directory to copy the target dir into
 RUN mkdir -m 777 /work
-
-COPY clang-tidy-check.sh ./
+# CMake segfaults when run from the root directory, so put it in its own script dir
+RUN mkdir -m 777 /script
+COPY clang-tidy-check.sh /script/clang-tidy-check.sh
+WORKDIR /script
