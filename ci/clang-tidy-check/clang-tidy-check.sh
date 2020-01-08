@@ -70,7 +70,7 @@ fi
 workdir=$(readlink -f "$workdir")
 
 CMAKE_PROJECTS=$(printf "%s" "$(find_cmake_projects)")
-if [ -z $CMAKE_PROJECTS ] ; then
+if [ -z "$CMAKE_PROJECTS" ]; then
     printf "No CMake projects configured for clang-tidy found. Exiting.\n"
     exit 1
 fi
