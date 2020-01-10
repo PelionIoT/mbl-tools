@@ -75,19 +75,24 @@ if [ -z "$CMAKE_PROJECTS" ]; then
     exit 1
 fi
 
+this_dir=$(pwd)
+
 for project in $CMAKE_PROJECTS; do
     printf "Building \"%s\" with clang-tidy checks enabled.\n" "$project"
     PROJECT_TMPDIR=/tmp/$(basename "$project")
-    mkdir -p "$PROJECT_TMPDIR"
-    cmake "$project" \
+    cp -r "$project" "$PROJECT_TMPDIR"
+    cd "$PROJECT_TMPDIR"
+    cmake . \
         --no-warn-unused-cli \
-        -B"$PROJECT_TMPDIR" \
         -DRUN_CODE_CHECKS=ON \
-        -DCMAKE_CXX_COMPILER=clang \
+        -DCMAKE_CXX_CLANG_TIDY=clang-tidy-9 \
+        -DCMAKE_CXX_COMPILER=clang++-9 \
+        -DCMAKE_C_COMPILER=clang-9 \
         -DCMAKE_INSTALL_LIBDIR=/usr/lib \
         -DCMAKE_INSTALL_BINDIR=/usr/bin \
-        -S"$project" || rc=1
-    make -C "$PROJECT_TMPDIR" || rc=1
+        || rc=1
+    make  || rc=1
+    cd "$this_dir"
 done
 
 exit $rc
