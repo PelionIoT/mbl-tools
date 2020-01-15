@@ -253,7 +253,7 @@ def main():
             "</tr>\n"
         )
 
-        while(totalQueue):
+        while totalQueue:
 
             # scheduler.jobs.list clamps at 100 jobs. Our queue can be bigger
             # than that. So get the data in chuncks of 100 until we have got
