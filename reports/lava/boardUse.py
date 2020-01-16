@@ -253,26 +253,41 @@ def main():
             "</tr>\n"
         )
 
-        queuedJobs = server.scheduler.jobs.list(
-            "SUBMITTED", None, 0, 100, None, True
-        )
-        for queuedJob in reversed(queuedJobs):
-            print(
-                "<tr>"
-                '<td><a href="https://{}/scheduler/job/{}"'
-                'target="_blank">{}</a</td>'
-                "<td>{}</td>"
-                "<td>{}</td>"
-                "<td>{}</td>"
-                "</tr>".format(
-                    hostname,
-                    queuedJob["id"],
-                    queuedJob["id"],
-                    queuedJob["description"],
-                    queuedJob["device_type"],
-                    queuedJob["submitter"],
-                )
+        while totalQueue:
+
+            # scheduler.jobs.list clamps at 100 jobs. Our queue can be bigger
+            # than that. So get the data in chuncks of 100 until we have got
+            # it all. The jobs are also in descending order of job ID, but
+            # we want to show ascending jobID so the eldest queued jobs are
+            # at the top of the list.
+            if totalQueue > 100:
+                skip = totalQueue - 100
+                numJobs = 100
+            else:
+                skip = 0
+                numJobs = totalQueue
+
+            queuedJobs = server.scheduler.jobs.list(
+                "SUBMITTED", None, skip, numJobs, None, True
             )
+            totalQueue -= numJobs
+            for queuedJob in reversed(queuedJobs):
+                print(
+                    "<tr>"
+                    '<td><a href="https://{}/scheduler/job/{}"'
+                    'target="_blank">{}</a</td>'
+                    "<td>{}</td>"
+                    "<td>{}</td>"
+                    "<td>{}</td>"
+                    "</tr>".format(
+                        hostname,
+                        queuedJob["id"],
+                        queuedJob["id"],
+                        queuedJob["description"],
+                        queuedJob["device_type"],
+                        queuedJob["submitter"],
+                    )
+                )
         print("</table>")
 
     print(HTML_FOOTER)
