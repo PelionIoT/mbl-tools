@@ -4,6 +4,10 @@
 
 FROM rwalton00/mbl-sanity-checks:test
 
+RUN git clone https://github.com/gabime/spdlog.git \
+    && cd spdlog && mkdir build && cd build \
+    && cmake -DCMAKE_CXX_CLANG_TIDY="" .. && make -j && make install
+
 # Create a work directory to copy the target dir into.
 RUN mkdir -m 777 /work
 
