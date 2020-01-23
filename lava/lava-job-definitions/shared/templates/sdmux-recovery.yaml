@@ -1,0 +1,62 @@
+# Deploy and boot the lxc container
+{% include "shared/templates/lxc-deploy-boot.yaml" with context %}
+
+
+- boot:
+    namespace: recovery
+    timeout:
+      minutes: 5
+    method: recovery
+    commands: recovery
+
+- deploy:
+     timeout:
+       minutes: 10
+     to: recovery
+     namespace: recovery
+     connection: lxc
+     images:
+       mbl-image:
+         url: {{ image_url }}
+       bmap-file:
+         url: {{ image_url.replace(".gz", ".bmap") }}
+     os: debian
+
+- test:
+     namespace: lxc
+     connection: lxc
+     timeout:
+       minutes: 10
+     definitions:
+     - from: inline
+       name: flash-image
+       path: inline/flash-image.yaml
+       repository:
+         metadata:
+           format: Lava-Test Test Definition 1.0
+           name: flash-image
+           description: "Flash image to board in recovery mode"
+           os:
+           - oe
+         run:
+           steps:
+           - set -e
+           - ls -al $LAVA_STORAGE_INFO_0_BLOCK"-"* || lava-test-raise "block device not found"
+           - bmaptool --quiet copy --bmap /lava-lxc/*.wic.bmap /lava-lxc/*.wic.gz  $LAVA_STORAGE_INFO_0_BLOCK || lava-test-raise "recovery flash operation failed"
+           - set +e
+
+- boot:
+    namespace: recovery
+    timeout:
+      minutes: 5
+    method: recovery
+    commands: exit
+
+- boot:
+    namespace: target
+    method: minimal
+    failure_retry: 3
+    prompts:
+      - "{{ login_prompt }}"
+    timeout:
+      minutes: 6
