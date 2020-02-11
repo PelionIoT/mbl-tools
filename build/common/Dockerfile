@@ -37,11 +37,15 @@ RUN apt-get update && apt-get install -y \
     xterm \
     xz-utils \
     parted \
-    repo
+    repo \
+    software-properties-common
 
+RUN apt-add-repository ppa:git-core/ppa -y
 RUN apt-get update && apt-get install gosu
 RUN pip3 install -U pip
 RUN pip3 install arpy dohq-artifactory jinja2 libconf
+RUN apt-get install git -y
+
 COPY common/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
