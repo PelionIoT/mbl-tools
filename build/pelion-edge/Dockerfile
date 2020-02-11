@@ -67,7 +67,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		lockfile-progs \
 		pxz \
 		rsync \
-		file
+		file \
+		repo
 
 # install dependencies from Travis
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -142,11 +143,6 @@ RUN if [ "$mode" = "jenkins" ]; then \
 	mkdir -p /var/run/sshd; \
 	sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd; \
 fi
-
-# Get Google's repo tool
-RUN mkdir -p /usr/local/bin \
-    && curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo \
-    && chmod a+x "/usr/local/bin/repo"
 
 # Packages required for Google's repo tool
 RUN apt-get update && apt-get install -y gpg-agent

@@ -85,7 +85,7 @@ repo_init_atomic ()
   rm -rf "$path-ri"
 
   mkdir -p "$path-ri"
-  (cd "$path-ri" && repo init "$@")
+  (cd "$path-ri" && repo init --repo-branch="83a3227b62c936b346b825b333fc2ca65528ecfd" "$@")
   mv "$path-ri" "$path"
 }
 
@@ -901,7 +901,7 @@ while true; do
         manifest="custom-$name"
         cp "$external_manifest" "$builddir/mbl-manifest/.repo/manifests/$manifest"
     fi
-    (cd "$builddir/mbl-manifest"; repo init -b "$branch" -m "$manifest")
+    (cd "$builddir/mbl-manifest"; repo init --repo-branch="83a3227b62c936b346b825b333fc2ca65528ecfd" -b "$branch" -m "$manifest")
     (cd "$builddir/mbl-manifest"; repo sync)
 
     push_stages pin
@@ -943,7 +943,7 @@ while true; do
     for machine in $machines; do
       cp "$builddir/pinned-manifest.xml" "$builddir/machine-$machine/mbl-manifest/.repo/manifests/"
       (cd "$builddir/machine-$machine/mbl-manifest"
-       repo init -m "pinned-manifest.xml"
+       repo init --repo-branch="83a3227b62c936b346b825b333fc2ca65528ecfd" -m "pinned-manifest.xml"
        repo sync
       )
     done

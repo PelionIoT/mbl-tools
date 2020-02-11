@@ -36,7 +36,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     xterm \
     xz-utils \
-    parted
+    parted \
+    repo
 
 RUN apt-get update && apt-get install gosu
 RUN pip3 install -U pip
@@ -48,10 +49,6 @@ COPY common/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 RUN rm -rf /var/lib/apt/lists/*
-
-RUN mkdir -p /usr/local/bin \
-    && curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo \
-    && chmod a+x "/usr/local/bin/repo"
 
 # Make TUN available for qemu
 RUN mkdir -p /dev/net \
