@@ -14,6 +14,13 @@ RUN apt-get update && apt-get install locales \
 ENV LANG=en_US.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install software-properties-common to get apt-add-repository
+RUN apt-get update && apt-get install -y software-properties-common
+# Get the latest git version to satisfy repo tool
+RUN apt-add-repository ppa:git-core/ppa -y
+# Install python 3.6 version to satisfy repo tool
+RUN apt-add-repository ppa:deadsnakes/ppa -y
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     chrpath \
@@ -28,7 +35,7 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     libsdl1.2-dev \
     python \
-    python3 \
+    python3.6 \
     python3-pip \
     socat \
     texinfo \
@@ -39,20 +46,13 @@ RUN apt-get update && apt-get install -y \
     xz-utils \
     parted
 
-RUN apt-get update && apt-get install gosu
-RUN pip3 install -U pip
-RUN pip3 install arpy dohq-artifactory jinja2 libconf
-
-# Get the latest git version to satisfy repo tool
-RUN apt-get update && apt-get install -y software-properties-common
-RUN apt-add-repository ppa:git-core/ppa -y
-RUN apt-get update && apt-get install -y git
-# Install python 3.6 version to satisfy repo tool
-RUN apt-add-repository ppa:deadsnakes/ppa -y
-RUN apt-get update && apt-get install -y python 3.6
+# Set python 3.6 version as default
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.6 10
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 10
 
+RUN apt-get update && apt-get install gosu
+RUN pip3 install -U pip
+RUN pip3 install arpy dohq-artifactory jinja2 libconf
 COPY common/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
