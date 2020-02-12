@@ -143,6 +143,11 @@ RUN if [ "$mode" = "jenkins" ]; then \
 	sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd; \
 fi
 
+# Get the latest git version to satisfy repo tool
+RUN apt-get update && apt-get install -y software-properties-common
+RUN apt-add-repository ppa:git-core/ppa -y
+RUN apt-get update && apt-get install -y git
+
 # Get Google's repo tool
 RUN mkdir -p /usr/local/bin \
     && curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo \

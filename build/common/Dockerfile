@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install locales \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
 
 ENV LANG=en_US.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -41,6 +42,17 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && apt-get install gosu
 RUN pip3 install -U pip
 RUN pip3 install arpy dohq-artifactory jinja2 libconf
+
+# Get the latest git version to satisfy repo tool
+RUN apt-get update && apt-get install -y software-properties-common
+RUN apt-add-repository ppa:git-core/ppa -y
+RUN apt-get update && apt-get install -y git
+# Install python 3.6 version to satisfy repo tool
+RUN apt-add-repository ppa:deadsnakes/ppa -y
+RUN apt-get update && apt-get install -y python 3.6
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.6 10
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 10
+
 COPY common/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Use the 'exec' form of ENTRYPOINT to ensure that docker run
